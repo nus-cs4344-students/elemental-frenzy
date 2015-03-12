@@ -76,7 +76,7 @@ var Q = window.Q = Quintus()
         .controls().touch()
 		.enableSound();
 
-Q.load("fire.ogg");
+Q.load("fireBall.mp3, waterBall.mp3, earthBall.mp3, thunderBall.mp3");
 		
 // ## Keyboard controls
 Q.input.keyboardControls({
@@ -141,7 +141,7 @@ Q.Sprite.extend("Eleball", {
 		
 		// Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play("fire.ogg");
+			Q.audio.play("fireBall.mp3");
 		}
 	},
 	
@@ -185,6 +185,11 @@ Q.Sprite.extend("EnemyEleball", {
 			}
 			this.destroy();
 		});
+        
+        // Play fire sound when eleball is launched
+		if ( !this.p.soundIsAnnoying) {
+			Q.audio.play("thunderBall.mp3");
+		}
 	},
 	
 	step: function(dt) {
