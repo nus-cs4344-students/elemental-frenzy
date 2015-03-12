@@ -1,0 +1,66 @@
+{
+	"character_ryan": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_yude": {
+		"sx": 128,
+		"sy": 0,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_yip": {
+		"sx": 256,
+		"sy": 0,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_sh": {
+		"sx": 0,
+		"sy": 384,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_earth": {
+		"sx": 0,
+		"sy": 194,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_water": {
+		"sx": 128,
+		"sy": 194,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_": {
+		"sx": 256,
+		"sy": 194,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	},
+	"character_": {
+		"sx": 384,
+		"sy": 194,
+		"cols": 4,
+		"tilew": 32,
+		"tileh": 47,
+		"frames": 16
+	}
+}
