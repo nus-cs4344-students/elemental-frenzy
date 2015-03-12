@@ -68,7 +68,7 @@ window.addEventListener("load",function() {
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
-var Q = window.Q = Quintus()
+var Q = window.Q = Quintus({ audioSupported: [ 'ogg','mp3', 'wav' ] })
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
@@ -76,7 +76,7 @@ var Q = window.Q = Quintus()
         .controls().touch()
 		.enableSound();
 
-Q.load("fire.ogg");
+Q.load("fireBall.mp3, waterBall.mp3, earthBall.mp3, thunderBall.mp3");
 		
 // ## Keyboard controls
 Q.input.keyboardControls({
@@ -141,7 +141,7 @@ Q.Sprite.extend("Eleball", {
 		
 		// Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play("fire.ogg");
+			Q.audio.play("fireBall.mp3");
 		}
 	},
 	
@@ -185,6 +185,11 @@ Q.Sprite.extend("EnemyEleball", {
 			}
 			this.destroy();
 		});
+        
+        // Play fire sound when eleball is launched
+		if ( !this.p.soundIsAnnoying) {
+			Q.audio.play("thunderBall.mp3");
+		}
 	},
 	
 	step: function(dt) {
