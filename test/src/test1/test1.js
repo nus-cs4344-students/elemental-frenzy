@@ -1,27 +1,36 @@
 "use strict";
 
 // # Constants
-// ## Fireball constants
-var FIREBALL_DEFAULT_VX = 150;
-var FIREBALL_DEFAULT_VY = 150;
-var FIREBALL_DOWN_FRAME = 0;
-var FIREBALL_LEFT_FRAME = 1;
-var FIREBALL_RIGHT_FRAME = 2;
-var FIREBALL_UP_FRAME = 3;
-var FIREBALL_BOUNDINGBOX_SF = 0.3;
-var FIREBALL_DEFAULT_DMG = 5;
+// ## Eleball constants
+var ELEBALL_DEFAULT_VX = 150;
+var ELEBALL_DEFAULT_VY = 150;
+var ELEBALL_DEFAULT_DMG = 5;
+var ELEBALL_ELEMENT_FIRE = "element_fire";
+var ELEBALL_ELEMENT_WOOD = "element_wood";
+var ELEBALL_ELEMENT_LIGHTNING = "element_lightning";
+var ELEBALL_ELEMENT_WATER = "element_water";
+// Element indices (0: fire, 1: wood, 2: lightning, 3: water, 0 > 1 > 2 > 3 > 0)
+var ELEBALL_ELEMENTNAMES = [ELEBALL_ELEMENT_FIRE, ELEBALL_ELEMENT_WOOD, ELEBALL_ELEMENT_LIGHTNING, ELEBALL_ELEMENT_WATER];
+var ELEBALL_DEFAULT_ELEMENT = 0; // fire
+var ELEBALL_DOWN_FRAME = 0;
+var ELEBALL_LEFT_FRAME = 1;
+var ELEBALL_RIGHT_FRAME = 2;
+var ELEBALL_UP_FRAME = 3;
+var ELEBALL_BOUNDINGBOX_SF = 0.3;
 
 // ## Player constants
 var PLAYER_NAME = 'water';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_DMG = 2;
+var PLAYER_DEFAULT_ELEMENT = 0; // fire
 
 // ## Enemy constants
 var ENEMY_DEFAULT_MAXHEALTH = 50;
 var ENEMY_DEFAULT_COOLDOWN = 1.0;
 var ENEMY_DEFAULT_DMG = 2;
-var ENEMY_FIREBALL_DEFAULT_DMG = 5;
+var ENEMY_ELEBALL_DEFAULT_DMG = 5;
+var ENEMY_DEFAULT_ELEMENT = 0; // fire
 
 // ## Healthbar constants
 var HEALTHBAR_WIDTH_SF = 1.5;
@@ -35,6 +44,14 @@ var makeScaledPoints = function (w, h, sf) {
 				[  w/2 * sf,  h/2 * sf ], 
 				[ -w/2 * sf,  h/2 * sf ] ];
 	return points;
+}
+
+var useDefaultIfUndefined = function (prop, def) {
+	if (typeof prop === 'undefined') {
+		return def;
+	} else {
+		return prop;
+	}
 }
 
 // # Quintus platformer example
@@ -66,7 +83,8 @@ Q.input.keyboardControls({
 	W : "fire_up",
 	S : "fire_down",
 	A : "fire_left",
-	D : "fire_right"
+	D : "fire_right",
+	SPACE : "toggleNextElement"
 });
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -84,28 +102,30 @@ Q.component("healthBar", {
 	}
 });
 
-// ## Own Fireball Sprite
-Q.Sprite.extend("Fireball", {
+// ## Own Eleball Sprite
+Q.Sprite.extend("Eleball", {
 	
 	init: function(p) {
 		
 		var that = this;
 		
 		this._super(p, {
-			sheet : "elemental_ball_fire",
+			element : ELEBALL_DEFAULT_ELEMENT,
+			sheet : ELEBALL_ELEMENTNAMES[ELEBALL_DEFAULT_ELEMENT],
 			frame : 0,
+			soundIsAnnoying : false,
 			vx : 0,
 			vy : 0,
 			scale : 0.9,
 			x : 0,
 			y : 0,
-			dmg : FIREBALL_DEFAULT_DMG,
+			dmg : ELEBALL_DEFAULT_DMG,
 			type : Q.SPRITE_PARTICLE,
 			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE
 		});		
 		
 		// Set bounding box smaller
-		this.p.points = makeScaledPoints(this.p.w, this.p.h, FIREBALL_BOUNDINGBOX_SF);
+		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 		
 		this.add("2d");
 		// Fireballs are not affected by gravity
@@ -119,8 +139,10 @@ Q.Sprite.extend("Fireball", {
 			this.destroy();
 		});
 		
-		// Play fire sound when fireball is launched
-		Q.audio.play("fire.ogg");
+		// Play fire sound when eleball is launched
+		if ( !this.p.soundIsAnnoying) {
+			Q.audio.play("fire.ogg");
+		}
 	},
 	
 	step: function(dt) {
@@ -129,39 +151,39 @@ Q.Sprite.extend("Fireball", {
 	}
 });
 
-// ## Enemy Fireball Sprite
-Q.Sprite.extend("EnemyFireball", {
+// ## Enemy Eleball Sprite
+Q.Sprite.extend("EnemyEleball", {
 	
 	init: function(p) {
-		
-		var that = this;
-		
+	
 		this._super(p, {
-			sheet : "elemental_ball_fire",
+			element : ELEBALL_DEFAULT_ELEMENT,
+			sheet : ELEBALL_ELEMENTNAMES[ELEBALL_DEFAULT_ELEMENT],
 			frame : 0,
+			soundIsAnnoying : false,
 			vx : 0,
 			vy : 0,
 			scale : 0.9,
 			x : 0,
 			y : 0,
+			dmg : ENEMY_ELEBALL_DEFAULT_DMG,
 			type : Q.SPRITE_PARTICLE,
-			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE ^ Q.SPRITE_ENEMY,
-			dmg : ENEMY_FIREBALL_DEFAULT_DMG
-		});		
+			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE ^ Q.SPRITE_ENEMY
+		});	
 		
 		// Set bounding box smaller
-		this.p.points = makeScaledPoints(this.p.w, this.p.h, FIREBALL_BOUNDINGBOX_SF);
+		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 		
 		this.add("2d");
 		// Fireballs are not affected by gravity
 		this.p.gravity = 0;
 		
-		// Fireballs get destroyed
+		// Enemy enemyEleballs get destroyed upon collision and deal damage to players
 		this.on("hit", function(collision) {
-			that.destroy();
 			if (collision.obj.isA("Player")) {
-				collision.obj.takeDamage(that.p.dmg);
+				collision.obj.takeDamage(this.p.dmg);
 			}
+			this.destroy();
 		});
 	},
 	
@@ -183,14 +205,15 @@ Q.Sprite.extend("Player",{
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
-      sprite: "character_"+PLAYER_NAME,
-      sheet: "character_"+PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
+      sheet: "character_" + PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
+	  sprite: "character_" + PLAYER_NAME,
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
 	  cooldown: 0,		// can fire immediately
 	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
-	  dmg: PLAYER_DEFAULT_DMG
+	  dmg: PLAYER_DEFAULT_DMG,
+	  element: PLAYER_DEFAULT_ELEMENT
     });
 
     // Add in pre-made components to get up and running quickly
@@ -205,7 +228,6 @@ Q.Sprite.extend("Player",{
     // Write event handlers to respond hook into behaviors.
     // hit.sprite is called everytime the player collides with a sprite
     this.on("hit.sprite",function(collision) {
-
       // Check the collision, if it's the Tower, you win!
       if(collision.obj.isA("Tower")) {
         Q.stageScene("endGame",1, { label: "You Won!" }); 
@@ -216,17 +238,14 @@ Q.Sprite.extend("Player",{
 	// Add healthbar
 	this.add("healthBar");	
 	
-	Q.input.on("fire_up", function() {
+	// Event listener for firing (w,a,s,d keys)
+	Q.input.on("fire_up, fire_down, fire_left, fire_right", function() {
 		that.trigger("fire");
 	});
-	Q.input.on("fire_down", function() {
-		that.trigger("fire");
-	});
-	Q.input.on("fire_left", function() {
-		that.trigger("fire");
-	});
-	Q.input.on("fire_right", function() {
-		that.trigger("fire");
+	
+	// Event listener for toggling elements using spacebar
+	Q.input.on("toggleNextElement", function() {
+		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
 	});
 	
 	// Event listener for attacks
@@ -235,50 +254,43 @@ Q.Sprite.extend("Player",{
 			return;
 		}
 		
-		var fireball = new Q.Fireball();
-		// Set the fireball directions and starting positions (with respect to the player) and velocity
-		if (Q.inputs['fire_up'] && Q.inputs['fire_left']) {
-			// Set the fireball direction to UP
-			fireball.p.frame = FIREBALL_UP_FRAME;
-			// Set the fireball starting position above the player
-			fireball.p.x = this.p.x - this.p.w/10 - fireball.p.w/2;
-			fireball.p.y = this.p.y - this.p.h/10 - fireball.p.h/2;
-			// Set the fireball velocity
-			fireball.p.vx = -FIREBALL_DEFAULT_VX;
-			fireball.p.vy = -FIREBALL_DEFAULT_VY;
-		}
+		var eleball = new Q.Eleball({
+			element : this.p.element,
+			sheet : ELEBALL_ELEMENTNAMES[this.p.element]
+		});
+		// Set the eleball directions and starting positions (with respect to the player) and velocity
 		if (Q.inputs['fire_up']) {
 			console.log("Firing up");
-			// Set the fireball direction to UP
-			fireball.p.frame = FIREBALL_UP_FRAME;
-			// Set the fireball starting position above the player
-			fireball.p.x = this.p.x;
-			fireball.p.y = this.p.y - this.p.h/4 - fireball.p.h/2;
-			// Set the fireball velocity
-			fireball.p.vy = -FIREBALL_DEFAULT_VY;
+			// Set the eleball direction to UP
+			eleball.p.frame = ELEBALL_UP_FRAME;
+			// Set the eleball starting position above the player
+			eleball.p.x = this.p.x;
+			eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
+			// Set the eleball velocity
+			eleball.p.vy = -ELEBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_down']) {
 			console.log("Firing down");
-			fireball.p.frame = FIREBALL_DOWN_FRAME;
-			fireball.p.x = this.p.x;
-			fireball.p.y = this.p.y + this.p.h/4 + fireball.p.h/2;
-			fireball.p.vy = FIREBALL_DEFAULT_VY;
+			eleball.p.frame = ELEBALL_DOWN_FRAME;
+			eleball.p.x = this.p.x;
+			eleball.p.y = this.p.y + this.p.h/4 + eleball.p.h/2;
+			eleball.p.vy = ELEBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_left']) {
 			console.log("Firing left");
-			fireball.p.frame = FIREBALL_LEFT_FRAME;
-			fireball.p.y = this.p.y;
-			fireball.p.x = this.p.x - this.p.w/10 - fireball.p.w/2;
-			fireball.p.vx = -FIREBALL_DEFAULT_VX;
+			eleball.p.frame = ELEBALL_LEFT_FRAME;
+			eleball.p.y = this.p.y;
+			eleball.p.x = this.p.x - this.p.w/4 - eleball.p.w/2;
+			eleball.p.vx = -ELEBALL_DEFAULT_VX;
 		} else if (Q.inputs['fire_right']){
 			console.log("Firing right");
-			fireball.p.frame = FIREBALL_RIGHT_FRAME;
-			fireball.p.y = this.p.y;
-			fireball.p.x = this.p.x + this.p.w/10 + fireball.p.w/2;
-			fireball.p.vx = FIREBALL_DEFAULT_VX;
+			eleball.p.frame = ELEBALL_RIGHT_FRAME;
+			eleball.p.y = this.p.y;
+			eleball.p.x = this.p.x + this.p.w/4 + eleball.p.w/2;
+			eleball.p.vx = ELEBALL_DEFAULT_VX;
 		} else {
-			fireball.destroy();
+			eleball.destroy();
 			return;
 		}
-		Q.stage().insert(fireball);
+		Q.stage().insert(eleball);
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
 	});
   },
@@ -297,15 +309,13 @@ Q.Sprite.extend("Player",{
 	  if (this.p.cooldown <= 0) {
 		  this.p.cooldown = 0;
 	  }
-
-	  if(this.p.vx > 0) {
-	    this.play("run_right");
-	  } else if(this.p.vx < 0) {
-	    this.play("run_left");
+	  if (this.p.vx > 0) {
+		  this.play("run_right");
+	  } else if (this.p.vx < 0) {
+		  this.play("run_left");
 	  } else {
-	    //this.play("stand_" + this.p.direction > 0 ? "right" : "left");
-	    this.play("stand_front");
-	}
+		  this.play("stand_front");
+	  }
   },
   
   draw: function(ctx) {
@@ -314,7 +324,6 @@ Q.Sprite.extend("Player",{
   }
 
 });
-
 
 // ## Tower Sprite
 // Sprites can be simple, the Tower sprite just sets a custom sprite sheet
@@ -327,6 +336,7 @@ Q.Sprite.extend("Tower", {
 // ## Enemy Sprite
 // Create the Enemy class to add in some baddies
 Q.Sprite.extend("Enemy",{
+	
   init: function(p) {
     this._super(p, { 
 		sheet: 'enemy', 
@@ -335,11 +345,10 @@ Q.Sprite.extend("Enemy",{
 		shootRandomly: true,	// make enemy shoot randomly if true
 		cooldown: 0,			// enemy has a cooldown as well
 		dmg: ENEMY_DEFAULT_DMG,
+		element: ENEMY_DEFAULT_ELEMENT,
 		currentHealth: ENEMY_DEFAULT_MAXHEALTH,
 		maxHealth: ENEMY_DEFAULT_MAXHEALTH
 	});
-	
-	var that = this;
 
     // Enemies use the Bounce AI to change direction 
     // whenver they run into something.
@@ -349,7 +358,7 @@ Q.Sprite.extend("Enemy",{
     // end the game unless the enemy is hit on top
     this.on("bump.left,bump.right,bump.bottom",function(collision) {
       if(collision.obj.isA("Player")) { 
-		collision.obj.takeDamage(that.p.dmg);
+		collision.obj.takeDamage(this.p.dmg);
       }
     });
 
@@ -379,25 +388,25 @@ Q.Sprite.extend("Enemy",{
 				this.p.cooldown = 0;
 			}
 			
-			if (this.p.cooldown > 0) {
-				//not ready to shoot
-			} else {
+			if (this.p.cooldown <= 0) {
 				//ready to shoot
 				
-				var enemyFireball = new Q.EnemyFireball();
-				enemyFireball.p.x = this.p.x - this.p.w/10 - enemyFireball.p.w/2;
-				enemyFireball.p.y = this.p.y;
+				var enemyEleball = new Q.EnemyEleball({
+					sheet : ELEBALL_ELEMENTNAMES[this.p.element]
+				});
+				enemyEleball.p.x = this.p.x - this.p.w/10 - enemyEleball.p.w/2;
+				enemyEleball.p.y = this.p.y;
 				
 				//randomly choose a direction to shoot
 				if (Math.random() > 0.5) {
-					enemyFireball.p.vx = FIREBALL_DEFAULT_VX;
-					enemyFireball.p.frame = FIREBALL_RIGHT_FRAME;
+					enemyEleball.p.vx = ELEBALL_DEFAULT_VX;
+					enemyEleball.p.frame = ELEBALL_RIGHT_FRAME;
 				} else {
-					enemyFireball.p.vx = -FIREBALL_DEFAULT_VX;
-					enemyFireball.p.frame = FIREBALL_LEFT_FRAME;
+					enemyEleball.p.vx = -ELEBALL_DEFAULT_VX;
+					enemyEleball.p.frame = ELEBALL_LEFT_FRAME;
 				}
 				
-				Q.stage().insert(enemyFireball);
+				Q.stage().insert(enemyEleball);
 				
 				// randomly set a cooldown between 2.0 and 5.0
 				this.p.cooldown = Math.random() * 3 + ENEMY_DEFAULT_COOLDOWN; }
@@ -466,31 +475,30 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("characters.png, characters.json, level.json, tiles.png, background-wall.png, \
-	elemental_balls.png, elemental_balls.json, npcs.png, npcs.json", function() {
+Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
+	elemental_balls.png, elemental_balls.json, characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
 
   // Or from a .json asset that defines sprite locations
-  Q.compileSheets("npcs.png", "npcs.json");
   Q.compileSheets("characters.png", "characters.json");
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
-
+  Q.compileSheets("npcs.png", "npcs.json");
+  
   // Finally, call stageScene to run the game
   Q.stageScene("level1");
 });
 
-
 Q.animations('character_' + PLAYER_NAME, {
-  run_right: { frames: [8,9,10,11], rate: 1/12}, 
-  run_left: { frames: [4,5,6,7], rate:1/12 },
-  run_out: { frames: [0,1,2,3], rate: 1/12}, 
-  run_in: { frames: [12,13,14,15], rate:1/12 },
-  stand_right: { frames: [8], rate: 1/5 },
-  stand_left: { frames: [4], rate: 1/5 },
-  stand_front: { frames: [0], rate: 1/5 },
-  stand_back: { frames: [12], rate: 1/5 },
- });
+	run_right: { frames: [8,9,10,11], rate: 1/12}, 
+	run_left: { frames: [4,5,6,7], rate:1/12 },
+	run_out: { frames: [0,1,2,3], rate: 1/12}, 
+	run_in: { frames: [12,13,14,15], rate:1/12 },
+	stand_right: { frames: [8], rate: 1/5 },
+	stand_left: { frames: [4], rate: 1/5 },
+	stand_front: { frames: [0], rate: 1/5 },
+	stand_back: { frames: [12], rate: 1/5 },
+});
 
 // ## Possible Experimentations:
 // 
