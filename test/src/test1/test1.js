@@ -25,7 +25,7 @@ var ENEMY_FIREBALL_DEFAULT_DMG = 5;
 
 // ## Healthbar constants
 var HEALTHBAR_WIDTH_SF = 1.5;
-var HEALTHBAR_HEIGHT_SF = 0.3;
+var HEALTHBAR_HEIGHT_SF = 0.2;
 var HEALTHBAR_HEIGHT_OFFSET = 5;
 
 // # Help functions
