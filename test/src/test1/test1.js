@@ -19,7 +19,7 @@ var ELEBALL_UP_FRAME = 3;
 var ELEBALL_BOUNDINGBOX_SF = 0.3;
 
 // ## Player constants
-var PLAYER_NAME = 'water';
+var PLAYER_NAME = 'yip';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_DMG = 2;
@@ -309,13 +309,30 @@ Q.Sprite.extend("Player",{
 	  if (this.p.cooldown <= 0) {
 		  this.p.cooldown = 0;
 	  }
-	  if (this.p.vx > 0) {
-		  this.play("run_right");
-	  } else if (this.p.vx < 0) {
-		  this.play("run_left");
-	  } else {
+
+	  // player not jumping
+	  if(this.p.vy ==0){
+		// play running animation
+		if (this.p.vx > 0) {
+			this.play("run_right");
+		} else if (this.p.vx < 0) {
+			this.play("run_left");
+		} else {
 		  this.play("stand_front");
+		}
+	  }else{
+	 	// player is jumping
+	 	// play the still frame where the direction is
+		if (this.p.vx > 0) {
+			this.play("run_right_still");
+		} else if (this.p.vx < 0) {
+			this.play("run_left_still");
+		}
+		else {
+		  this.play("stand_front");
+		}
 	  }
+	   
   },
   
   draw: function(ctx) {
@@ -490,14 +507,16 @@ Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
 });
 
 Q.animations('character_' + PLAYER_NAME, {
-	run_right: { frames: [8,9,10,11], rate: 1/12}, 
-	run_left: { frames: [4,5,6,7], rate:1/12 },
-	run_out: { frames: [0,1,2,3], rate: 1/12}, 
-	run_in: { frames: [12,13,14,15], rate:1/12 },
-	stand_right: { frames: [8], rate: 1/5 },
-	stand_left: { frames: [4], rate: 1/5 },
-	stand_front: { frames: [0], rate: 1/5 },
-	stand_back: { frames: [12], rate: 1/5 },
+	run_right: { frames: [8,9,10,11], rate: 1/6}, 
+	run_left: { frames: [4,5,6,7], rate:1/6 },
+	run_right_still: { frames: [9], rate: 1/6}, 
+	run_left_still: { frames: [5], rate:1/6 },
+	run_out: { frames: [0,1,2,3], rate: 1/6}, 
+	run_in: { frames: [12,13,14,15], rate:1/6 },
+	stand_right: { frames: [8], rate: 1/3 },
+	stand_left: { frames: [4], rate: 1/3 },
+	stand_front: { frames: [0], rate: 1/3 },
+	stand_back: { frames: [12], rate: 1/3 },
 });
 
 // ## Possible Experimentations:
