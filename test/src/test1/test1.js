@@ -12,6 +12,7 @@ var FIREBALL_BOUNDINGBOX_SF = 0.3;
 var FIREBALL_DEFAULT_DMG = 5;
 
 // ## Player constants
+var PLAYER_NAME = 'water';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_DMG = 2;
@@ -24,7 +25,7 @@ var ENEMY_FIREBALL_DEFAULT_DMG = 5;
 
 // ## Healthbar constants
 var HEALTHBAR_WIDTH_SF = 1.5;
-var HEALTHBAR_HEIGHT_SF = 0.3;
+var HEALTHBAR_HEIGHT_SF = 0.2;
 var HEALTHBAR_HEIGHT_OFFSET = 5;
 
 // # Help functions
@@ -91,7 +92,7 @@ Q.Sprite.extend("Fireball", {
 		var that = this;
 		
 		this._super(p, {
-			sheet : "fireball",
+			sheet : "elemental_ball_fire",
 			frame : 0,
 			vx : 0,
 			vy : 0,
@@ -136,7 +137,7 @@ Q.Sprite.extend("EnemyFireball", {
 		var that = this;
 		
 		this._super(p, {
-			sheet : "fireball",
+			sheet : "elemental_ball_fire",
 			frame : 0,
 			vx : 0,
 			vy : 0,
@@ -182,7 +183,8 @@ Q.Sprite.extend("Player",{
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
-      sheet: "player",  // Setting a sprite sheet sets sprite width and height
+      sprite: "character_"+PLAYER_NAME,
+      sheet: "character_"+PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
 	  cooldown: 0,		// can fire immediately
@@ -198,7 +200,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls');
+    this.add('2d, platformerControls, animation');
 
     // Write event handlers to respond hook into behaviors.
     // hit.sprite is called everytime the player collides with a sprite
@@ -251,14 +253,14 @@ Q.Sprite.extend("Player",{
 			fireball.p.frame = FIREBALL_UP_FRAME;
 			// Set the fireball starting position above the player
 			fireball.p.x = this.p.x;
-			fireball.p.y = this.p.y - this.p.h/10 - fireball.p.h/2;
+			fireball.p.y = this.p.y - this.p.h/4 - fireball.p.h/2;
 			// Set the fireball velocity
 			fireball.p.vy = -FIREBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_down']) {
 			console.log("Firing down");
 			fireball.p.frame = FIREBALL_DOWN_FRAME;
 			fireball.p.x = this.p.x;
-			fireball.p.y = this.p.y + this.p.h/10 + fireball.p.h/2;
+			fireball.p.y = this.p.y + this.p.h/4 + fireball.p.h/2;
 			fireball.p.vy = FIREBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_left']) {
 			console.log("Firing left");
@@ -295,6 +297,15 @@ Q.Sprite.extend("Player",{
 	  if (this.p.cooldown <= 0) {
 		  this.p.cooldown = 0;
 	  }
+
+	  if(this.p.vx > 0) {
+	    this.play("run_right");
+	  } else if(this.p.vx < 0) {
+	    this.play("run_left");
+	  } else {
+	    //this.play("stand_" + this.p.direction > 0 ? "right" : "left");
+	    this.play("stand_front");
+	}
   },
   
   draw: function(ctx) {
@@ -455,18 +466,31 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("sprites.png, sprites.json, level.json, tiles.png, background-wall.png, \
-	fireball.png, fireball.json", function() {
+Q.load("characters.png, characters.json, level.json, tiles.png, background-wall.png, \
+	elemental_balls.png, elemental_balls.json, npcs.png, npcs.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
 
   // Or from a .json asset that defines sprite locations
-  Q.compileSheets("sprites.png", "sprites.json");
-  Q.compileSheets("fireball.png", "fireball.json");
+  Q.compileSheets("npcs.png", "npcs.json");
+  Q.compileSheets("characters.png", "characters.json");
+  Q.compileSheets("elemental_balls.png", "elemental_balls.json");
 
   // Finally, call stageScene to run the game
   Q.stageScene("level1");
 });
+
+
+Q.animations('character_' + PLAYER_NAME, {
+  run_right: { frames: [8,9,10,11], rate: 1/12}, 
+  run_left: { frames: [4,5,6,7], rate:1/12 },
+  run_out: { frames: [0,1,2,3], rate: 1/12}, 
+  run_in: { frames: [12,13,14,15], rate:1/12 },
+  stand_right: { frames: [8], rate: 1/5 },
+  stand_left: { frames: [4], rate: 1/5 },
+  stand_front: { frames: [0], rate: 1/5 },
+  stand_back: { frames: [12], rate: 1/5 },
+ });
 
 // ## Possible Experimentations:
 // 
