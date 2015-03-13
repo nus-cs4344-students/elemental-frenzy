@@ -191,6 +191,11 @@ Q.component('2dEleball', {
 	//				and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
 	//	- Case 3: Both elements pass through each other if |i-j| == 2
 	collision: function(col,last) {
+		// Don't collide with the shooter of the eleball
+		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.name) {
+			return;
+		}
+		
 		var entity = this.entity;
 		var other = col.obj;
 		if (other.has("2dEleball")) {
@@ -198,31 +203,34 @@ Q.component('2dEleball', {
 			console.log("Eleball-eleball collision");
 			var i = entity.p.element,
 				j = other.p.element;
-			if (entity.p.element == other.p.element) {
+			console.log("i = " + i + " j = " + j);
+			if (i == j) {
 				// Case 1, destroy each other
-				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 				entity.destroy();
 				// Play sound
 				if ( !entity.p.soundIsAnnoying) {
-					Q.audio.play(ELEBALL_ELEMENTSOUNDS[entity.p.element]);
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[i]);
 				}
-			} else if ( (j-i == 1) || (i-j == ELEBALL_ELEMENTNAMES.length-1) ){
+			} else if ( (j-i == 1) || (j-i == 1-ELEBALL_ELEMENTNAMES.length) ){
 				// Case 2, this eleball destroys the other and passes through
-				console.log("Case 2, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " destroys " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " destroys " + ELEBALL_ELEMENTNAMES[j]);
 				other.destroy();
 				// Play sound
 				if ( !other.p.soundIsAnnoying) {
-					Q.audio.play(ELEBALL_ELEMENTSOUNDS[other.p.element]);
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
 				}
-			} else {
-				console.log("Case 3, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " passes through " + ELEBALL_ELEMENTNAMES[other.p.element]);
+			} else if (Math.abs(i-j) == 2) {
+				console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " passes through " + ELEBALL_ELEMENTNAMES[j]);
 			}
+			entity.trigger("onHit", col);
+		} else {
+			entity.trigger("onHit", col);
+			entity.destroy();
 		}
-		
-		entity.trigger("onHit", col);
 	},
 
 	step: function(dt) {
@@ -264,6 +272,7 @@ Q.Sprite.extend("Eleball", {
 			x : 0,
 			y : 0,
 			dmg : ELEBALL_DEFAULT_DMG,
+			shooter : "..no_name..",
 			type : Q.SPRITE_PARTICLE,
 			collisionMask : Q.SPRITE_ALL
 		});	
@@ -283,7 +292,6 @@ Q.Sprite.extend("Eleball", {
 
 	onHit: function(collision) {
 		console.log("onHit");
-		this.destroy();
 	},
 	
 	step: function(dt) {
@@ -567,6 +575,7 @@ Q.Sprite.extend("Enemy",{
 				//ready to shoot
 				
 				var enemyEleball = new Q.EnemyEleball({
+					element : this.p.element,
 					sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 					soundIsAnnoying : true
 				});
@@ -576,10 +585,8 @@ Q.Sprite.extend("Enemy",{
 				//randomly choose a direction to shoot
 				if (Math.random() > 0.5) {
 					enemyEleball.p.vx = ELEBALL_DEFAULT_VX;
-					enemyEleball.p.frame = ELEBALL_RIGHT_FRAME;
 				} else {
 					enemyEleball.p.vx = -ELEBALL_DEFAULT_VX;
-					enemyEleball.p.frame = ELEBALL_LEFT_FRAME;
 				}
 				
 				Q.stage().insert(enemyEleball);
@@ -595,16 +602,16 @@ Q.Sprite.extend("Enemy",{
 	}
 });
 
-// ## level2 scene
+// ## level1 scene
 // Create a new scene called level 1
-Q.scene("level2",function(stage) {
+Q.scene("level1",function(stage) {
 
   // Add in a repeater for a little parallax action
   stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level2.json',
+                             dataAsset: 'level1.json',
                              sheet:     'tiles' }));
 
 
@@ -679,7 +686,7 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level2.json, level2.json, tiles.png, background-wall.png,\
+Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
 	eleball.png, eleball.json, \
     characters.png, characters.json", function() {
   // Sprites sheets can be created manually
@@ -692,7 +699,7 @@ Q.load("npcs.png, npcs.json, level2.json, level2.json, tiles.png, background-wal
 
   
   // Finally, call stageScene to run the game
-  Q.stageScene("level2");
+  Q.stageScene("level1");
 });
 
 Q.animations('character_' + PLAYER_NAME, {
