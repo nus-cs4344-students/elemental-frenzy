@@ -1,6 +1,7 @@
 "use strict";
 
 // # Constants
+
 // ## Eleball constants
 var ELEBALL_DEFAULT_VX = 150;
 var ELEBALL_DEFAULT_VY = 150;
@@ -84,7 +85,12 @@ window.addEventListener("load",function() {
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
-var Q = window.Q = Quintus({ audioSupported: [ 'ogg','mp3', 'wav' ] })
+var Q = window.Q = Quintus({ 
+		audioSupported: [ 'ogg','mp3', 'wav' ],
+		imagePath: "/images/",
+		audioPath: "/audio/",
+		dataPath: "/data/"
+	})
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
@@ -416,9 +422,7 @@ Q.Sprite.extend("Player",{
 		var touch = e.changedTouches ?  e.changedTouches[0] : e;
 		var mouseX = Q.canvasToStageX(touch.x, stage);
 		var mouseY = Q.canvasToStageY(touch.y, stage);
-		var playerToMouseY = mouseY - that.p.y;
-		var playerToMouseX = mouseX - that.p.x;
-		var angleRad = Math.atan2(playerToMouseY, playerToMouseX) ;
+		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
 		var angleDeg = -angleRad* 180 / Math.PI;
 
 		if(angleDeg>0){
@@ -437,7 +441,7 @@ Q.Sprite.extend("Player",{
 		eleball.p.frame = ELEBALL_RIGHT_FRAME;
 		// Set the eleball starting position above the player
 		eleball.p.x = this.p.x;
-		eleball.p.y = this.p.y - eleball.p.h/2;
+		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
 		// // Set the eleball velocity
 		eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
 		eleball.p.vy = ELEBALL_DEFAULT_VY * Math.sin(angleRad);
