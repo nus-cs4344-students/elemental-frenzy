@@ -18,7 +18,7 @@ var ELEBALL_DOWN_FRAME = 0;
 var ELEBALL_LEFT_FRAME = 1;
 var ELEBALL_RIGHT_FRAME = 2;
 var ELEBALL_UP_FRAME = 3;
-var ELEBALL_BOUNDINGBOX_SF = 0.3;
+var ELEBALL_BOUNDINGBOX_SF = 0.5;
 
 // ## Player constants
 var PLAYER_NAME = 'yip';
@@ -131,6 +131,86 @@ Q.component("healthBar", {
 	}
 });
 
+// ## 2dEleball component that is an extension of the '2d' component provided by Quintus (in Quintus_2d.js)
+// 	Modifies what happens on collision with another eleball
+Q.component('2dEleball',{
+	added: function() {
+		var entity = this.entity;
+		Q._defaults(entity.p,{
+			vx: 0,
+			vy: 0,
+			ax: 0,
+			ay: 0,
+			gravity: 0, // Eleballs have no gravity
+			type: Q.SPRITE_PARTICLE, // Eleballs are particles
+			collisionMask: Q.SPRITE_ALL // Eleballs collide with anything
+		});
+		entity.on('step',this,"step");
+		entity.on('hit',this,"collision");
+	},
+
+	// Eleballs get destroyed when touching things, and may play a sound if soundIsAnnoying is set to false
+	// Eleballs may also cancel out fireballs
+	// Eleball elements and their indices:
+	// [0: fire, 1: earth, 2: lightning, 3: water]
+	// Logic for eleball collision:
+	//	- Case 1: Both gets destroyed if their elements are the same
+	//	- Case 2: this element of index i destroys the other element of index j
+	//				and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
+	//	- Case 3: Both elements pass through each other if |i-j| == 2
+	collision: function(col,last) {
+		var entity = this.entity;
+		var other = col.obj;
+		if (other.has("2dEleball")) {
+			// Eleball - eleball collision
+			console.log("Eleball-eleball collision");
+			if (entity.p.element == other.p.element) {
+				// Case 1, destroy each other
+				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
+							+ " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				entity.destroy();
+				// Play sound
+				if ( !entity.p.soundIsAnnoying) {
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[entity.p.element]);
+				}
+			} else if ( (j-i == 1) || (i-j == ELEBALL_ELEMENTNAMES.length-1) ){
+				// Case 2, this eleball destroys the other and passes through
+				console.log("Case 2, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
+							+ " destroys " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				other.destroy();
+				// Play sound
+				if ( !other.p.soundIsAnnoying) {
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[other.p.element]);
+				}
+			} else {
+				console.log("Case 3, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
+							+ " passes through " + ELEBALL_ELEMENTNAMES[other.p.element]);
+			}
+		}
+		
+		entity.trigger("onHit", col);
+	},
+
+	step: function(dt) {
+		var p = this.entity.p,
+		dtStep = dt;
+		// TODO: check the entity's magnitude of vx and vy,
+		// reduce the max dtStep if necessary to prevent
+		// skipping through objects.
+		while(dtStep > 0) {
+			dt = Math.min(1/30,dtStep);
+			// Updated based on the velocity and acceleration
+			p.vx += p.ax * dt + (p.gravityX === void 0 ? Q.gravityX : p.gravityX) * dt * p.gravity;
+			p.vy += p.ay * dt + (p.gravityY === void 0 ? Q.gravityY : p.gravityY) * dt * p.gravity;
+			p.x += p.vx * dt;
+			p.y += p.vy * dt;
+
+			this.entity.stage.collide(this.entity);
+			dtStep -= dt;
+		}
+	}
+});
+
 // ## Own Eleball Sprite
 Q.Sprite.extend("Eleball", {
 	
@@ -151,39 +231,49 @@ Q.Sprite.extend("Eleball", {
 			y : 0,
 			dmg : ELEBALL_DEFAULT_DMG,
 			type : Q.SPRITE_PARTICLE,
-			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE
-		});		
-		
+			collisionMask : Q.SPRITE_ALL
+		});	
+
 		// Set bounding box smaller
 		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 
-		this.add("2d");
-		// Fireballs are not affected by gravity
-		this.p.gravity = 0;
+		this.add("2dEleball");
 		
-		this.on("hit", this, "onHit");
+		this.on("onHit", this, "onHit");
 		
 		// Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
 			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
 	},
-	
-	// Fireballs get destroyed and deal dmg to enemies
+
 	onHit: function(collision) {
-		console.log("called normal eleball");
-		if (collision.obj.isA("Enemy")) {
-			collision.obj.takeDamage(this.p.dmg);
-		}
+		console.log("onHit");
 		this.destroy();
-		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
-		}
 	},
 	
 	step: function(dt) {
 		this.p.x += this.p.vx * dt;
 		this.p.y += this.p.vy * dt;
+	}
+});
+
+// ## Player Eleball Sprite
+Q.Eleball.extend("PlayerEleball", {
+	
+	init: function(p, defaultP) {
+	
+		p = mergeObjects(p, defaultP);
+		
+		this._super(p);
+	},
+	
+	// Player eleballs only damage enemies
+	onHit: function(collision) {
+		if (collision.obj.isA("Enemy")) {
+			collision.obj.takeDamage(this.p.dmg);
+		}
+		this._super(collision);
 	}
 });
 
@@ -196,7 +286,7 @@ Q.Eleball.extend("EnemyEleball", {
 		
 		this._super(p, {
 			dmg : ENEMY_ELEBALL_DEFAULT_DMG,
-			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE ^ Q.SPRITE_ENEMY
+			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
 		});	
 	},
 	
@@ -205,17 +295,7 @@ Q.Eleball.extend("EnemyEleball", {
 		if (collision.obj.isA("Player")) {
 			collision.obj.takeDamage(this.p.dmg);
 		}
-		this.destroy();
-        
-        // Play fire sound when eleball hits something
-		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
-		}
-	},
-	
-	step: function(dt) {
-		this.p.x += this.p.vx * dt;
-		this.p.y += this.p.vy * dt;
+		this._super(collision);
 	}
 });
 
@@ -281,7 +361,7 @@ Q.Sprite.extend("Player",{
 			return;
 		}
 		
-		var eleball = new Q.Eleball({
+		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element]
 		});
@@ -474,7 +554,35 @@ Q.scene("level1",function(stage) {
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level.json',
+                             dataAsset: 'level1.json',
+                             sheet:     'tiles' }));
+
+
+  // Create the player and add them to the stage
+  var player = stage.insert(new Q.Player());
+
+  // Give the stage a moveable viewport and tell it
+  // to follow the player.
+  stage.add("viewport").follow(player);
+
+  // Add in a couple of enemies
+  stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+  stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+
+  // Finally add in the tower goal
+  stage.insert(new Q.Tower({ x: 180, y: 50 }));
+});
+
+// ## Level2 scene
+// Create a new scene called level 2
+Q.scene("level2",function(stage) {
+
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+
+  // Add in a tile layer, and make it the collision layer
+  stage.collisionLayer(new Q.TileLayer({
+                             dataAsset: 'level2.json',
                              sheet:     'tiles' }));
 
 
@@ -521,7 +629,7 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
+Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, \
 	elemental_balls.png, elemental_balls.json, characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
