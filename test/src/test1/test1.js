@@ -39,6 +39,16 @@ var HEALTHBAR_WIDTH_SF = 1.5;
 var HEALTHBAR_HEIGHT_SF = 0.2;
 var HEALTHBAR_HEIGHT_OFFSET = 5;
 
+// ## UI constants
+var UI_OVERLAY_ALPHA_VALUE = 0.3;
+var UI_TEXT_ALPHA_VALUE = 0.7;
+
+// ## Stage constants
+var STAGE_GAME = 0;
+//change stage 1 maybe?
+var STAGE_GAME_OVER_BUTTON = 1;
+var STAGE_UI = 2;
+
 // # Help functions
 var makeScaledPoints = function (w, h, sf) {
 	var points = [ [ -w/2 * sf, -h/2 * sf ], 
@@ -103,7 +113,8 @@ Q.input.keyboardControls({
 	S : "fire_down",
 	A : "fire_left",
 	D : "fire_right",
-	SPACE : "toggleNextElement"
+	SPACE : "toggleNextElement",
+	TAB : "displayScoreScreen"
 });
 // ## Mouse events
 Q.el.addEventListener('mousemove',function(e) {
@@ -114,6 +125,12 @@ Q.el.addEventListener('mouseup',function(e) {
 });
 Q.el.addEventListener('mousedown',function(e) {
 	console.log("mousedown detected");
+});
+Q.el.addEventListener('keyup',function(e) {
+	//TAB KEY
+	if (e.keyCode == 9) {
+		Q.clearStage(STAGE_UI);
+	}
 });
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -270,6 +287,11 @@ Q.Sprite.extend("Player",{
 		that.trigger("fire");
 	});
 	
+	// Event listener to toggle scoreScreen
+	Q.input.on("displayScoreScreen", function() {
+		Q.stageScene("scoreScreen", STAGE_UI, { kills: "Over 9000" }); 
+	});
+
 	// Event listener for toggling elements using spacebar
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
@@ -474,7 +496,7 @@ Q.scene("level1",function(stage) {
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level.json',
+                             dataAsset: 'level1.json',
                              sheet:     'tiles' }));
 
 
@@ -517,11 +539,46 @@ Q.scene('endGame',function(stage) {
   container.fit(20);
 });
 
+Q.scene('scoreScreen', function(stage) {
+
+	var containerSizeX = 200;
+	var containerSizeY = 100;
+
+	//every line takes about 20 pixels
+	var offsetY = 20;
+
+	console.log("inside load score scene")
+	var container = stage.insert(new Q.UI.Container({
+      fill: "rgba(0,0,0,"+UI_OVERLAY_ALPHA_VALUE+")",
+      border: 5,
+      y: Q.height/2,
+      x: Q.width/2 
+    }));
+
+	stage.insert(new Q.UI.Text({ 
+	      label: "PLAYER NAME\tKILLS\tDEATHS",
+	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+	      x: 0,
+	      y: -Q.height/4
+	    }), container);
+
+	//get Q.state.number of players
+	stage.insert(new Q.UI.Text({ 
+	      label: PLAYER_NAME + "\t" + stage.options.kills + "\t0",
+	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+	      x: 0,
+	      y: -Q.height/4 + offsetY
+	    }), container);
+
+	//spacing between components in container and border of container
+	container.fit(20,20);
+})
+
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
+Q.load("npcs.png, npcs.json, level1.json, tiles.png, background-wall.png, \
 	elemental_balls.png, elemental_balls.json, characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -558,5 +615,7 @@ Q.animations('character_' + PLAYER_NAME, {
 // 3. Add in a title screen
 // 4. Add in a hud and points for jumping on enemies.
 // 5. Add in a `Repeater` behind the TileLayer to create a paralax scrolling effect.
+
+
 
 });
