@@ -5,12 +5,14 @@
 var ELEBALL_DEFAULT_VX = 150;
 var ELEBALL_DEFAULT_VY = 150;
 var ELEBALL_DEFAULT_DMG = 5;
-var ELEBALL_ELEMENT_FIRE = "element_fire";
-var ELEBALL_ELEMENT_WOOD = "element_wood";
-var ELEBALL_ELEMENT_LIGHTNING = "element_lightning";
-var ELEBALL_ELEMENT_WATER = "element_water";
-// Element indices (0: fire, 1: wood, 2: lightning, 3: water, 0 > 1 > 2 > 3 > 0)
-var ELEBALL_ELEMENTNAMES = [ELEBALL_ELEMENT_FIRE, ELEBALL_ELEMENT_WOOD, ELEBALL_ELEMENT_LIGHTNING, ELEBALL_ELEMENT_WATER];
+// Element indices (0: fire, 1: earth, 2: lightning, 3: water, 0 > 1 > 2 > 3 > 0)
+var ELEBALL_ELEMENT_FIRE = 0;
+var ELEBALL_ELEMENT_EARTH = 1;
+var ELEBALL_ELEMENT_LIGHTNING = 2;
+var ELEBALL_ELEMENT_WATER = 3;
+var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
+// TODO Change the sound files once they are ready
+var ELEBALL_ELEMENTSOUNDS = ["fire.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
 var ELEBALL_DEFAULT_ELEMENT = 0; // fire
 var ELEBALL_DOWN_FRAME = 0;
 var ELEBALL_LEFT_FRAME = 1;
@@ -54,6 +56,20 @@ var useDefaultIfUndefined = function (prop, def) {
 	}
 }
 
+// Merges obj1 and obj2 together and returns it, but obj1 attributes will take priority over the same attributes of obj2. 
+// E.g. var obj1 = {food : 'pizza', drink : 'cola'}, obj2 = {food : 'lasagna', dessert : 'icecream'}
+//		returned object = {food : 'pizza', drink : 'cola', dessert : 'icecream'}
+var mergeObjects = function(obj1, obj2) {
+	var ret = {};
+	for (var attrName in obj2) {
+		ret[attrName] = obj2[attrName];
+	}
+	for (var attrName in obj1) {
+		ret[attrName] = obj1[attrName];
+	}
+	return ret;
+}
+
 // # Quintus platformer example
 //
 // [Run the example](../quintus/examples/platformer/index.html)
@@ -86,6 +102,16 @@ Q.input.keyboardControls({
 	D : "fire_right",
 	SPACE : "toggleNextElement"
 });
+// ## Mouse events
+Q.el.addEventListener('mousemove',function(e) {
+	console.log("mousemove detected");
+});
+Q.el.addEventListener('mouseup',function(e) {
+	console.log("mouseup detected");
+});
+Q.el.addEventListener('mousedown',function(e) {
+	console.log("mousedown detected");
+});
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
 Q.component("healthBar", {
@@ -105,9 +131,10 @@ Q.component("healthBar", {
 // ## Own Eleball Sprite
 Q.Sprite.extend("Eleball", {
 	
-	init: function(p) {
+	init: function(p, defaultP) {
 		
-		var that = this;
+		// merge p and defaultP, where attributes in p will override those in defaultP
+		p = mergeObjects(p, defaultP);
 		
 		this._super(p, {
 			element : ELEBALL_DEFAULT_ELEMENT,
@@ -126,23 +153,26 @@ Q.Sprite.extend("Eleball", {
 		
 		// Set bounding box smaller
 		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
-		
+
 		this.add("2d");
 		// Fireballs are not affected by gravity
 		this.p.gravity = 0;
 		
-		// Fireballs get destroyed and deal dmg to enemies
-		this.on("hit", function(collision) {
-			if (collision.obj.isA("Enemy")) {
-				collision.obj.takeDamage(this.p.dmg);
-			}
-			this.destroy();
-		});
+		this.on("hit", this, "onHit");
 		
 		// Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play("fireBall.mp3");
+			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
+	},
+	
+	// Fireballs get destroyed and deal dmg to enemies
+	onHit: function(collision) {
+		console.log("called normal eleball");
+		if (collision.obj.isA("Enemy")) {
+			collision.obj.takeDamage(this.p.dmg);
+		}
+		this.destroy();
 	},
 	
 	step: function(dt) {
@@ -152,39 +182,24 @@ Q.Sprite.extend("Eleball", {
 });
 
 // ## Enemy Eleball Sprite
-Q.Sprite.extend("EnemyEleball", {
+Q.Eleball.extend("EnemyEleball", {
 	
-	init: function(p) {
+	init: function(p, defaultP) {
 	
+		p = mergeObjects(p, defaultP);
+		
 		this._super(p, {
-			element : ELEBALL_DEFAULT_ELEMENT,
-			sheet : ELEBALL_ELEMENTNAMES[ELEBALL_DEFAULT_ELEMENT],
-			frame : 0,
-			soundIsAnnoying : false,
-			vx : 0,
-			vy : 0,
-			scale : 0.9,
-			x : 0,
-			y : 0,
 			dmg : ENEMY_ELEBALL_DEFAULT_DMG,
-			type : Q.SPRITE_PARTICLE,
 			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE ^ Q.SPRITE_ENEMY
 		});	
-		
-		// Set bounding box smaller
-		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
-		
-		this.add("2d");
-		// Fireballs are not affected by gravity
-		this.p.gravity = 0;
-		
-		// Enemy enemyEleballs get destroyed upon collision and deal damage to players
-		this.on("hit", function(collision) {
-			if (collision.obj.isA("Player")) {
-				collision.obj.takeDamage(this.p.dmg);
-			}
-			this.destroy();
-		});
+	},
+	
+	// Enemy eleballs only damage players
+	onHit: function(collision) {
+		if (collision.obj.isA("Player")) {
+			collision.obj.takeDamage(this.p.dmg);
+		}
+		this.destroy();
         
         // Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
@@ -218,6 +233,7 @@ Q.Sprite.extend("Player",{
 	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  dmg: PLAYER_DEFAULT_DMG,
+	  type: Q.SPRITE_ACTIVE,
 	  element: PLAYER_DEFAULT_ELEMENT
     });
 
@@ -364,6 +380,7 @@ Q.Sprite.extend("Enemy",{
 		sheet: 'enemy', 
 		vx: 100,  
 		type: Q.SPRITE_ENEMY,
+		collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE ^ Q.SPRITE_ENEMY,
 		shootRandomly: true,	// make enemy shoot randomly if true
 		cooldown: 0,			// enemy has a cooldown as well
 		dmg: ENEMY_DEFAULT_DMG,
@@ -414,7 +431,8 @@ Q.Sprite.extend("Enemy",{
 				//ready to shoot
 				
 				var enemyEleball = new Q.EnemyEleball({
-					sheet : ELEBALL_ELEMENTNAMES[this.p.element]
+					sheet : ELEBALL_ELEMENTNAMES[this.p.element],
+					soundIsAnnoying : true
 				});
 				enemyEleball.p.x = this.p.x - this.p.w/10 - enemyEleball.p.w/2;
 				enemyEleball.p.y = this.p.y;
