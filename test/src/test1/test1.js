@@ -357,6 +357,12 @@ Q.Sprite.extend("Player",{
 	  type: Q.SPRITE_ACTIVE,
 	  element: PLAYER_DEFAULT_ELEMENT
     });
+	
+	// Add to the game state!
+	// Kills = Deaths = 0
+	if (Q.state.p.kills[this.p.name] != undefined) {
+		Q.state.p.kills[this.p.name] = Q.state.p.kills[this.p.name] = 0;
+	}
 
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
