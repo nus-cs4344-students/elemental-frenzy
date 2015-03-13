@@ -133,7 +133,7 @@ Q.component("healthBar", {
 
 // ## 2dEleball component that is an extension of the '2d' component provided by Quintus (in Quintus_2d.js)
 // 	Modifies what happens on collision with another eleball
-Q.component('2dEleball',{
+Q.component('2dEleball', {
 	added: function() {
 		var entity = this.entity;
 		Q._defaults(entity.p,{
@@ -164,6 +164,8 @@ Q.component('2dEleball',{
 		if (other.has("2dEleball")) {
 			// Eleball - eleball collision
 			console.log("Eleball-eleball collision");
+			var i = entity.p.element,
+				j = other.p.element;
 			if (entity.p.element == other.p.element) {
 				// Case 1, destroy each other
 				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
