@@ -1,6 +1,13 @@
 "use strict";
 
+var HOSTNAME = "localhost";
+var PORT = 4344;
+
 var io = io();
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+var selfId;
+var actors = []; // other players
 
 // # Constants
 // ## Eleball constants
@@ -358,10 +365,12 @@ Q.Eleball.extend("EnemyEleball", {
 Q.Sprite.extend("Player",{
 
   // the init constructor is called on creation
-  init: function(p) {
+  init: function(p, defaultP) {
 	  
 	var that = this;
 
+	p = mergeObjects(p, defaultP);
+	
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
       sheet: "character_" + PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
@@ -374,14 +383,9 @@ Q.Sprite.extend("Player",{
 	  name: "no_name",
 	  dmg: PLAYER_DEFAULT_DMG,
 	  type: Q.SPRITE_ACTIVE,
-	  element: PLAYER_DEFAULT_ELEMENT
+	  element: PLAYER_DEFAULT_ELEMENT,
+	  isSelf: true // isSelf indicates that this is the current player, not an actor (which are other players)
     });
-	
-	// Add to the game state!
-	// Kills = Deaths = 0
-	if (Q.state.p.kills[this.p.name] != undefined) {
-		Q.state.p.kills[this.p.name] = Q.state.p.kills[this.p.name] = 0;
-	}
 
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
@@ -390,68 +394,85 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation');
-
-    // Write event handlers to respond hook into behaviors.
-    // hit.sprite is called everytime the player collides with a sprite
-    this.on("hit.sprite",function(collision) {
-      // Check the collision, if it's the Tower, you win!
-      if(collision.obj.isA("Tower")) {
-        Q.stageScene("endGame",1, { label: "You Won!" }); 
-        this.destroy();
-      }
-    });
-	
+    this.add('2d, animation');
 	// Add healthbar
 	this.add("healthBar");	
 	
-	// Event listener for toggling elements using spacebar
-	Q.input.on("toggleNextElement", function() {
-		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-	});
-
-	Q.el.addEventListener('mouseup', function(e){
-		that.trigger('fire', e);
-	});
-
-	this.on('fire', function(e){
-		if (this.p.cooldown > 0) {
-			return;
-		}
-
-		var stage = Q.stage(0); 
-		var touch = e.changedTouches ?  e.changedTouches[0] : e;
-		var mouseX = Q.canvasToStageX(touch.x, stage);
-		var mouseY = Q.canvasToStageY(touch.y, stage);
-		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
-		var angleDeg = -angleRad* 180 / Math.PI;
-
-		if(angleDeg>0){
-			angleDeg = 360 - angleDeg;
-		}else{
-			angleDeg = -angleDeg;
+	// Only the current (controlling) player needs to set the following listeners and components
+	if (this.p.isSelf) {
+		
+		// Add to the game state!
+		// Kills = Deaths = 0
+		if (Q.state.p.kills[this.p.name] != undefined) {
+			Q.state.p.kills[this.p.name] = Q.state.p.kills[this.p.name] = 0;
 		}
 		
-		var eleball = new Q.PlayerEleball({
-			element : this.p.element,
-			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
-			shooter : this.p.name,
-			angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
+		this.add('platformerControls');
+
+		// Write event handlers to respond hook into behaviors.
+		// hit.sprite is called everytime the player collides with a sprite
+		this.on("hit.sprite",function(collision) {
+		  // Check the collision, if it's the Tower, you win!
+		  if(collision.obj.isA("Tower")) {
+			Q.stageScene("endGame",1, { label: "You Won!" }); 
+			this.destroy();
+		  }
 		});
-		// Set the eleball direction to right frame
-		eleball.p.frame = ELEBALL_RIGHT_FRAME;
-		// Set the eleball starting position above the player
-		eleball.p.x = this.p.x;
-		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
-		// // Set the eleball velocity
-		eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
-		eleball.p.vy = ELEBALL_DEFAULT_VY * Math.sin(angleRad);
+		
+		// Event listener for toggling elements using spacebar
+		Q.input.on("toggleNextElement", function() {
+			that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
+		});					
 
-		e.preventDefault();
+		Q.el.addEventListener('mouseup', function(e){
+			that.trigger('fire', e);
+		});
 
-		Q.stage().insert(eleball);
-		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
-	});
+		this.on('fire', function(e){
+			if (this.p.cooldown > 0) {
+				return;
+			}
+
+			var stage = Q.stage(0); 
+			var touch = e.changedTouches ?  e.changedTouches[0] : e;
+			var mouseX = Q.canvasToStageX(touch.x, stage);
+			var mouseY = Q.canvasToStageY(touch.y, stage);
+			var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
+			var angleDeg = -angleRad* 180 / Math.PI;
+
+			if(angleDeg>0){
+				angleDeg = 360 - angleDeg;
+			}else{
+				angleDeg = -angleDeg;
+			}
+			
+			var eleball = new Q.PlayerEleball({
+				element : this.p.element,
+				sheet : ELEBALL_ELEMENTNAMES[this.p.element],
+				shooter : this.p.name,
+				angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
+			});
+			// Set the eleball direction to right frame
+			eleball.p.frame = ELEBALL_RIGHT_FRAME;
+			// Set the eleball starting position above the player
+			eleball.p.x = this.p.x;
+			eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
+			// Set the eleball velocity
+			eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
+			eleball.p.vy = ELEBALL_DEFAULT_VY * Math.sin(angleRad);
+			// Magic code
+			e.preventDefault();
+
+			Q.stage().insert(eleball);
+			socket.emit('insert_object', {
+				playerId: selfId,
+				object_type: "PlayerEleball",
+				object_properties: eleball.p
+			});
+			
+			this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
+		});
+	}
   },
   
   takeDamage: function(dmg, shooter) {
@@ -498,8 +519,25 @@ Q.Sprite.extend("Player",{
   draw: function(ctx) {
 	  this._super(ctx);
 	  this.healthBar.draw(ctx);
+	  console.log("Drawing Player");
   }
 
+});
+
+// ## Actor (other players) Sprite
+// Same as the Player, but does not have platformerControls
+Q.Player.extend("Actor", {
+	
+	init: function(p, defaultP) {
+		p = mergeObjects(p, defaultP);
+		p.isSelf = false;
+		this._super(p);
+	},
+	
+	draw: function(ctx) {
+		this._super(ctx);
+		console.log("Drawing Actor");
+	}
 });
 
 // ## Tower Sprite
@@ -606,19 +644,24 @@ Q.Sprite.extend("Enemy",{
 
 // ## Level1 scene
 // Create a new scene called level 1
-Q.scene("level2",function(stage) {
+Q.scene("level1",function(stage) {
 
   // Add in a repeater for a little parallax action
   stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level.json',
+                             dataAsset: 'level1.json',
                              sheet:     'tiles' }));
 
 
   // Create the player and add them to the stage
   var player = stage.insert(new Q.Player({name: "saihou"}));
+  socket.emit('insert_object', {
+	playerId: selfId,
+	object_type: "Player",
+	object_properties: player.p
+  });
 
   // Give the stage a moveable viewport and tell it
   // to follow the player.
@@ -647,6 +690,11 @@ Q.scene("level2",function(stage) {
 
   // Create the player and add them to the stage
   var player = stage.insert(new Q.Player());
+  socket.emit('insert_object', {
+	playerId: selfId,
+	object_type: "Player",
+	object_properties: player.p
+  });
 
   // Give the stage a moveable viewport and tell it
   // to follow the player.
@@ -716,6 +764,25 @@ Q.animations('character_' + PLAYER_NAME, {
 	stand_front: { frames: [0], rate: 1/3 },
 	stand_back: { frames: [12], rate: 1/3 },
 });
+
+io.on('connected', function(data) {
+	console.log("Connected to server as player " + data.playerId);
+	selfId = data.playerId;
+	
+	// ## Event listeners for data received from server
+	socket.on('insert_object', function(data) {
+	console.log(selfId + ": Message from server: insert_object");
+	if (data.object_type == 'PlayerEleball') {
+		Q.stage().insert(new Q.PlayerEleball(data.object_properties));
+		console.log(selfId + ": PlayerEleball created");
+	} else if (data.object_type == 'Player') {
+		var actor = Q.stage().insert(new Q.Actor(data.object_properties));
+		actors[data.playerId] = actor;
+		console.log(selfId + ": Actor created");
+	}
+});
+});
+
 
 // ## Possible Experimentations:
 // 
