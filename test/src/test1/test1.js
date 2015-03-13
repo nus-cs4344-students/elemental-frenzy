@@ -13,7 +13,7 @@ var ELEBALL_ELEMENT_WATER = 3;
 var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
 // TODO Change the sound files once they are ready
 var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
-var ELEBALL_DEFAULT_ELEMENT = 0; // fire
+var ELEBALL_DEFAULT_ELEMENT = 0; // water
 var ELEBALL_DOWN_FRAME = 0;
 var ELEBALL_LEFT_FRAME = 1;
 var ELEBALL_RIGHT_FRAME = 2;
@@ -411,7 +411,7 @@ Q.Sprite.extend("Player",{
 		if (Q.inputs['fire_up']) {
 			console.log("Firing up");
 			// Set the eleball direction to UP
-			eleball.p.frame = ELEBALL_UP_FRAME;
+			eleball.p.frame = 0;
 			// Set the eleball starting position above the player
 			eleball.p.x = this.p.x;
 			eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
@@ -419,19 +419,19 @@ Q.Sprite.extend("Player",{
 			eleball.p.vy = -ELEBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_down']) {
 			console.log("Firing down");
-			eleball.p.frame = ELEBALL_DOWN_FRAME;
+			eleball.p.frame = 0;
 			eleball.p.x = this.p.x;
 			eleball.p.y = this.p.y + this.p.h/4 + eleball.p.h/2;
 			eleball.p.vy = ELEBALL_DEFAULT_VY;
 		} else if (Q.inputs['fire_left']) {
 			console.log("Firing left");
-			eleball.p.frame = ELEBALL_LEFT_FRAME;
+			eleball.p.frame = 0;
 			eleball.p.y = this.p.y;
 			eleball.p.x = this.p.x - this.p.w/4 - eleball.p.w/2;
 			eleball.p.vx = -ELEBALL_DEFAULT_VX;
 		} else if (Q.inputs['fire_right']){
 			console.log("Firing right");
-			eleball.p.frame = ELEBALL_RIGHT_FRAME;
+			eleball.p.frame = 0;
 			eleball.p.y = this.p.y;
 			eleball.p.x = this.p.x + this.p.w/4 + eleball.p.w/2;
 			eleball.p.vx = ELEBALL_DEFAULT_VX;
@@ -595,16 +595,16 @@ Q.Sprite.extend("Enemy",{
 	}
 });
 
-// ## Level1 scene
+// ## level2 scene
 // Create a new scene called level 1
-Q.scene("level1",function(stage) {
+Q.scene("level2",function(stage) {
 
   // Add in a repeater for a little parallax action
   stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level1.json',
+                             dataAsset: 'level2.json',
                              sheet:     'tiles' }));
 
 
@@ -667,7 +667,7 @@ Q.scene('endGame',function(stage) {
   // and restart the game.
   button.on("click",function() {
     Q.clearStages();
-    Q.stageScene('level1');
+    Q.stageScene('level2');
   });
 
   // Expand the container to visibily fit it's contents
@@ -679,18 +679,20 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, \
-	elemental_balls.png, elemental_balls.json, characters.png, characters.json", function() {
+Q.load("npcs.png, npcs.json, level2.json, level2.json, tiles.png, background-wall.png,\
+	eleball.png, eleball.json, \
+    characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
-
   // Or from a .json asset that defines sprite locations
   Q.compileSheets("characters.png", "characters.json");
-  Q.compileSheets("elemental_balls.png", "elemental_balls.json");
+  //Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("npcs.png", "npcs.json");
+    Q.compileSheets("eleball.png", "eleball.json");   
+
   
   // Finally, call stageScene to run the game
-  Q.stageScene("level1");
+  Q.stageScene("level2");
 });
 
 Q.animations('character_' + PLAYER_NAME, {
