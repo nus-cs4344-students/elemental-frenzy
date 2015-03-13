@@ -398,11 +398,6 @@ Q.Sprite.extend("Player",{
 	// Add healthbar
 	this.add("healthBar");	
 	
-	// Event listener for firing (w,a,s,d keys)
-	Q.input.on("fire_up, fire_down, fire_left, fire_right", function() {
-		that.trigger("fire");
-	});
-	
 	// Event listener for toggling elements using spacebar
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
@@ -430,7 +425,7 @@ Q.Sprite.extend("Player",{
 			angleDeg = -angleDeg;
 		}
 		
-
+		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
