@@ -1,7 +1,8 @@
 "use strict";
 
-// # Constants
+var io = io();
 
+// # Constants
 // ## Eleball constants
 var ELEBALL_DEFAULT_VX = 150;
 var ELEBALL_DEFAULT_VY = 150;
