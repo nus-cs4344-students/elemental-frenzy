@@ -23,7 +23,7 @@ var ELEBALL_BOUNDINGBOX_SF = 0.5;
 // ## Player constants
 var PLAYER_NAME = 'yip';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
-var PLAYER_DEFAULT_COOLDOWN = 0.5;
+var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 
@@ -99,16 +99,21 @@ for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
 		
 // ## Keyboard controls
 Q.input.keyboardControls({
-	W : "fire_up",
-	S : "fire_down",
-	A : "fire_left",
-	D : "fire_right",
+	W : "up",
+	S : "down",
+	A : "left",
+	D : "right",
 	SPACE : "toggleNextElement",
+	Z : "",
+	LEFT : "",
+	UP : "",
+	DOWN : "",
+	RIGHT : ""
 });
 // ## Mouse events
-Q.el.addEventListener('mousemove',function(e) {
-	console.log("mousemove detected");
+Q.el.addEventListener('mousemove', function(e){
 });
+
 Q.el.addEventListener('mouseup',function(e) {
 	console.log("mouseup detected");
 });
@@ -191,6 +196,11 @@ Q.component('2dEleball', {
 	//				and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
 	//	- Case 3: Both elements pass through each other if |i-j| == 2
 	collision: function(col,last) {
+		// Don't collide with the shooter of the eleball
+		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.shooter) {
+			return;
+		}
+		
 		var entity = this.entity;
 		var other = col.obj;
 		if (other.has("2dEleball")) {
@@ -198,31 +208,34 @@ Q.component('2dEleball', {
 			console.log("Eleball-eleball collision");
 			var i = entity.p.element,
 				j = other.p.element;
-			if (entity.p.element == other.p.element) {
+			console.log("i = " + i + " j = " + j);
+			if (i == j) {
 				// Case 1, destroy each other
-				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 				entity.destroy();
 				// Play sound
 				if ( !entity.p.soundIsAnnoying) {
-					Q.audio.play(ELEBALL_ELEMENTSOUNDS[entity.p.element]);
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[i]);
 				}
-			} else if ( (j-i == 1) || (i-j == ELEBALL_ELEMENTNAMES.length-1) ){
+			} else if ( (j-i == 1) || (j-i == 1-ELEBALL_ELEMENTNAMES.length) ){
 				// Case 2, this eleball destroys the other and passes through
-				console.log("Case 2, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " destroys " + ELEBALL_ELEMENTNAMES[other.p.element]);
+				console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " destroys " + ELEBALL_ELEMENTNAMES[j]);
 				other.destroy();
 				// Play sound
 				if ( !other.p.soundIsAnnoying) {
-					Q.audio.play(ELEBALL_ELEMENTSOUNDS[other.p.element]);
+					Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
 				}
-			} else {
-				console.log("Case 3, " + ELEBALL_ELEMENTNAMES[entity.p.element] 
-							+ " passes through " + ELEBALL_ELEMENTNAMES[other.p.element]);
+			} else if (Math.abs(i-j) == 2) {
+				console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
+							+ " passes through " + ELEBALL_ELEMENTNAMES[j]);
 			}
+			entity.trigger("onHit", col);
+		} else {
+			entity.trigger("onHit", col);
+			entity.destroy();
 		}
-		
-		entity.trigger("onHit", col);
 	},
 
 	step: function(dt) {
@@ -249,7 +262,6 @@ Q.component('2dEleball', {
 Q.Sprite.extend("Eleball", {
 	
 	init: function(p, defaultP) {
-		
 		// merge p and defaultP, where attributes in p will override those in defaultP
 		p = mergeObjects(p, defaultP);
 		
@@ -264,6 +276,7 @@ Q.Sprite.extend("Eleball", {
 			x : 0,
 			y : 0,
 			dmg : ELEBALL_DEFAULT_DMG,
+			shooter : "..no_name..",
 			type : Q.SPRITE_PARTICLE,
 			collisionMask : Q.SPRITE_ALL
 		});	
@@ -283,7 +296,6 @@ Q.Sprite.extend("Eleball", {
 
 	onHit: function(collision) {
 		console.log("onHit");
-		this.destroy();
 	},
 	
 	step: function(dt) {
@@ -386,59 +398,50 @@ Q.Sprite.extend("Player",{
 	// Add healthbar
 	this.add("healthBar");	
 	
-	// Event listener for firing (w,a,s,d keys)
-	Q.input.on("fire_up, fire_down, fire_left, fire_right", function() {
-		that.trigger("fire");
-	});
-	
 	// Event listener for toggling elements using spacebar
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
 	});
-	
-	// Event listener for attacks
-	this.on("fire", function() {
+
+	Q.el.addEventListener('mouseup', function(e){
+		that.trigger('fire', e);
+	});
+
+	this.on('fire', function(e){
 		if (this.p.cooldown > 0) {
 			return;
+		}
+
+		var stage = Q.stage(0); 
+		var touch = e.changedTouches ?  e.changedTouches[0] : e;
+		var mouseX = Q.canvasToStageX(touch.x, stage);
+		var mouseY = Q.canvasToStageY(touch.y, stage);
+		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
+		var angleDeg = -angleRad* 180 / Math.PI;
+
+		if(angleDeg>0){
+			angleDeg = 360 - angleDeg;
+		}else{
+			angleDeg = -angleDeg;
 		}
 		
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
-			shooter : this.p.name
+			shooter : this.p.name,
+			angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
 		});
-		// Set the eleball directions and starting positions (with respect to the player) and velocity
-		if (Q.inputs['fire_up']) {
-			console.log("Firing up");
-			// Set the eleball direction to UP
-			eleball.p.frame = 0;
-			// Set the eleball starting position above the player
-			eleball.p.x = this.p.x;
-			eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
-			// Set the eleball velocity
-			eleball.p.vy = -ELEBALL_DEFAULT_VY;
-		} else if (Q.inputs['fire_down']) {
-			console.log("Firing down");
-			eleball.p.frame = 0;
-			eleball.p.x = this.p.x;
-			eleball.p.y = this.p.y + this.p.h/4 + eleball.p.h/2;
-			eleball.p.vy = ELEBALL_DEFAULT_VY;
-		} else if (Q.inputs['fire_left']) {
-			console.log("Firing left");
-			eleball.p.frame = 0;
-			eleball.p.y = this.p.y;
-			eleball.p.x = this.p.x - this.p.w/4 - eleball.p.w/2;
-			eleball.p.vx = -ELEBALL_DEFAULT_VX;
-		} else if (Q.inputs['fire_right']){
-			console.log("Firing right");
-			eleball.p.frame = 0;
-			eleball.p.y = this.p.y;
-			eleball.p.x = this.p.x + this.p.w/4 + eleball.p.w/2;
-			eleball.p.vx = ELEBALL_DEFAULT_VX;
-		} else {
-			eleball.destroy();
-			return;
-		}
+		// Set the eleball direction to right frame
+		eleball.p.frame = ELEBALL_RIGHT_FRAME;
+		// Set the eleball starting position above the player
+		eleball.p.x = this.p.x;
+		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
+		// // Set the eleball velocity
+		eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
+		eleball.p.vy = ELEBALL_DEFAULT_VY * Math.sin(angleRad);
+
+		e.preventDefault();
+
 		Q.stage().insert(eleball);
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
 	});
@@ -550,6 +553,12 @@ Q.Sprite.extend("Enemy",{
 	},
   
 	step: function(dt) {
+		// Randomly change elements
+		if (Math.random() > 0.5) {
+			this.p.element = ELEBALL_ELEMENT_WATER;
+		} else {
+			this.p.element = ELEBALL_ELEMENT_FIRE;
+		}
 		// Make enemies shoot randomly
 		if (this.p.shootRandomly) {
 			this.p.cooldown -= dt;
@@ -561,6 +570,7 @@ Q.Sprite.extend("Enemy",{
 				//ready to shoot
 				
 				var enemyEleball = new Q.EnemyEleball({
+					element : this.p.element,
 					sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 					soundIsAnnoying : true
 				});
@@ -570,10 +580,8 @@ Q.Sprite.extend("Enemy",{
 				//randomly choose a direction to shoot
 				if (Math.random() > 0.5) {
 					enemyEleball.p.vx = ELEBALL_DEFAULT_VX;
-					enemyEleball.p.frame = ELEBALL_RIGHT_FRAME;
 				} else {
 					enemyEleball.p.vx = -ELEBALL_DEFAULT_VX;
-					enemyEleball.p.frame = ELEBALL_LEFT_FRAME;
 				}
 				
 				Q.stage().insert(enemyEleball);
@@ -589,7 +597,7 @@ Q.Sprite.extend("Enemy",{
 	}
 });
 
-// ## level2 scene
+// ## Level1 scene
 // Create a new scene called level 1
 Q.scene("level2",function(stage) {
 
@@ -598,7 +606,7 @@ Q.scene("level2",function(stage) {
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level2.json',
+                             dataAsset: 'level.json',
                              sheet:     'tiles' }));
 
 
@@ -673,7 +681,7 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level2.json, level2.json, tiles.png, background-wall.png,\
+Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
 	eleball.png, eleball.json, \
     characters.png, characters.json", function() {
   // Sprites sheets can be created manually
@@ -706,7 +714,7 @@ Q.animations('character_' + PLAYER_NAME, {
 // 
 // The are lots of things to try out here.
 // 
-// 1. Modify level.json to change the level around and add in some more enemies.
+// 1. Modify level2.json to change the level around and add in some more enemies.
 // 2. Add in a second level by creating a level2.json and a level2 scene that gets
 //    loaded after level 1 is complete.
 // 3. Add in a title screen
