@@ -14,5 +14,13 @@
 		"tilew": 63,
 		"tileh": 30,
 		"frames": 6
+	},
+    "element_lightning": {
+		"sx": 0,
+		"sy": 160,
+		"cols": 6,
+		"tilew": 63,
+		"tileh": 30,
+		"frames": 4
 	}
 }
