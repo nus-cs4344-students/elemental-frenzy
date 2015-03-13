@@ -1,8 +1,0 @@
-*.swp
-node_modules/
-.DS_Store
-dist/
-docs/
-doc/
-bin/
-s3.json
