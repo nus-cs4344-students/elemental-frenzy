@@ -103,7 +103,7 @@ Q.input.keyboardControls({
 	S : "fire_down",
 	A : "fire_left",
 	D : "fire_right",
-	SPACE : "toggleNextElement"
+	SPACE : "toggleNextElement",
 });
 // ## Mouse events
 Q.el.addEventListener('mousemove',function(e) {
@@ -114,6 +114,37 @@ Q.el.addEventListener('mouseup',function(e) {
 });
 Q.el.addEventListener('mousedown',function(e) {
 	console.log("mousedown detected");
+});
+
+// ## Game State
+Q.state.reset({
+	kills : [],
+	deaths : []
+});
+// # Set listeners for the game state
+// # When player dies, update the kills of the killer and the deaths of the victim
+Q.state.on("playerDied", function(victim, killer) {
+	if (typeof Q.state.p.kills[killer] === 'undefined') {
+		Q.state.p.kills[killer] = 0;
+	}
+	if (typeof Q.state.p.deaths[victim] === 'undefined') {
+		Q.state.p.deaths[victim] = 0;
+	}
+	Q.state.p.kills[killer]++;
+	Q.state.p.deaths[victim]++;
+	console.log("Kills for player " + killer + " is " + Q.state.p.kills[killer]);
+	console.log("Deaths for player " + victim + " is " + Q.state.p.deaths[victim]);
+});
+// # When enemy dies, update the kills of the killer only
+Q.state.on("enemyDied", function(killer) {
+	if (typeof killer === 'undefined') {
+		return;
+	}
+	
+	if (typeof Q.state.p.kills[killer] === 'undefined') {
+		Q.state.p.kills[killer] = 0;
+	}
+	Q.state.p.kills[killer]++;
 });
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -273,7 +304,7 @@ Q.Eleball.extend("PlayerEleball", {
 	// Player eleballs only damage enemies
 	onHit: function(collision) {
 		if (collision.obj.isA("Enemy")) {
-			collision.obj.takeDamage(this.p.dmg);
+			collision.obj.takeDamage(this.p.dmg, this.p.shooter);
 		}
 		this._super(collision);
 	}
@@ -295,7 +326,7 @@ Q.Eleball.extend("EnemyEleball", {
 	// Enemy eleballs only damage players
 	onHit: function(collision) {
 		if (collision.obj.isA("Player")) {
-			collision.obj.takeDamage(this.p.dmg);
+			collision.obj.takeDamage(this.p.dmg, this.p.shooter);
 		}
 		this._super(collision);
 	}
@@ -320,6 +351,7 @@ Q.Sprite.extend("Player",{
 	  cooldown: 0,		// can fire immediately
 	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
+	  name: "no_name",
 	  dmg: PLAYER_DEFAULT_DMG,
 	  type: Q.SPRITE_ACTIVE,
 	  element: PLAYER_DEFAULT_ELEMENT
@@ -365,7 +397,8 @@ Q.Sprite.extend("Player",{
 		
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
-			sheet : ELEBALL_ELEMENTNAMES[this.p.element]
+			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
+			shooter : this.p.name
 		});
 		// Set the eleball directions and starting positions (with respect to the player) and velocity
 		if (Q.inputs['fire_up']) {
@@ -404,11 +437,12 @@ Q.Sprite.extend("Player",{
 	});
   },
   
-  takeDamage: function(dmg) {
+  takeDamage: function(dmg, shooter) {
 	this.p.currentHealth -= dmg;
 	console.log("Took damage. currentHealth = " + this.p.currentHealth);
 	if (this.p.currentHealth <= 0) {
 		Q.stageScene("endGame",1, { label: "You Died" }); 
+		Q.state.trigger("playerDied", this.p.name, shooter);
 		this.destroy();
 	}  
   },
@@ -500,9 +534,10 @@ Q.Sprite.extend("Enemy",{
 	
   },
   
-	takeDamage: function(dmg) {
+	takeDamage: function(dmg, shooter) {
 		this.p.currentHealth -= dmg;
 		if (this.p.currentHealth <= 0) {
+			Q.state.trigger("enemyDied", shooter);
 			this.destroy();
 		}
 	},
