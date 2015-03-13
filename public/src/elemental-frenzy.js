@@ -689,7 +689,7 @@ Q.scene('endGame',function(stage) {
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
-	eleball.png, eleball.json, \
+	elemental_balls.png, elemental_balls.json, \
     characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -697,7 +697,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("characters.png", "characters.json");
   //Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("npcs.png", "npcs.json");
-    Q.compileSheets("eleball.png", "eleball.json");   
+    Q.compileSheets("elemental_balls.png", "elemental_balls.json");   
 
   
   // Finally, call stageScene to run the game
