@@ -5,7 +5,6 @@
 
 <meta name="viewport" content="width=device-width, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0"/>
 <title>Platformer Example</title>
-<script src="socket.io/socket.io.js"></script>
 <script src='/lib/quintus.js'></script>
 <script src='/lib/quintus_sprites.js'></script>
 <script src='/lib/quintus_scenes.js'></script>
@@ -16,22 +15,11 @@
 <script src='/lib/quintus_ui.js'></script>
 <script src='/lib/quintus_audio.js'></script>
 
+<script src='/src/elemental-frenzy.js'></script>
 <style> 
-	body { padding:0px; margin:0px; }
-	.players {
-		z-index: 5;
-		position: absolute;
-		padding-top: 10px;
-		padding-right: 10px;
-		right: 0;
-		text-align: right;
-		font-size: 1.5em;
-	}
+  body { padding:0px; margin:0px; } 
 </style>
 </head>
 <body>
-<span id="players" class="players"></span>
-<script src="/lib/require.min.js"></script>
-<script src='/src/elemental-frenzy.js'></script>
 </body>
 </html>

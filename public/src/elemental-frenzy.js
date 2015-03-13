@@ -1,10 +1,7 @@
 "use strict";
 
-var socket = io();
-
-var socket = io.connect("http://localhost:4344/");
-
 // # Constants
+
 // ## Eleball constants
 var ELEBALL_DEFAULT_VX = 150;
 var ELEBALL_DEFAULT_VY = 150;
