@@ -23,7 +23,7 @@ var ELEBALL_BOUNDINGBOX_SF = 0.3;
 // ## Player constants
 var PLAYER_NAME = 'yip';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
-var PLAYER_DEFAULT_COOLDOWN = 0.5;
+var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 
@@ -99,16 +99,21 @@ for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
 		
 // ## Keyboard controls
 Q.input.keyboardControls({
-	W : "fire_up",
-	S : "fire_down",
-	A : "fire_left",
-	D : "fire_right",
-	SPACE : "toggleNextElement"
+	W : "up",
+	S : "down",
+	A : "left",
+	D : "right",
+	SPACE : "toggleNextElement",
+	Z : "",
+	LEFT : "",
+	UP : "",
+	DOWN : "",
+	RIGHT : ""
 });
 // ## Mouse events
-Q.el.addEventListener('mousemove',function(e) {
-	console.log("mousemove detected");
+Q.el.addEventListener('mousemove', function(e){
 });
+
 Q.el.addEventListener('mouseup',function(e) {
 	console.log("mouseup detected");
 });
@@ -135,7 +140,6 @@ Q.component("healthBar", {
 Q.Sprite.extend("Eleball", {
 	
 	init: function(p, defaultP) {
-		
 		// merge p and defaultP, where attributes in p will override those in defaultP
 		p = mergeObjects(p, defaultP);
 		
@@ -274,49 +278,46 @@ Q.Sprite.extend("Player",{
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
 	});
-	
-	// Event listener for attacks
-	this.on("fire", function() {
+
+	Q.el.addEventListener('mouseup', function(e){
+		that.trigger('fire', e);
+	});
+
+	this.on('fire', function(e){
 		if (this.p.cooldown > 0) {
 			return;
 		}
+
+		var stage = Q.stage(0); 
+		var touch = e.changedTouches ?  e.changedTouches[0] : e;
+		var mouseX = Q.canvasToStageX(touch.x, stage);
+		var mouseY = Q.canvasToStageY(touch.y, stage);
+		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
+		var angleDeg = -angleRad* 180 / Math.PI;
+
+		if(angleDeg>0){
+			angleDeg = 360 - angleDeg;
+		}else{
+			angleDeg = -angleDeg;
+		}
 		
+
 		var eleball = new Q.Eleball({
 			element : this.p.element,
-			sheet : ELEBALL_ELEMENTNAMES[this.p.element]
+			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
+			angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
 		});
-		// Set the eleball directions and starting positions (with respect to the player) and velocity
-		if (Q.inputs['fire_up']) {
-			console.log("Firing up");
-			// Set the eleball direction to UP
-			eleball.p.frame = ELEBALL_UP_FRAME;
-			// Set the eleball starting position above the player
-			eleball.p.x = this.p.x;
-			eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
-			// Set the eleball velocity
-			eleball.p.vy = -ELEBALL_DEFAULT_VY;
-		} else if (Q.inputs['fire_down']) {
-			console.log("Firing down");
-			eleball.p.frame = ELEBALL_DOWN_FRAME;
-			eleball.p.x = this.p.x;
-			eleball.p.y = this.p.y + this.p.h/4 + eleball.p.h/2;
-			eleball.p.vy = ELEBALL_DEFAULT_VY;
-		} else if (Q.inputs['fire_left']) {
-			console.log("Firing left");
-			eleball.p.frame = ELEBALL_LEFT_FRAME;
-			eleball.p.y = this.p.y;
-			eleball.p.x = this.p.x - this.p.w/4 - eleball.p.w/2;
-			eleball.p.vx = -ELEBALL_DEFAULT_VX;
-		} else if (Q.inputs['fire_right']){
-			console.log("Firing right");
-			eleball.p.frame = ELEBALL_RIGHT_FRAME;
-			eleball.p.y = this.p.y;
-			eleball.p.x = this.p.x + this.p.w/4 + eleball.p.w/2;
-			eleball.p.vx = ELEBALL_DEFAULT_VX;
-		} else {
-			eleball.destroy();
-			return;
-		}
+		// Set the eleball direction to right frame
+		eleball.p.frame = ELEBALL_RIGHT_FRAME;
+		// Set the eleball starting position above the player
+		eleball.p.x = this.p.x;
+		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
+		// // Set the eleball velocity
+		eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
+		eleball.p.vy = ELEBALL_DEFAULT_VY * Math.sin(angleRad);
+
+		e.preventDefault();
+
 		Q.stage().insert(eleball);
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
 	});
@@ -465,16 +466,16 @@ Q.Sprite.extend("Enemy",{
 	}
 });
 
-// ## Level1 scene
+// ## level2 scene
 // Create a new scene called level 1
-Q.scene("level1",function(stage) {
+Q.scene("level2",function(stage) {
 
   // Add in a repeater for a little parallax action
   stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level.json',
+                             dataAsset: 'level2.json',
                              sheet:     'tiles' }));
 
 
@@ -509,7 +510,7 @@ Q.scene('endGame',function(stage) {
   // and restart the game.
   button.on("click",function() {
     Q.clearStages();
-    Q.stageScene('level1');
+    Q.stageScene('level2');
   });
 
   // Expand the container to visibily fit it's contents
@@ -521,7 +522,7 @@ Q.scene('endGame',function(stage) {
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
+Q.load("npcs.png, npcs.json, level2.json, tiles.png, background-wall.png, \
 	elemental_balls.png, elemental_balls.json, characters.png, characters.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -532,7 +533,7 @@ Q.load("npcs.png, npcs.json, level.json, tiles.png, background-wall.png, \
   Q.compileSheets("npcs.png", "npcs.json");
   
   // Finally, call stageScene to run the game
-  Q.stageScene("level1");
+  Q.stageScene("level2");
 });
 
 Q.animations('character_' + PLAYER_NAME, {
@@ -552,7 +553,7 @@ Q.animations('character_' + PLAYER_NAME, {
 // 
 // The are lots of things to try out here.
 // 
-// 1. Modify level.json to change the level around and add in some more enemies.
+// 1. Modify level2.json to change the level around and add in some more enemies.
 // 2. Add in a second level by creating a level2.json and a level2 scene that gets
 //    loaded after level 1 is complete.
 // 3. Add in a title screen
