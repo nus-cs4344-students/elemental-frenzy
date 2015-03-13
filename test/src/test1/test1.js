@@ -197,7 +197,7 @@ Q.component('2dEleball', {
 	//	- Case 3: Both elements pass through each other if |i-j| == 2
 	collision: function(col,last) {
 		// Don't collide with the shooter of the eleball
-		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.name) {
+		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.shooter) {
 			return;
 		}
 		
@@ -430,6 +430,7 @@ Q.Sprite.extend("Player",{
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
+			shooter : this.p.name,
 			angle : angleDeg // angle 0 starts from 3 o'clock then clockwise
 		});
 		// Set the eleball direction to right frame
