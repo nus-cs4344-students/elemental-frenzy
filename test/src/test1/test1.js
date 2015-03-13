@@ -12,7 +12,7 @@ var ELEBALL_ELEMENT_LIGHTNING = 2;
 var ELEBALL_ELEMENT_WATER = 3;
 var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
 // TODO Change the sound files once they are ready
-var ELEBALL_ELEMENTSOUNDS = ["fire.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
+var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
 var ELEBALL_DEFAULT_ELEMENT = 0; // fire
 var ELEBALL_DOWN_FRAME = 0;
 var ELEBALL_LEFT_FRAME = 1;
@@ -92,7 +92,10 @@ var Q = window.Q = Quintus({ audioSupported: [ 'ogg','mp3', 'wav' ] })
         .controls().touch()
 		.enableSound();
 
-Q.load("fireBall.mp3, waterBall.mp3, earthBall.mp3, thunderBall.mp3");
+// Load element sounds
+for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
+	Q.load(ELEBALL_ELEMENTSOUNDS[i]);
+}
 		
 // ## Keyboard controls
 Q.input.keyboardControls({
@@ -173,6 +176,9 @@ Q.Sprite.extend("Eleball", {
 			collision.obj.takeDamage(this.p.dmg);
 		}
 		this.destroy();
+		if ( !this.p.soundIsAnnoying) {
+			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
+		}
 	},
 	
 	step: function(dt) {
@@ -201,9 +207,9 @@ Q.Eleball.extend("EnemyEleball", {
 		}
 		this.destroy();
         
-        // Play fire sound when eleball is launched
+        // Play fire sound when eleball hits something
 		if ( !this.p.soundIsAnnoying) {
-			Q.audio.play("thunderBall.mp3");
+			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
 	},
 	
