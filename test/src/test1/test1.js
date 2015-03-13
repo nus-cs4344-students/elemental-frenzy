@@ -145,6 +145,7 @@ Q.state.on("enemyDied", function(killer) {
 		Q.state.p.kills[killer] = 0;
 	}
 	Q.state.p.kills[killer]++;
+	console.log("Kills for player " + killer + " is " + Q.state.p.kills[killer]);
 });
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -596,7 +597,7 @@ Q.scene("level1",function(stage) {
 
 
   // Create the player and add them to the stage
-  var player = stage.insert(new Q.Player());
+  var player = stage.insert(new Q.Player({name: "saihou"}));
 
   // Give the stage a moveable viewport and tell it
   // to follow the player.
