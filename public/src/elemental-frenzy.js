@@ -440,7 +440,7 @@ Q.Sprite.extend("Player",{
 		// Set the eleball direction to right frame
 		eleball.p.frame = ELEBALL_RIGHT_FRAME;
 		// Set the eleball starting position above the player
-		eleball.p.x = this.p.x;
+		eleball.p.x = this.p.x - this.p.w/4 - eleball.p.w/2;
 		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
 		// // Set the eleball velocity
 		eleball.p.vx = ELEBALL_DEFAULT_VX * Math.cos(angleRad);
