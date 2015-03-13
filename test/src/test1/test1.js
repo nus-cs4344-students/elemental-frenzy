@@ -45,7 +45,7 @@ var UI_TEXT_ALPHA_VALUE = 0.7;
 
 // ## Stage constants
 var STAGE_GAME = 0;
-//change stage 1 maybe?
+//change this maybe?
 var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
 
@@ -130,6 +130,13 @@ Q.el.addEventListener('keyup',function(e) {
 	//TAB KEY
 	if (e.keyCode == 9) {
 		Q.clearStage(STAGE_UI);
+	}
+});
+//ideally, if got keyhold, then can keep redrawing i.e. update
+Q.el.addEventListener('keydown',function(e) {
+	//TAB KEY
+	if (e.keyCode == 9) {
+		Q.stageScene("scoreScreen", STAGE_UI); 
 	}
 });
 
@@ -402,10 +409,7 @@ Q.Sprite.extend("Player",{
 		that.trigger("fire");
 	});
 	
-	// Event listener to toggle scoreScreen
-	Q.input.on("displayScoreScreen", function() {
-		Q.stageScene("scoreScreen", STAGE_UI, { kills: "Over 9000" }); 
-	});
+	
 
 	// Event listener for toggling elements using spacebar
 	Q.input.on("toggleNextElement", function() {
@@ -708,13 +712,23 @@ Q.scene('scoreScreen', function(stage) {
 	      y: -Q.height/4
 	    }), container);
 
-	//get Q.state.number of players
-	stage.insert(new Q.UI.Text({ 
-	      label: PLAYER_NAME + "\t" + stage.options.kills + "\t0",
+	var kills = Q.state.p.kills
+	var deaths = Q.state.p.deaths
+
+	var line = 1;
+	for (var name in kills) {
+		stage.insert(new Q.UI.Text({ 
+	      label: name + "\t" + kills[name] + "\t" + "Hmm over 9000 ",
 	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
 	      x: 0,
-	      y: -Q.height/4 + offsetY
+	      y: -Q.height/4 + line*offsetY
 	    }), container);
+
+		++line;
+		console.log("inside loop");
+	}
+	//get Q.state.number of players
+	
 
 	//spacing between components in container and border of container
 	container.fit(20,20);
