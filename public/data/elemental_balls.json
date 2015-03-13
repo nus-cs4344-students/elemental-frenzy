@@ -1,10 +1,34 @@
 {
-	"element_fire": {
+	"element_water": {
 		"sx": 0,
-		"sy": 0,
-		"cols": 1,
-		"tilew": 32,
-		"tileh": 32,
+		"sy": 100,
+		"cols": 6,
+		"tilew": 63,
+		"tileh": 30,
+		"frames": 6
+	},
+    "element_fire": {
+		"sx": 0,
+		"sy": 130,
+		"cols": 6,
+		"tilew": 63,
+		"tileh": 30,
+		"frames": 6
+	},
+    "element_lightning": {
+		"sx": 0,
+		"sy": 160,
+		"cols": 4,
+		"tilew": 63,
+		"tileh": 30,
 		"frames": 4
+	},
+    "element_earth": {
+		"sx": 0,
+		"sy": 190,
+		"cols": 6,
+		"tilew": 30,
+		"tileh": 30,
+		"frames": 6
 	}
 }
