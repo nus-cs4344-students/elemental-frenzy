@@ -550,6 +550,12 @@ Q.Sprite.extend("Enemy",{
 	},
   
 	step: function(dt) {
+		// Randomly change elements
+		if (Math.random() > 0.5) {
+			this.p.element = ELEBALL_ELEMENT_WATER;
+		} else {
+			this.p.element = ELEBALL_ELEMENT_FIRE;
+		}
 		// Make enemies shoot randomly
 		if (this.p.shootRandomly) {
 			this.p.cooldown -= dt;
