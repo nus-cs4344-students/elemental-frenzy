@@ -22,7 +22,8 @@ var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg
 var ELEBALL_DEFAULT_ELEMENT = 0; // water
 var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
-var ELEBALL_ANIMATION = "eleball"
+var ELEBALL_ANIMATION = "eleball";
+var ELEBALL_PLAYER_SF = 0.5;
 
 // ## Player constants
 var PLAYER_NAME = 'earth';
@@ -493,7 +494,7 @@ Q.Sprite.extend("Player",{
 		});
 
 		// fire ball location offset from player
-		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(this.p.fireAngleRad));
+		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
 		if(this.p.fireAngleDeg <= 360 && this.p.fireAngleDeg > 180){
 			// deduct ball width due to the direction of the ball is set to be default at right direction
 			eleball.p.y = this.p.y - ballToPlayerY;
@@ -501,7 +502,7 @@ Q.Sprite.extend("Player",{
 			eleball.p.y = this.p.y + ballToPlayerY;
 		}
 
-		var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(this.p.fireAngleRad));
+		var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
 		if(this.p.fireAngleDeg <= 270 && this.p.fireAngleDeg > 90){
 			eleball.p.x = this.p.x - ballToPlayerX;
 		} else {
