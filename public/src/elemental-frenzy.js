@@ -26,7 +26,7 @@ var ELEBALL_ANIMATION = "eleball";
 var ELEBALL_PLAYER_SF = 0.5;
 
 // ## Player constants
-var PLAYER_NAME = 'earth';
+var PLAYER_NAME = "water";
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
@@ -175,6 +175,9 @@ Q.state.on("enemyDied", function(killer) {
 });
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
+// Usage:
+//	1. Ensure the entity it is attached to has a p.currentHealth and p.maxHealth property,
+//	2. then call the draw(ctx) method of the healthBar in the draw method of the entity.
 Q.component("healthBar", {
 	draw: function(ctx) {
 		var color = '#FF0000'; // defaults to red
@@ -190,6 +193,68 @@ Q.component("healthBar", {
 		ctx.fillStyle = "black";
 		ctx.strokeRect(-width/2, -this.entity.p.cy - height - HEALTHBAR_HEIGHT_OFFSET,
 					width, height);
+	}
+});
+
+// ## Namebar component to be attached to a player/actor which displays their name above them
+// Usage:
+//	1. Ensure the entity it is attached to has a p.name property,
+//	2. then call the draw(ctx) method of the nameBar in the draw method of the entity.
+Q.component("nameBar", {
+	draw: function(ctx) {
+		ctx.font = "15px Arial";
+		ctx.textAlign = "center";
+		var entity = this.entity;
+		var y = -entity.p.cy - 20;
+		ctx.fillText(this.entity.p.name, 0, y);
+	}
+});
+
+// ## DmgDisplay component to be attached to a sprite which displays the damages they take
+// Usage:
+//	1. Call the addDmg(dmg) function when damage is taken to add the dmg to the display buffer
+//	2. Call the step(dt) function in the step function of the entity.
+//	3. Call the draw(ctx) function in the draw function of the entity.
+Q.component("dmgDisplay", {
+	added: function() {
+		this.entity.p.dmgDisplayDmgList = [];			// damages to be displayed
+		this.entity.p.dmgDisplayTimeLeftList = [];	// timeLeft for each damage to be displayed
+		this.entity.p.dmgDisplayPosList = [];		// positions x and y of the display for each damage
+		this.entity.p.dmgDisplayVx = 0;		// 
+		this.entity.p.dmgDisplayVy = -1;	// velocities for the display
+	},
+	
+	addDmg: function(dmg) {
+		console.log("adding dmg " + dmg);
+		this.entity.p.dmgDisplayDmgList.push(dmg);
+		this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
+		this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 20, 0]); // starting position of the display is on the right of the entity
+	},
+	
+	step: function(dt) {
+		for (var i = 0; i < this.entity.p.dmgDisplayTimeLeftList.length; i++) {
+			this.entity.p.dmgDisplayTimeLeftList[i] -= dt;
+			if (this.entity.p.dmgDisplayTimeLeftList[i] <= 0) {
+				// No need to display anymore, so remove it
+				this.entity.p.dmgDisplayTimeLeftList.splice(i, 1);
+				this.entity.p.dmgDisplayDmgList.splice(i, 1);
+				this.entity.p.dmgDisplayPosList.splice(i, 1);
+			} else {
+				// Need to display, so shift by vx, vy
+				this.entity.p.dmgDisplayPosList[i][0] += this.entity.p.dmgDisplayVx;
+				this.entity.p.dmgDisplayPosList[i][1] += this.entity.p.dmgDisplayVy;
+			}
+		}
+	},
+	
+	draw: function(ctx) {
+		ctx.font = "15px Arial";
+		ctx.textAlign = "left";
+		ctx.fillStyle = 'red';
+		for (var i = 0; i < this.entity.p.dmgDisplayDmgList.length; i++) {
+			ctx.fillText(this.entity.p.dmgDisplayDmgList[i], 
+						this.entity.p.dmgDisplayPosList[i][0], this.entity.p.dmgDisplayPosList[i][1]);
+		}
 	}
 });
 
@@ -411,7 +476,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar');
+    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay');
 	
 	this.addEventListeners();
 
@@ -532,6 +597,11 @@ Q.Sprite.extend("Player",{
   takeDamage: function(dmg, shooter) {
 	this.p.currentHealth -= dmg;
 	console.log("Took damage. currentHealth = " + this.p.currentHealth);
+	this.dmgDisplay.addDmg(dmg);
+	socket.emit('playerTookDmg', {
+		playerId: this.p.playerId,
+		dmg: dmg
+	});
 	if (this.p.currentHealth <= 0) {
 		this.die(shooter);
 	}  
@@ -549,6 +619,8 @@ Q.Sprite.extend("Player",{
   },
   
   step: function(dt) {
+	  this.dmgDisplay.step(dt);
+	  
 	  this.p.cooldown -= dt;
 	  if (this.p.cooldown <= 0) {
 		this.p.cooldown = 0;
@@ -591,6 +663,8 @@ Q.Sprite.extend("Player",{
   draw: function(ctx) {
 	  this._super(ctx);
 	  this.healthBar.draw(ctx);
+	  this.nameBar.draw(ctx);
+	  this.dmgDisplay.draw(ctx);
   }
 
 });
@@ -606,7 +680,7 @@ Q.Sprite.extend("Actor", {
 			update: true
 		});
 		
-		this.add('healthBar');
+		this.add('healthBar, nameBar, dmgDisplay');
 		
 		var temp = this;
 		setInterval(function() {
@@ -617,9 +691,20 @@ Q.Sprite.extend("Actor", {
 		}, 3000);
 	},
 	
+	takeDamage: function(dmg) {
+		this.p.currentHealth -= dmg;
+		this.dmgDisplay.addDmg(dmg);
+	},
+	
+	step: function(dt) {
+		this.dmgDisplay.step(dt);
+	},
+	
 	draw: function(ctx) {
 		this._super(ctx);
 		this.healthBar.draw(ctx);
+		this.nameBar.draw(ctx);
+		this.dmgDisplay.draw(ctx);
 	}
 });
 
@@ -651,7 +736,7 @@ Q.Sprite.extend("Enemy",{
 
     // Enemies use the Bounce AI to change direction 
     // whenver they run into something.
-    this.add('2d, aiBounce, healthBar');
+    this.add('2d, aiBounce, healthBar, dmgDisplay');
 
     // Listen for a sprite collision, if it's the player,
     // end the game unless the enemy is hit on top
@@ -674,6 +759,7 @@ Q.Sprite.extend("Enemy",{
   
 	takeDamage: function(dmg, shooter) {
 		this.p.currentHealth -= dmg;
+		this.dmgDisplay.addDmg(dmg);
 		if (this.p.currentHealth <= 0) {
 			Q.state.trigger("enemyDied", shooter);
 			this.destroy();
@@ -681,6 +767,7 @@ Q.Sprite.extend("Enemy",{
 	},
   
 	step: function(dt) {
+		this.dmgDisplay.step(dt);
 		// Randomly change elements
 		if (Math.random() > 0.5) {
 			this.p.element = ELEBALL_ELEMENT_WATER;
@@ -722,6 +809,7 @@ Q.Sprite.extend("Enemy",{
 	draw: function(ctx) {
 		this._super(ctx);
 		this.healthBar.draw(ctx);
+		this.dmgDisplay.draw(ctx);
 	}
 });
 
@@ -819,15 +907,20 @@ Q.scene('endGame',function(stage) {
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
 	elemental_balls.png, elemental_balls.json, \
-    character_earth.png, character_earth.json, character_lightning.png, character_lightning.json", function() {
+    character_earth.png, character_earth.json, \
+    character_lightning.png, character_lightning.json, \
+    character_water.png, character_water.json, \
+    character_fire.png, character_fire.json", function() {
+
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
   Q.compileSheets("character_earth.png", "character_earth.json");
   Q.compileSheets("character_lightning.png", "character_lightning.json");
+  Q.compileSheets("character_water.png", "character_water.json");
+  Q.compileSheets("character_fire.png", "character_fire.json");
   Q.compileSheets("npcs.png", "npcs.json");
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
-
   
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");
@@ -887,7 +980,6 @@ socket.on('connected', function(data1) {
 			actor.player.p.x = data.p.x;
 			actor.player.p.y = data.p.y;
 			actor.player.p.sheet = data.p.sheet;
-			actor.player.p.currentHealth = data.p.currentHealth;
 			actor.player.p.maxHealth = data.p.maxHealth;
 			actor.player.p.update = true;
 		} else {
@@ -906,6 +998,17 @@ socket.on('connected', function(data1) {
 				playerId: data.p.playerId
 			});
 			Q.stage().insert(temp);
+		}
+	});
+	
+	socket.on('playerTookDmg', function(data) {
+		console.log(data.playerId + ": playerTookDmg " + data.dmg);
+		var actor = actors.filter(function(obj) {
+			return obj.playerId == data.playerId;
+		})[0];
+		console.log(actor);
+		if (actor) {
+			actor.player.takeDamage(data.dmg);
 		}
 	});
 	
