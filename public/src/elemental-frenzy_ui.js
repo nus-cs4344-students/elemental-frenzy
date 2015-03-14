@@ -36,6 +36,9 @@ Q.scene('scoreScreen', function(stage) {
 	//every line takes about 30 pixels
 	var offsetY = 30;
 
+	/*
+	** Set up UI containers
+	*/
 	var overlayContainer = stage.insert(new Q.UI.Container({
       fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
       border: 5,
@@ -65,11 +68,14 @@ Q.scene('scoreScreen', function(stage) {
 	      y: Q.height/5
 	    }));
 
+	/*
+	** Set up Titles
+	*/
+
 	// placeholder, ignore
 	stage.insert(new Q.UI.Text({ 
 	      label: "invisible placeholder",
 	      color: "rgba(1,1,1,0)",
-	      , center = (0,0)
 	      x: 0,
 	      y: 0,
 	      align: "center"
@@ -104,8 +110,9 @@ Q.scene('scoreScreen', function(stage) {
 	    }), deathsContainer);
 
 
-
-
+	/*
+	** Loop through total number of players and add their scores line by line
+	*/
 	var kills = Q.state.p.kills;
 	var deaths = Q.state.p.deaths;
 	
@@ -122,6 +129,7 @@ Q.scene('scoreScreen', function(stage) {
 		stage.insert(new Q.UI.Text({ 
 	      label: name,
 	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+	      //x, y coordinates here are relative to container, center = (0,0)
 	      x: 0,
 	      y: line*offsetY,
 	      align: "left"
@@ -130,16 +138,26 @@ Q.scene('scoreScreen', function(stage) {
 	    stage.insert(new Q.UI.Text({ 
 	      label: kills[name].toString(),
 	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+	      //x, y coordinates here are relative to container, center = (0,0)
 	      x: 0,
 	      y: line*offsetY,
 	      align: "left"
 	    }), killsContainer);
 
+	    stage.insert(new Q.UI.Text({ 
+	      label: deaths[name].toString(),
+	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+	      //x, y coordinates here are relative to container, center = (0,0)
+	      x: 0,
+	      y: line*offsetY,
+	      align: "left"
+	    }), deathsContainer);
+
 	    ++line;
 	}
 	
 	//padding between stuff in container and border of container
-	overlayContainer.fit(UI_PADDING_VALUE, 240);
+	overlayContainer.fit(UI_PADDING_VALUE, Q.width / 3.6); // magic number. need to decide aspect ratio first.
 	nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 	killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 	deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
