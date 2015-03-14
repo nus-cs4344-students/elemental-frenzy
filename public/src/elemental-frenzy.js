@@ -20,11 +20,9 @@ var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning"
 // TODO Change the sound files once they are ready
 var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
 var ELEBALL_DEFAULT_ELEMENT = 0; // water
-var ELEBALL_DOWN_FRAME = 0;
-var ELEBALL_LEFT_FRAME = 1;
-var ELEBALL_RIGHT_FRAME = 2;
-var ELEBALL_UP_FRAME = 3;
+var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
+var ELEBALL_ANIMATION = "eleball"
 
 // ## Player constants
 var PLAYER_NAME = 'earth';
@@ -32,6 +30,7 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
+var PLAYER_ANIMATION = "character";
 
 // ## Enemy constants
 var ENEMY_DEFAULT_MAXHEALTH = 50;
@@ -287,6 +286,7 @@ Q.Sprite.extend("Eleball", {
 		this._super(p, {
 			element : ELEBALL_DEFAULT_ELEMENT,
 			sheet : ELEBALL_ELEMENTNAMES[ELEBALL_DEFAULT_ELEMENT],
+			sprite : ELEBALL_ANIMATION,
 			frame : 0,
 			soundIsAnnoying : false,
 			vx : 0,
@@ -303,7 +303,7 @@ Q.Sprite.extend("Eleball", {
 		// Set bounding box smaller
 		this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 
-		this.add("2dEleball");
+		this.add("2dEleball, animation");
 		
 		this.on("onHit", this, "onHit");
 		
@@ -311,6 +311,8 @@ Q.Sprite.extend("Eleball", {
 		if ( !this.p.soundIsAnnoying) {
 			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
+
+		this.play("fire");
 	},
 
 	onHit: function(collision) {
@@ -378,7 +380,7 @@ Q.Sprite.extend("Player",{
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
       sheet: "character_" + PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
-	  sprite: "character_" + PLAYER_NAME,
+	  sprite: PLAYER_ANIMATION,
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
 	  cooldown: 0,		// can fire immediately
@@ -484,7 +486,7 @@ Q.Sprite.extend("Player",{
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
 			shooterId : this.p.playerId,
-			frame : ELEBALL_RIGHT_FRAME,
+			frame : ELEBALL_FRAME,
 			angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
 			vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
 			vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
@@ -717,29 +719,29 @@ Q.Sprite.extend("Enemy",{
 // Create a new scene called level 1
 Q.scene("level1",function(stage) {
 
-  // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+	// Add in a repeater for a little parallax action
+	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level1.json',
-                             sheet:     'tiles' }));
+		// Add in a tile layer, and make it the collision layer
+		stage.collisionLayer(new Q.TileLayer({
+								dataAsset: 'level1.json',
+		                        sheet:     'tiles' }));
 
 
-	player = Q.stage().insert(new Q.Player({
-		playerId: selfId
+		player = Q.stage().insert(new Q.Player({
+			playerId: selfId
 	}));
-	
+		
 	// Give the stage a moveable viewport and tell it
 	// to follow the player.
 	Q.stage().add("viewport").follow(player);
 
-  // Add in a couple of enemies
-  stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+	// Add in a couple of enemies
+	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
-  // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
+	// Finally add in the tower goal
+	stage.insert(new Q.Tower({ x: 180, y: 50 }));
   
 	// Insert all actors
 	insertAllActors(stage);
@@ -749,30 +751,30 @@ Q.scene("level1",function(stage) {
 // Create a new scene called level 2
 Q.scene("level2",function(stage) {
 
-  // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+	// Add in a repeater for a little parallax action
+	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({
-                             dataAsset: 'level2.json',
-                             sheet:     'tiles' }));
+		// Add in a tile layer, and make it the collision layer
+		stage.collisionLayer(new Q.TileLayer({
+		                     dataAsset: 'level2.json',
+		                     sheet:     'tiles' }));
 
 
-	player = Q.stage().insert(new Q.Player({
+		player = Q.stage().insert(new Q.Player({
 		playerId: selfId
 	}));
-	
+
 	// Give the stage a moveable viewport and tell it
 	// to follow the player.
 	Q.stage().add("viewport").follow(player);
 
-  // Add in a couple of enemies
-  stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+	// Add in a couple of enemies
+	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
-  // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
-  
+	// Finally add in the tower goal
+	stage.insert(new Q.Tower({ x: 180, y: 50 }));
+
 	// Insert all actors
 	insertAllActors(stage);
 });
@@ -814,14 +816,14 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("character_earth.png", "character_earth.json");
   Q.compileSheets("character_lightning.png", "character_lightning.json");
   Q.compileSheets("npcs.png", "npcs.json");
-  Q.compileSheets("elemental_balls.png", "elemental_balls.json");   
+  Q.compileSheets("elemental_balls.png", "elemental_balls.json");
 
   
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");
 });
 
-Q.animations('character_' + PLAYER_NAME, {
+Q.animations(PLAYER_ANIMATION, {
 	run_in: { frames: [7,8,9,10,11,12], rate: 1/6}, 
 	run_left: { frames: [20,21,22,23,24,25], rate:1/6 },
 	run_out: { frames: [33,34,35,36,37,38], rate:1/6 },
@@ -832,13 +834,17 @@ Q.animations('character_' + PLAYER_NAME, {
 
 	fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: 1/13, trigger: "fired", loop: false},
 	fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: 1/13, trigger: "fired", loop: false}, 
-	fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89,90], rate: 1/13, trigger: "fired", loop: false}, 
-	fire_right: { frames: [91,92,93,94,95,96,97,98,99,100,101,102,103,104], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103,103], rate: 1/13, trigger: "fired", loop: false}, 
 
 	stand_back: { frames: [7], rate: 1/3 },
 	stand_left: { frames: [20], rate: 1/3 },
 	stand_front: { frames: [33], rate: 1/3 },
 	stand_right: { frames: [46], rate: 1/3 }
+});
+
+Q.animations(ELEBALL_ANIMATION, {
+	fire: { frames: [0,1,2,3,4,5], rate: 1/6}
 });
 
 var selfId;
