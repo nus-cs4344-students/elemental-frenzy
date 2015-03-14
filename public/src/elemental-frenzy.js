@@ -186,6 +186,17 @@ Q.component("healthBar", {
 	}
 });
 
+// ## Namebar component to be attached to a player/actor which displays their name above them
+Q.component("nameBar", {
+	draw: function(ctx) {
+		ctx.font = "15px Arial";
+		ctx.textAlign = "center";
+		var entity = this.entity;
+		var y = -entity.p.cy - 20;
+		ctx.fillText(this.entity.p.name, 0, y);
+	}
+});
+
 // ## 2dEleball component that is an extension of the '2d' component provided by Quintus (in Quintus_2d.js)
 // 	Modifies what happens on collision with another eleball
 Q.component('2dEleball', {
@@ -401,7 +412,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar');
+    this.add('2d, platformerControls, animation, healthBar, nameBar');
 	
 	this.addEventListeners();
 
@@ -579,6 +590,7 @@ Q.Sprite.extend("Player",{
   draw: function(ctx) {
 	  this._super(ctx);
 	  this.healthBar.draw(ctx);
+	  this.nameBar.draw(ctx);
   }
 
 });
@@ -594,7 +606,7 @@ Q.Sprite.extend("Actor", {
 			update: true
 		});
 		
-		this.add('healthBar');
+		this.add('healthBar, nameBar');
 		
 		var temp = this;
 		setInterval(function() {
@@ -608,6 +620,7 @@ Q.Sprite.extend("Actor", {
 	draw: function(ctx) {
 		this._super(ctx);
 		this.healthBar.draw(ctx);
+		this.nameBar.draw(ctx);
 	}
 });
 
