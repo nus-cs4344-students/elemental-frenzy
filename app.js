@@ -48,6 +48,11 @@ io.on('connection', function (socket) {
 		broadcastToAllExcept(data.playerId, 'updated', data);
 	});
 	
+	socket.on('playerTookDmg', function(data) {
+		console.log("playerTookDmg");
+		broadcastToAllExcept(data.playerId, 'playerTookDmg', data);
+	});
+	
 	socket.on('playerDied', function(data) {
 		broadcastToAllExcept(data.playerId, 'playerDied', data);
 	});
