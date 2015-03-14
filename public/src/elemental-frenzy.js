@@ -382,6 +382,7 @@ Q.Sprite.extend("Player",{
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
 	  cooldown: 0,		// can fire immediately
+	  canFire: true,
 	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  name: "no_name",
@@ -432,7 +433,7 @@ Q.Sprite.extend("Player",{
 	});
 
 	this.on('fire', function(e){
-		if (this.p.cooldown > 0) {
+		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
 		}
 
@@ -484,6 +485,7 @@ Q.Sprite.extend("Player",{
   },
   
   die: function(killer) {
+	this.p.canFire = false;
 	Q.stageScene("endGame",1, { label: "You Died" }); 
 	console.log(this.p.name + " died to " + killer);
 	Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
@@ -678,6 +680,13 @@ Q.scene("level1",function(stage) {
                              sheet:     'tiles' }));
 
 
+	player = Q.stage().insert(new Q.Player({
+		playerId: selfId
+	}));
+	
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
 
   // Add in a couple of enemies
   stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -700,6 +709,13 @@ Q.scene("level2",function(stage) {
                              sheet:     'tiles' }));
 
 
+	player = Q.stage().insert(new Q.Player({
+		playerId: selfId
+	}));
+	
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
 
   // Add in a couple of enemies
   stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -775,14 +791,6 @@ socket.on('connected', function(data1) {
 	console.log("Connected to server as player " + selfId);
 	
 	Q.stageScene('level2');
-	
-	player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-	
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
 	
 	// ## Event listeners for data received from server
 	socket.on('insert_object', function(data) {
