@@ -737,7 +737,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 
   
   // Finally, call stageScene to run the game
-  Q.stageScene("level2");
+  //Q.stageScene("level2");
 });
 
 Q.animations('character_' + PLAYER_NAME, {
@@ -760,6 +760,8 @@ var player;
 socket.on('connected', function(data1) {
 	selfId = data1.playerId;
 	console.log("Connected to server as player " + selfId);
+	
+	Q.stageScene('level2');
 	
 	player = Q.stage().insert(new Q.Player({
 		playerId: selfId
