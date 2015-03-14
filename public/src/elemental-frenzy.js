@@ -27,7 +27,7 @@ var ELEBALL_UP_FRAME = 3;
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
 
 // ## Player constants
-var PLAYER_NAME = 'lightning';
+var PLAYER_NAME = 'earth';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
@@ -485,6 +485,7 @@ Q.Sprite.extend("Player",{
 			shooter : this.p.name,
 			shooterId : this.p.playerId,
 			frame : ELEBALL_RIGHT_FRAME,
+			angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
 			vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
 			vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
 		});
@@ -504,10 +505,6 @@ Q.Sprite.extend("Player",{
 		} else {
 			eleball.p.x = this.p.x + ballToPlayerX;
 		}
-		console.log("playerXY "+this.p.x+","+this.p.y);
-		console.log("playerHW "+this.p.h+","+this.p.w);
-		console.log("ball "+eleball.p.x+","+eleball.p.y);
-		console.log("angle "+this.p.fireAngleDeg);
 		
 		Q.stage().insert(eleball);
 		socket.emit('insert_object', {
