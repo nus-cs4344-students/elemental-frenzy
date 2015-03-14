@@ -27,7 +27,7 @@ var ELEBALL_UP_FRAME = 3;
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
 
 // ## Player constants
-var PLAYER_NAME = 'yip';
+var PLAYER_NAME = 'lightning';
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
@@ -378,7 +378,10 @@ Q.Sprite.extend("Player",{
 	  name: "no_name",
 	  dmg: PLAYER_DEFAULT_DMG,
 	  type: Q.SPRITE_ACTIVE,
-	  element: PLAYER_DEFAULT_ELEMENT
+	  element: PLAYER_DEFAULT_ELEMENT,
+	  fireAnimation: "no_fire",
+	  fireAngleDeg: 0, // angle 0 starts from 3 o'clock then clockwise
+	  fireAngleRad: 0
     });
 
     // Add in pre-made components to get up and running quickly
@@ -423,7 +426,7 @@ Q.Sprite.extend("Player",{
 	});
 
 	this.on('fire', function(e){
-		if (this.p.cooldown > 0) {
+		if(this.p.cooldown > 0){
 			return;
 		}
 
@@ -432,28 +435,70 @@ Q.Sprite.extend("Player",{
 		var mouseX = Q.canvasToStageX(touch.x, stage);
 		var mouseY = Q.canvasToStageY(touch.y, stage);
 		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
-		var angleDeg = -angleRad* 180 / Math.PI;
+		this.p.fireAngleRad = angleRad;
+		var angleDeg = -angleRad * 180 / Math.PI;
 
 		if(angleDeg>0){
 			angleDeg = 360 - angleDeg;
 		}else{
 			angleDeg = -angleDeg;
 		}
-		
+		this.p.fireAngleDeg = angleDeg;
+
+		var animationName = "";
+		if((angleDeg >=0 && angleDeg <=45) || (angleDeg <=360 && angleDeg>=315)){
+			// shooting angle right
+			animationName = "fire_right";
+		}else if(angleDeg > 45 && angleDeg <= 135){
+			// shooting angle down
+			animationName = "fire_down";
+		}else if(angleDeg > 135 && angleDeg <= 225){
+			// shooting angle left
+			animationName = "fire_left";
+		}else{
+			// shooting angle up
+			animationName = "fire_up";
+		}
+		this.p.fireAnimation=animationName;
+
+		// Magic code
+		e.preventDefault();
+	});
+
+	this.on('fired', function(){
+		// stop fire animation
+		this.p.fireAnimation = "no_fire";
+
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
-			angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
+			angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
 			frame : ELEBALL_RIGHT_FRAME,
-			x : this.p.x,
-			vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
-			vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
+			vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
+			vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
 		});
-		eleball.p.y = this.p.y - this.p.h/4 - eleball.p.h/2;
-		// Magic code
-		e.preventDefault();
 
+		// fire ball location offset from player
+		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(this.p.fireAngleRad));
+		if(this.p.fireAngleDeg <= 360 && this.p.fireAngleDeg > 180){
+			// deduct ball width due to the direction of the ball is set to be default at right direction
+			eleball.p.y = this.p.y - ballToPlayerY;
+		} else {
+			eleball.p.y = this.p.y + ballToPlayerY;
+		}
+
+		var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(this.p.fireAngleRad));
+		if(this.p.fireAngleDeg <= 270 && this.p.fireAngleDeg > 90){
+			eleball.p.x = this.p.x - ballToPlayerX;
+		} else {
+			eleball.p.x = this.p.x + ballToPlayerX;
+		}
+		console.log("playerXY "+this.p.x+","+this.p.y);
+		console.log("playerHW "+this.p.h+","+this.p.w);
+		console.log("ball "+eleball.p.x+","+eleball.p.y);
+		console.log("angle "+this.p.fireAngleDeg);
+		
 		Q.stage().insert(eleball);
 		socket.emit('insert_object', {
 			playerId: selfId,
@@ -478,29 +523,34 @@ Q.Sprite.extend("Player",{
   step: function(dt) {
 	  this.p.cooldown -= dt;
 	  if (this.p.cooldown <= 0) {
-		  this.p.cooldown = 0;
+		this.p.cooldown = 0;
 	  }
 
-	  // player not jumping
-	  if(this.p.vy ==0){
-		// play running animation
-		if (this.p.vx > 0) {
-			this.play("run_right");
-		} else if (this.p.vx < 0) {
-			this.play("run_left");
-		} else {
-		  this.play("stand_front");
-		}
-	  }else{
-	 	// player is jumping
-	 	// play the still frame where the direction is
-		if (this.p.vx > 0) {
-			this.play("run_right_still");
-		} else if (this.p.vx < 0) {
-			this.play("run_left_still");
-		}
-		else {
-		  this.play("stand_front");
+	  // fire animation in progress
+	  if(this.p.fireAnimation != "no_fire"){
+	  	this.play(this.p.fireAnimation);
+	  } else {
+		// player not jumping
+		if(this.p.vy ==0){
+			// play running animation
+			if (this.p.vx > 0) {
+				this.play("run_right");
+			} else if (this.p.vx < 0) {
+				this.play("run_left");
+			} else {
+				this.play("stand_front");
+			}
+		}else{
+			// player is jumping
+			// play the still frame where the direction is
+			if (this.p.vx > 0) {
+				this.play("run_right_still");
+			} else if (this.p.vx < 0) {
+				this.play("run_left_still");
+			}
+			else {
+				this.play("stand_front");
+			}
 		}
 	  }
 	  
@@ -715,14 +765,14 @@ Q.scene('endGame',function(stage) {
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
 	elemental_balls.png, elemental_balls.json, \
-    characters.png, characters.json", function() {
+    character_earth.png, character_earth.json, character_lightning.png, character_lightning.json", function() {
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
-  Q.compileSheets("characters.png", "characters.json");
-  //Q.compileSheets("elemental_balls.png", "elemental_balls.json");
+  Q.compileSheets("character_earth.png", "character_earth.json");
+  Q.compileSheets("character_lightning.png", "character_lightning.json");
   Q.compileSheets("npcs.png", "npcs.json");
-    Q.compileSheets("elemental_balls.png", "elemental_balls.json");   
+  Q.compileSheets("elemental_balls.png", "elemental_balls.json");   
 
   
   // Finally, call stageScene to run the game
@@ -730,16 +780,23 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 });
 
 Q.animations('character_' + PLAYER_NAME, {
-	run_right: { frames: [8,9,10,11], rate: 1/6}, 
-	run_left: { frames: [4,5,6,7], rate:1/6 },
-	run_right_still: { frames: [9], rate: 1/6}, 
-	run_left_still: { frames: [5], rate:1/6 },
-	run_out: { frames: [0,1,2,3], rate: 1/6}, 
-	run_in: { frames: [12,13,14,15], rate:1/6 },
-	stand_right: { frames: [8], rate: 1/3 },
-	stand_left: { frames: [4], rate: 1/3 },
-	stand_front: { frames: [0], rate: 1/3 },
-	stand_back: { frames: [12], rate: 1/3 },
+	run_in: { frames: [7,8,9,10,11,12], rate: 1/6}, 
+	run_left: { frames: [20,21,22,23,24,25], rate:1/6 },
+	run_out: { frames: [33,34,35,36,37,38], rate:1/6 },
+	run_right: { frames: [46,47,48,49,50,51], rate: 1/6}, 
+	
+	run_left_still: { frames: [22], rate:1/3 },
+	run_right_still: { frames: [47], rate: 1/3}, 
+
+	fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: 1/13, trigger: "fired", loop: false},
+	fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89,90], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_right: { frames: [91,92,93,94,95,96,97,98,99,100,101,102,103,104], rate: 1/13, trigger: "fired", loop: false}, 
+
+	stand_back: { frames: [7], rate: 1/3 },
+	stand_left: { frames: [20], rate: 1/3 },
+	stand_front: { frames: [33], rate: 1/3 },
+	stand_right: { frames: [46], rate: 1/3 }
 });
 
 var selfId;

@@ -1,0 +1,10 @@
+{
+	"character_earth": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 13,
+		"tilew": 40,
+		"tileh": 40,
+		"frames": 104
+	}
+}
