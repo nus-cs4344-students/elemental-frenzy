@@ -167,10 +167,14 @@ Q.state.on("enemyDied", function(killer) {
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
 Q.component("healthBar", {
 	draw: function(ctx) {
+		var color = '#FF0000'; // defaults to red
+		if (this.entity.isA('Player')) {
+			color = '#00FF00'; // player healthbar is green
+		}
 		var hf = this.entity.p.currentHealth / this.entity.p.maxHealth;
 		var width = this.entity.p.w * HEALTHBAR_WIDTH_SF;
 		var height = this.entity.p.h * HEALTHBAR_HEIGHT_SF;
-		ctx.fillStyle = '#FF0000';
+		ctx.fillStyle = color;
 		ctx.fillRect(-width/2, -this.entity.p.cy - height - HEALTHBAR_HEIGHT_OFFSET,
 					width * hf, height);
 		ctx.fillStyle = "black";
@@ -208,7 +212,8 @@ Q.component('2dEleball', {
 	//	- Case 3: Both elements pass through each other if |i-j| == 2
 	collision: function(col,last) {
 		// Don't collide with the shooter of the eleball
-		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.shooter) {
+		if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.playerId == this.entity.p.shooterId) {
+			console.log("Eleball passing object!!!");
 			return;
 		}
 		
@@ -444,6 +449,7 @@ Q.Sprite.extend("Player",{
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
+			shooterId : this.p.playerId,
 			angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
 			frame : ELEBALL_RIGHT_FRAME,
 			x : this.p.x,
@@ -522,8 +528,12 @@ Q.Sprite.extend("Actor", {
 	init: function(p, defaultP) {
 		p = mergeObjects(p, defaultP);
 		this._super(p, {
+			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
+			type: Q.SPRITE_ACTIVE,
 			update: true
 		});
+		
+		this.add('healthBar');
 		
 		var temp = this;
 		setInterval(function() {
@@ -536,6 +546,7 @@ Q.Sprite.extend("Actor", {
 	
 	draw: function(ctx) {
 		this._super(ctx);
+		this.healthBar.draw(ctx);
 	}
 });
 
@@ -763,18 +774,10 @@ socket.on('connected', function(data1) {
 		console.log(selfId + ": Message from server: insert_object");
 		if (data.object_type == 'PlayerEleball') {
 			var props = data.object_properties;
-			Q.stage().insert(new Q.PlayerEleball({
-				element : props.element,
-				sheet : props.sheet,
-				shooter : props.name,
-				angle : props.angleDeg,
-				frame : props.frame,
-				x : props.x,
-				y : props.y,
-				vx : props.vx,
-				vy : props.vy
-			}));
+			Q.stage().insert(new Q.PlayerEleball(props));
 			console.log(selfId + ": PlayerEleball created at " + props.x + "," + props.y + " where player is at " + player.p.x + "," + player.p.y);
+			console.log(selfId + ": PlayerEleball has velocities " + props.vx + "," + props.vy);
+			console.log(selfId + ": PlayerEleball has collisionMask " + props.collisionMask);
 		}
 	});
 	
@@ -786,13 +789,19 @@ socket.on('connected', function(data1) {
 			actor.player.p.x = data.p.x;
 			actor.player.p.y = data.p.y;
 			actor.player.p.sheet = data.p.sheet;
+			actor.player.p.currentHealth = data.p.currentHealth;
+			actor.player.p.maxHealth = data.p.maxHealth;
 			actor.player.p.update = true;
 		} else {
 			var temp = new Q.Actor({
-				type: Q.SPRITE_ACTIVE,
+				type: data.p.type,
 				x: data.p.x,
 				y: data.p.y,
-				sheet: data.p.sheet
+				sheet: data.p.sheet,
+				name: data.p.name,
+				currentHealth: data.p.currentHealth,
+				maxHealth: data.p.maxHealth,
+				playerId: data.p.playerId
 			});
 			actors.push({
 				player: temp,
