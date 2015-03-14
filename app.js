@@ -49,7 +49,6 @@ io.on('connection', function (socket) {
 	});
 	
 	socket.on('playerTookDmg', function(data) {
-		console.log("playerTookDmg");
 		broadcastToAllExcept(data.playerId, 'playerTookDmg', data);
 	});
 	
