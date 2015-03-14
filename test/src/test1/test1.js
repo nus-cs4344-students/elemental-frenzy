@@ -39,13 +39,9 @@ var HEALTHBAR_WIDTH_SF = 1.5;
 var HEALTHBAR_HEIGHT_SF = 0.2;
 var HEALTHBAR_HEIGHT_OFFSET = 5;
 
-// ## UI constants
-var UI_OVERLAY_ALPHA_VALUE = 0.3;
-var UI_TEXT_ALPHA_VALUE = 0.7;
-
-// ## Stage constants
+// ## Stage constants (higher number will render OVER lower number)
 var STAGE_GAME = 0;
-//change this maybe?
+//change this maybe? currently they use 1 for the game over button
 var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
 
@@ -125,19 +121,6 @@ Q.el.addEventListener('mouseup',function(e) {
 });
 Q.el.addEventListener('mousedown',function(e) {
 	console.log("mousedown detected");
-});
-Q.el.addEventListener('keyup',function(e) {
-	//TAB KEY
-	if (e.keyCode == 9) {
-		Q.clearStage(STAGE_UI);
-	}
-});
-//ideally, if got keyhold, then can keep redrawing i.e. update
-Q.el.addEventListener('keydown',function(e) {
-	//TAB KEY
-	if (e.keyCode == 9) {
-		Q.stageScene("scoreScreen", STAGE_UI); 
-	}
 });
 
 // ## Game State
@@ -688,51 +671,6 @@ Q.scene('endGame',function(stage) {
   // (with a padding of 20 pixels)
   container.fit(20);
 });
-
-Q.scene('scoreScreen', function(stage) {
-
-	var containerSizeX = 200;
-	var containerSizeY = 100;
-
-	//every line takes about 20 pixels
-	var offsetY = 20;
-
-	console.log("inside load score scene")
-	var container = stage.insert(new Q.UI.Container({
-      fill: "rgba(0,0,0,"+UI_OVERLAY_ALPHA_VALUE+")",
-      border: 5,
-      y: Q.height/2,
-      x: Q.width/2 
-    }));
-
-	stage.insert(new Q.UI.Text({ 
-	      label: "PLAYER NAME\tKILLS\tDEATHS",
-	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-	      x: 0,
-	      y: -Q.height/4
-	    }), container);
-
-	var kills = Q.state.p.kills
-	var deaths = Q.state.p.deaths
-
-	var line = 1;
-	for (var name in kills) {
-		stage.insert(new Q.UI.Text({ 
-	      label: name + "\t" + kills[name] + "\t" + "Hmm over 9000 ",
-	      color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-	      x: 0,
-	      y: -Q.height/4 + line*offsetY
-	    }), container);
-
-		++line;
-		console.log("inside loop");
-	}
-	//get Q.state.number of players
-	
-
-	//spacing between components in container and border of container
-	container.fit(20,20);
-})
 
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
