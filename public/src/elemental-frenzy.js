@@ -139,7 +139,10 @@ Q.state.reset({
 });
 // # Set listeners for the game state
 // # When player dies, update the kills of the killer and the deaths of the victim
-Q.state.on("playerDied", function(victim, killer) {
+Q.state.on("playerDied", function(data) {
+	var victim = data.victim,
+		killer = data.killer;
+	console.log("State log: victim " + victim + " killer " + killer);
 	if (typeof Q.state.p.kills[killer] === 'undefined') {
 		Q.state.p.kills[killer] = 0;
 	}
@@ -332,7 +335,8 @@ Q.Eleball.extend("PlayerEleball", {
 	
 	// Player eleballs only damage enemies
 	onHit: function(collision) {
-		if (collision.obj.isA("Enemy")) {
+		if (collision.obj.isA("Enemy") ||
+			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId)) {
 			collision.obj.takeDamage(this.p.dmg, this.p.shooter);
 		}
 		this._super(collision);
@@ -399,8 +403,8 @@ Q.Sprite.extend("Player",{
 
 	// Add to the game state!
 	// Kills = Deaths = 0
-	if (Q.state.p.kills[this.p.name] != undefined) {
-		Q.state.p.kills[this.p.name] = Q.state.p.kills[this.p.name] = 0;
+	if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
+		Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
 	}
   },
   
@@ -462,7 +466,7 @@ Q.Sprite.extend("Player",{
 
 		Q.stage().insert(eleball);
 		socket.emit('insert_object', {
-			playerId: selfId,
+			playerId: this.p.playerId,
 			object_type: 'PlayerEleball',
 			object_properties: eleball.p
 		});
@@ -475,10 +479,18 @@ Q.Sprite.extend("Player",{
 	this.p.currentHealth -= dmg;
 	console.log("Took damage. currentHealth = " + this.p.currentHealth);
 	if (this.p.currentHealth <= 0) {
-		Q.stageScene("endGame",1, { label: "You Died" }); 
-		Q.state.trigger("playerDied", this.p.name, shooter);
-		this.destroy();
+		this.die(shooter);
 	}  
+  },
+  
+  die: function(killer) {
+	Q.stageScene("endGame",1, { label: "You Died" }); 
+	console.log(this.p.name + " died to " + killer);
+	Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
+	socket.emit('playerDied', {
+		playerId: this.p.playerId
+	});
+	this.destroy();  
   },
   
   step: function(dt) {
@@ -511,6 +523,7 @@ Q.Sprite.extend("Player",{
 	  }
 	  
 	  socket.emit('update', {
+		playerId: this.p.playerId,
 		p: this.p
 	  });
   },
@@ -810,6 +823,21 @@ socket.on('connected', function(data1) {
 				playerId: data.p.playerId
 			});
 			Q.stage().insert(temp);
+		}
+	});
+	
+	socket.on('playerDied', function(data) {
+		console.log(data.playerId + ": playerDied");
+		var deadPlayerId = data.playerId;
+		console.log("deadPlayerId: " + deadPlayerId);
+		for (var attrName in actors) {
+			console.log("looking at actorId: " + actorId);
+			var actorId = actors[attrName].playerId;
+			if (actorId == deadPlayerId) {
+				console.log("Destroying player " + actorId);
+				actors[attrName].player.destroy();
+				actors.splice(attrName, 1);
+			}
 		}
 	});
 });

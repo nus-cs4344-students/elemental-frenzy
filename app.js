@@ -13,6 +13,18 @@ var sockets = [];
 
 var playerCount = 0;
 var id = 0;
+
+// ## Helper functions
+/**
+ * Broadcasts to all sockets except the one with the given playerId
+ */
+ var broadcastToAllExcept = function(dontSendId, eventName, data) {
+	 for (var attrName in sockets) {
+			if (dontSendId != attrName) {
+				sockets[attrName].emit(eventName, data);
+			}
+	 }
+ }
  
 io.on('connection', function (socket) {
 	playerCount++;
@@ -29,20 +41,15 @@ io.on('connection', function (socket) {
 	});
 
 	socket.on('insert_object', function(data) {
-		for (var attrName in sockets) {
-			if (data.playerId != attrName) {
-				// Send to all players except the originator
-				sockets[attrName].emit('insert_object', data);
-			}
-		}
+		broadcastToAllExcept(data.playerId, 'insert_object', data);
 	});
 	
 	socket.on('update', function(data) {
-		for (var attrName in sockets) {
-			if (data.p.playerId != attrName) {
-				sockets[attrName].emit('updated', data);
-			}
-		}
+		broadcastToAllExcept(data.playerId, 'updated', data);
+	});
+	
+	socket.on('playerDied', function(data) {
+		broadcastToAllExcept(data.playerId, 'playerDied', data);
 	});
   
   console.log("Accepting connection, id " + id);
