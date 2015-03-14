@@ -26,7 +26,7 @@ var ELEBALL_ANIMATION = "eleball";
 var ELEBALL_PLAYER_SF = 0.5;
 
 // ## Player constants
-var PLAYER_NAME = 'earth';
+var PLAYER_NAME = "water";
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
@@ -810,15 +810,20 @@ Q.scene('endGame',function(stage) {
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
 	elemental_balls.png, elemental_balls.json, \
-    character_earth.png, character_earth.json, character_lightning.png, character_lightning.json", function() {
+    character_earth.png, character_earth.json, \
+    character_lightning.png, character_lightning.json, \
+    character_water.png, character_water.json, \
+    character_fire.png, character_fire.json", function() {
+
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
   Q.compileSheets("character_earth.png", "character_earth.json");
   Q.compileSheets("character_lightning.png", "character_lightning.json");
+  Q.compileSheets("character_water.png", "character_water.json");
+  Q.compileSheets("character_fire.png", "character_fire.json");
   Q.compileSheets("npcs.png", "npcs.json");
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
-
   
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");
