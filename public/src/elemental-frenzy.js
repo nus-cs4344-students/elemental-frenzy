@@ -139,7 +139,10 @@ Q.state.reset({
 });
 // # Set listeners for the game state
 // # When player dies, update the kills of the killer and the deaths of the victim
-Q.state.on("playerDied", function(victim, killer) {
+Q.state.on("playerDied", function(data) {
+	var victim = data.victim,
+		killer = data.killer;
+	console.log("State log: victim " + victim + " killer " + killer);
 	if (typeof Q.state.p.kills[killer] === 'undefined') {
 		Q.state.p.kills[killer] = 0;
 	}
@@ -167,10 +170,14 @@ Q.state.on("enemyDied", function(killer) {
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
 Q.component("healthBar", {
 	draw: function(ctx) {
+		var color = '#FF0000'; // defaults to red
+		if (this.entity.isA('Player')) {
+			color = '#00FF00'; // player healthbar is green
+		}
 		var hf = this.entity.p.currentHealth / this.entity.p.maxHealth;
 		var width = this.entity.p.w * HEALTHBAR_WIDTH_SF;
 		var height = this.entity.p.h * HEALTHBAR_HEIGHT_SF;
-		ctx.fillStyle = '#FF0000';
+		ctx.fillStyle = color;
 		ctx.fillRect(-width/2, -this.entity.p.cy - height - HEALTHBAR_HEIGHT_OFFSET,
 					width * hf, height);
 		ctx.fillStyle = "black";
@@ -208,7 +215,8 @@ Q.component('2dEleball', {
 	//	- Case 3: Both elements pass through each other if |i-j| == 2
 	collision: function(col,last) {
 		// Don't collide with the shooter of the eleball
-		if (col.obj.isA("Player") && col.obj.p.name == this.entity.p.shooter) {
+		if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.playerId == this.entity.p.shooterId) {
+			console.log("Eleball passing object!!!");
 			return;
 		}
 		
@@ -327,7 +335,8 @@ Q.Eleball.extend("PlayerEleball", {
 	
 	// Player eleballs only damage enemies
 	onHit: function(collision) {
-		if (collision.obj.isA("Enemy")) {
+		if (collision.obj.isA("Enemy") ||
+			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId)) {
 			collision.obj.takeDamage(this.p.dmg, this.p.shooter);
 		}
 		this._super(collision);
@@ -373,6 +382,7 @@ Q.Sprite.extend("Player",{
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
 	  cooldown: 0,		// can fire immediately
+	  canFire: true,
 	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
 	  name: "no_name",
@@ -397,8 +407,8 @@ Q.Sprite.extend("Player",{
 
 	// Add to the game state!
 	// Kills = Deaths = 0
-	if (Q.state.p.kills[this.p.name] != undefined) {
-		Q.state.p.kills[this.p.name] = Q.state.p.kills[this.p.name] = 0;
+	if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
+		Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
 	}
   },
   
@@ -426,7 +436,7 @@ Q.Sprite.extend("Player",{
 	});
 
 	this.on('fire', function(e){
-		if(this.p.cooldown > 0){
+		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
 		}
 
@@ -473,7 +483,7 @@ Q.Sprite.extend("Player",{
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
-			angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
+			shooterId : this.p.playerId,
 			frame : ELEBALL_RIGHT_FRAME,
 			vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
 			vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
@@ -501,7 +511,7 @@ Q.Sprite.extend("Player",{
 		
 		Q.stage().insert(eleball);
 		socket.emit('insert_object', {
-			playerId: selfId,
+			playerId: this.p.playerId,
 			object_type: 'PlayerEleball',
 			object_properties: eleball.p
 		});
@@ -514,10 +524,19 @@ Q.Sprite.extend("Player",{
 	this.p.currentHealth -= dmg;
 	console.log("Took damage. currentHealth = " + this.p.currentHealth);
 	if (this.p.currentHealth <= 0) {
-		Q.stageScene("endGame",1, { label: "You Died" }); 
-		Q.state.trigger("playerDied", this.p.name, shooter);
-		this.destroy();
+		this.die(shooter);
 	}  
+  },
+  
+  die: function(killer) {
+	this.p.canFire = false;
+	Q.stageScene("endGame",1, { label: "You Died" }); 
+	console.log(this.p.name + " died to " + killer);
+	Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
+	socket.emit('playerDied', {
+		playerId: this.p.playerId
+	});
+	this.destroy();  
   },
   
   step: function(dt) {
@@ -555,6 +574,7 @@ Q.Sprite.extend("Player",{
 	  }
 	  
 	  socket.emit('update', {
+		playerId: this.p.playerId,
 		p: this.p
 	  });
   },
@@ -572,8 +592,12 @@ Q.Sprite.extend("Actor", {
 	init: function(p, defaultP) {
 		p = mergeObjects(p, defaultP);
 		this._super(p, {
+			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
+			type: Q.SPRITE_ACTIVE,
 			update: true
 		});
+		
+		this.add('healthBar');
 		
 		var temp = this;
 		setInterval(function() {
@@ -586,6 +610,7 @@ Q.Sprite.extend("Actor", {
 	
 	draw: function(ctx) {
 		this._super(ctx);
+		this.healthBar.draw(ctx);
 	}
 });
 
@@ -704,6 +729,13 @@ Q.scene("level1",function(stage) {
                              sheet:     'tiles' }));
 
 
+	player = Q.stage().insert(new Q.Player({
+		playerId: selfId
+	}));
+	
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
 
   // Add in a couple of enemies
   stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -711,6 +743,9 @@ Q.scene("level1",function(stage) {
 
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  
+	// Insert all actors
+	insertAllActors(stage);
 });
 
 // ## Level2 scene
@@ -726,6 +761,13 @@ Q.scene("level2",function(stage) {
                              sheet:     'tiles' }));
 
 
+	player = Q.stage().insert(new Q.Player({
+		playerId: selfId
+	}));
+	
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
 
   // Add in a couple of enemies
   stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -733,6 +775,9 @@ Q.scene("level2",function(stage) {
 
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  
+	// Insert all actors
+	insertAllActors(stage);
 });
 
 // To display a game over / game won popup box, 
@@ -776,7 +821,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 
   
   // Finally, call stageScene to run the game
-  Q.stageScene("level2");
+  //Q.stageScene("level2");
 });
 
 Q.animations('character_' + PLAYER_NAME, {
@@ -807,31 +852,17 @@ socket.on('connected', function(data1) {
 	selfId = data1.playerId;
 	console.log("Connected to server as player " + selfId);
 	
-	player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-	
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
+	Q.stageScene('level2');
 	
 	// ## Event listeners for data received from server
 	socket.on('insert_object', function(data) {
 		console.log(selfId + ": Message from server: insert_object");
 		if (data.object_type == 'PlayerEleball') {
 			var props = data.object_properties;
-			Q.stage().insert(new Q.PlayerEleball({
-				element : props.element,
-				sheet : props.sheet,
-				shooter : props.name,
-				angle : props.angleDeg,
-				frame : props.frame,
-				x : props.x,
-				y : props.y,
-				vx : props.vx,
-				vy : props.vy
-			}));
+			Q.stage().insert(new Q.PlayerEleball(props));
 			console.log(selfId + ": PlayerEleball created at " + props.x + "," + props.y + " where player is at " + player.p.x + "," + player.p.y);
+			console.log(selfId + ": PlayerEleball has velocities " + props.vx + "," + props.vy);
+			console.log(selfId + ": PlayerEleball has collisionMask " + props.collisionMask);
 		}
 	});
 	
@@ -843,13 +874,19 @@ socket.on('connected', function(data1) {
 			actor.player.p.x = data.p.x;
 			actor.player.p.y = data.p.y;
 			actor.player.p.sheet = data.p.sheet;
+			actor.player.p.currentHealth = data.p.currentHealth;
+			actor.player.p.maxHealth = data.p.maxHealth;
 			actor.player.p.update = true;
 		} else {
 			var temp = new Q.Actor({
-				type: Q.SPRITE_ACTIVE,
+				type: data.p.type,
 				x: data.p.x,
 				y: data.p.y,
-				sheet: data.p.sheet
+				sheet: data.p.sheet,
+				name: data.p.name,
+				currentHealth: data.p.currentHealth,
+				maxHealth: data.p.maxHealth,
+				playerId: data.p.playerId
 			});
 			actors.push({
 				player: temp,
@@ -858,7 +895,28 @@ socket.on('connected', function(data1) {
 			Q.stage().insert(temp);
 		}
 	});
+	
+	socket.on('playerDied', function(data) {
+		console.log(data.playerId + ": playerDied");
+		var deadPlayerId = data.playerId;
+		console.log("deadPlayerId: " + deadPlayerId);
+		for (var attrName in actors) {
+			console.log("looking at actorId: " + actorId);
+			var actorId = actors[attrName].playerId;
+			if (actorId == deadPlayerId) {
+				console.log("Destroying player " + actorId);
+				actors[attrName].player.destroy();
+				actors.splice(attrName, 1);
+			}
+		}
+	});
 });
+
+var insertAllActors = function(stage) {
+	for (var attrName in actors) {
+		stage.insert(actors[attrName].player);
+	}
+};
 
 
 // ## Possible Experimentations:
