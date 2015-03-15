@@ -88,10 +88,9 @@ Q.Sprite.extend("Player",{
 		});
 
 		this.on('fire', this, 'fire');
-
-		this.on('fired', this, 'fired');		
+		this.on('fired', this, 'fired');
   },
-  
+
   fire: function(e){
 		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
