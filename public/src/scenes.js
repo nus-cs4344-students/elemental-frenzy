@@ -69,6 +69,38 @@ Q.scene("level2",function(stage) {
 	insertAllActors(stage);
 });
 
+// ## Level3 scene
+// Create a new scene called level 3
+Q.scene("level3",function(stage) {
+
+	// Add in a repeater for a little parallax action
+	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+
+		// Add in a tile layer, and make it the collision layer
+		stage.collisionLayer(new Q.TileLayer({
+		                     dataAsset: 'level3.json',
+		                     sheet:     'map_tiles' }));
+
+
+		player = Q.stage().insert(new Q.Player({
+		playerId: selfId
+	}));
+
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
+
+	// Add in a couple of enemies
+	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+
+	// Finally add in the tower goal
+	stage.insert(new Q.Tower({ x: 180, y: 50 }));
+
+	// Insert all actors
+	insertAllActors(stage);
+});
+
 // To display a game over / game won popup box, 
 // create a endGame scene that takes in a `label` option
 // to control the displayed message.
@@ -85,7 +117,7 @@ Q.scene('endGame',function(stage) {
   // and restart the game.
   button.on("click",function() {
     Q.clearStages();
-    Q.stageScene('level2');
+    Q.stageScene('level3');
   });
 
   // Expand the container to visibily fit it's contents
