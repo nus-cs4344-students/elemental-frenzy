@@ -22,7 +22,9 @@ Q.Sprite.extend("Player",{
   // the init constructor is called on creation
   init: function(p, defaultP) {
 
-	p = mergeObjects(p, defaultP);
+	require(['src/helper-functions'], function() {
+		p = mergeObjects(p, defaultP);
+	});
 	
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
@@ -75,7 +77,7 @@ Q.Sprite.extend("Player",{
 	  }
 	});
 	
-	this.on('takeDamage', this, 'takeDamage');
+	this.on('takeDamage');
 	
 	// Event listener for toggling elements
 	Q.input.on("toggleNextElement", function() {
@@ -176,9 +178,11 @@ Q.Sprite.extend("Player",{
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
   },
 
-  takeDamage: function(dmg, shooter) {
+  takeDamage: function(dmgAndShooter) {
+    var dmg = dmgAndShooter.dmg,
+		shooter = dmgAndShooter.shooter;
 	this.p.currentHealth -= dmg;
-	console.log("Took damage. currentHealth = " + this.p.currentHealth);
+	console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
 	socket.emit('playerTookDmg', {
 		playerId: this.p.playerId,
 		dmg: dmg
