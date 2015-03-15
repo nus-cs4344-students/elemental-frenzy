@@ -13,6 +13,7 @@ var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 var PLAYER_ANIMATION = "character";
+var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -40,9 +41,10 @@ Q.Sprite.extend("Player",{
 		  dmg: PLAYER_DEFAULT_DMG,
 		  type: Q.SPRITE_ACTIVE,
 		  element: PLAYER_DEFAULT_ELEMENT,
-		  fireAnimation: "no_fire",
+		  fireAnimation: PLAYER_NO_FIRE_ANIMATION,
 		  fireTargetX: 0, // position x of target in game world
-		  fireTargetY: 0  // possition y of target in game world
+		  fireTargetY: 0,  // possition y of target in game world
+		  isFiring: false
 		});
 
     // Add in pre-made components to get up and running quickly
@@ -128,6 +130,8 @@ Q.Sprite.extend("Player",{
 			animationName = "fire_up";
 		}
 
+		this.p.fireAnimation = animationName;
+
 		if(this.has('animation')){
 			this.play(animationName, 1);
 		}else{
@@ -139,6 +143,9 @@ Q.Sprite.extend("Player",{
   },
 
   fired: function(){
+  	// reset fire animation
+  	this.p.fireAnimation = PLAYER_NO_FIRE_ANIMATION;
+
   	// re-compute firing angle with respect to current player position and target position
   	var angleRad = Math.atan2(this.p.fireTargetY - this.p.y, this.p.fireTargetX - this.p.x) ;
 		var angleDeg = -angleRad * 180 / Math.PI;

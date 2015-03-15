@@ -44,7 +44,7 @@ require(['src/keyboard-controls'], function() {
 	Q.input.keyboardControls(KEYBOARD_CONTROLS);
 });
 // ## HUD
-require(['src/elemental-frenzy_ui']);
+require(['src/user-interface']);
 // ## Game state
 require(['src/game-state']);
 // ## Components to be used by eleballs/players/actors

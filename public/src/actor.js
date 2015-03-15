@@ -1,7 +1,14 @@
 "use strict";
 
 // ## Actor constants
+var ACOTR_FIRE = 0;
+var ACTOR_EARTH = 1;
+var ACTOR_LIGHTNING = 2;
+var ACTOR_WATER = 3;
+var ACTOR_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
+var ACTOR_DEFAULT_ELEMENT = 0; // fire
 var ACTOR_ANIMATION = 'actor';
+var ACTOR_NO_FIRE_ANIMATION = "no_fire";
 
 // ## Actor Sprite (other players)
 Q.Sprite.extend("Actor", {
@@ -9,13 +16,17 @@ Q.Sprite.extend("Actor", {
 	init: function(p, defaultP) {
 		p = mergeObjects(p, defaultP);
 		this._super(p, {
+			sheet: ACTOR_CHARACTERS[ACTOR_DEFAULT_ELEMENT],
+			sprite: ACTOR_ANIMATION,
 			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 			type: Q.SPRITE_ACTIVE,
 			update: true
 		});
 		
-		this.add('healthBar, nameBar, dmgDisplay');
+		this.add('healthBar, nameBar, dmgDisplay, animation');
 		
+		this.on("takeDamage");
+
 		var temp = this;
 		setInterval(function() {
 			if (!temp.p.update) {
@@ -25,15 +36,31 @@ Q.Sprite.extend("Actor", {
 		}, 3000);
 	},
 	
-	takeDamage: function(dmg) {
+	takeDamage: function(dmgAndShooter) {
+		var dmg = dmgAndShooter.dmg;
+		var shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
-		this.dmgDisplay.addDmg(dmg);
+		console.log("Actor took damage "+ dmg +" from " + shooter + ". currentHealth = " + this.p.currentHealth);
+		
+		if (this.p.currentHealth <= 0) {
+			this.die(shooter);
+		} 
 	},
 	
+	 die: function(killer) {
+		this.destroy();  
+  },
+
 	step: function(dt) {
 		this.dmgDisplay.step(dt);
 
 		if(this.has('animation')){
+
+			if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&
+				typeof this.p.fireAnimation != 'undefined'){
+				this.play(this.p.fireAnimation, 1);
+			}
+
 			// player not jumping
 			if(this.p.vy ==0){
 				// play running animation
@@ -51,8 +78,7 @@ Q.Sprite.extend("Actor", {
 					this.play("run_right_still");
 				} else if (this.p.vx < 0) {
 					this.play("run_left_still");
-				}
-				else {
+				} else {
 					this.play("stand_front");
 				}
 			}

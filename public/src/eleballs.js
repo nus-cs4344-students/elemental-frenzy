@@ -88,7 +88,8 @@ Q.Eleball.extend("PlayerEleball", {
 	// Player eleballs only damage enemies
 	onHit: function(collision) {
 		if (collision.obj.isA("Enemy") ||
-			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId)) {
+			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId) ||
+			collision.obj.isA("Actor")) {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
@@ -110,7 +111,7 @@ Q.Eleball.extend("EnemyEleball", {
 	
 	// Enemy eleballs only damage players
 	onHit: function(collision) {
-		if (collision.obj.isA("Player")) {
+		if (collision.obj.isA("Player") || collision.obj.isA("Actor")) {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
