@@ -69,7 +69,9 @@ require(['src/ladder']);
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, level3.json, \
-	elemental_balls.png, elemental_balls.json, \
+	  elemental_balls.png, elemental_balls.json, \
+    character_orc.png, character_orc.json, \
+    character_skeleton.png, character_skeleton.json, \
     character_earth.png, character_earth.json, \
     character_lightning.png, character_lightning.json, \
     character_water.png, character_water.json, \
@@ -80,6 +82,8 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   Q.sheet("map_tiles", "map_tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
+  Q.compileSheets("character_orc.png", "character_orc.json");
+  Q.compileSheets("character_skeleton.png", "character_skeleton.json");
   Q.compileSheets("character_earth.png", "character_earth.json");
   Q.compileSheets("character_lightning.png", "character_lightning.json");
   Q.compileSheets("character_water.png", "character_water.json");

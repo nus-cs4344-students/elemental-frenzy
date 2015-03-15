@@ -19,6 +19,7 @@ var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
 var ELEBALL_ANIMATION = "eleball";
 var ELEBALL_PLAYER_SF = 0.5;
+var ELEBALL_ENEMY_SF = 0.5;
 
 // Load element sounds
 for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
@@ -60,8 +61,6 @@ Q.Sprite.extend("Eleball", {
 		if ( !this.p.soundIsAnnoying) {
 			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
-
-		this.play("fire");
 	},
 
 	onHit: function(collision) {
@@ -71,6 +70,8 @@ Q.Sprite.extend("Eleball", {
 	step: function(dt) {
 		this.p.x += this.p.vx * dt;
 		this.p.y += this.p.vy * dt;
+
+		this.play("fire");
 	}
 });
 
