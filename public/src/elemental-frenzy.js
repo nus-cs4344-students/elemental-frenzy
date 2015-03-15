@@ -61,6 +61,8 @@ require(['src/enemy-ai']);
 require(['src/tower']);
 // ## Scenes for the game
 require(['src/scenes']);
+// 
+require(['src/ladder']);
 
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
@@ -72,7 +74,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     character_lightning.png, character_lightning.json, \
     character_water.png, character_water.json, \
     character_fire.png, character_fire.json, \
-    map_tiles.png", function() {
+    map_tiles.png, ladder.png, ladder.json", function() {
 
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -84,6 +86,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("character_fire.png", "character_fire.json");
   Q.compileSheets("npcs.png", "npcs.json");
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
+  Q.compileSheets("ladder.png", "ladder.json");
   
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");

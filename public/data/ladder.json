@@ -1,0 +1,34 @@
+{
+	"ladder_metal": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 32,
+		"tileh": 71,
+		"frames": 1
+	},
+	"ladder_wood": {
+		"sx": 32,
+		"sy": 1,
+		"cols": 1,
+		"tilew": 32,
+		"tileh": 71,
+		"frames": 1
+	},
+	"rope": {
+		"sx": 64,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 32,
+		"tileh": 78,
+		"frames": 1
+	},
+    "rope_vine": {
+        "sx": 96,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 32,
+		"tileh": 60,
+		"frames": 1  
+    }
+}

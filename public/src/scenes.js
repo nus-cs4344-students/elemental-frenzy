@@ -94,6 +94,11 @@ Q.scene("level3",function(stage) {
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
+    stage.insert(new Q.Ladder({ x: 1200, y: 100 }));
+    stage.insert(new Q.Ladder({ x: 1200, y: 171 }));
+    stage.insert(new Q.Ladder({ x: 1200, y: 242 }));
+    stage.insert(new Q.Ladder({ x: 1200, y: 313 }));
+    stage.insert(new Q.Ladder({ x: 1200, y: 384 }));
 
 	// Insert all actors
 	insertAllActors(stage);

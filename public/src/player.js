@@ -74,6 +74,7 @@ Q.Sprite.extend("Player",{
 	});
 	
 	this.on('takeDamage');
+      
 	
 	// Event listener for toggling elements
 	Q.input.on("toggleNextElement", function() {
