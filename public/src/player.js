@@ -1,5 +1,7 @@
 "use strict";
 
+require(['src/helper-functions']);
+
 // ## Player constants
 var PLAYER_NAME = "water";
 var PLAYER_DEFAULT_MAXHEALTH = 50;
@@ -16,7 +18,9 @@ Q.Sprite.extend("Player",{
   // the init constructor is called on creation
   init: function(p, defaultP) {
 
-	p = mergeObjects(p, defaultP);
+	require(['src/helper-functions'], function() {
+		p = mergeObjects(p, defaultP);
+	});
 	
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
@@ -69,9 +73,9 @@ Q.Sprite.extend("Player",{
 	  }
 	});
 	
+	this.on('takeDamage');
 	
-
-	// Event listener for toggling elements using spacebar
+	// Event listener for toggling elements
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
 	});					
@@ -162,10 +166,11 @@ Q.Sprite.extend("Player",{
 	});  
   },
   
-  takeDamage: function(dmg, shooter) {
+  takeDamage: function(dmgAndShooter) {
+    var dmg = dmgAndShooter.dmg,
+		shooter = dmgAndShooter.shooter;
 	this.p.currentHealth -= dmg;
-	console.log("Took damage. currentHealth = " + this.p.currentHealth);
-	this.dmgDisplay.addDmg(dmg);
+	console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
 	socket.emit('playerTookDmg', {
 		playerId: this.p.playerId,
 		dmg: dmg
@@ -186,9 +191,7 @@ Q.Sprite.extend("Player",{
 	this.destroy();  
   },
   
-  step: function(dt) {
-	  this.dmgDisplay.step(dt);
-	  
+  step: function(dt) {	  
 	  this.p.cooldown -= dt;
 	  if (this.p.cooldown <= 0) {
 		this.p.cooldown = 0;
@@ -230,9 +233,6 @@ Q.Sprite.extend("Player",{
   
   draw: function(ctx) {
 	  this._super(ctx);
-	  this.healthBar.draw(ctx);
-	  this.nameBar.draw(ctx);
-	  this.dmgDisplay.draw(ctx);
   }
 
 });

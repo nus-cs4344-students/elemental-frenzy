@@ -10,6 +10,10 @@ var HEALTHBAR_HEIGHT_OFFSET = 5;
 //	1. Ensure the entity it is attached to has a p.currentHealth and p.maxHealth property,
 //	2. then call the draw(ctx) method of the healthBar in the draw method of the entity.
 Q.component("healthBar", {
+	added: function() {
+		this.entity.on('draw', this, 'draw');
+	},
+	
 	draw: function(ctx) {
 		var color = '#FF0000'; // defaults to red
 		if (this.entity.isA('Player')) {
@@ -31,7 +35,11 @@ Q.component("healthBar", {
 // Usage:
 //	1. Ensure the entity it is attached to has a p.name property,
 //	2. then call the draw(ctx) method of the nameBar in the draw method of the entity.
-Q.component("nameBar", {	
+Q.component("nameBar", {
+	added: function() {
+		this.entity.on('draw', this, 'draw');
+	},
+	
 	draw: function(ctx) {
 		ctx.font = "15px Arial";
 		ctx.textAlign = "center";
@@ -55,10 +63,14 @@ Q.component("dmgDisplay", {
 		this.entity.p.dmgDisplayPosList = [];		// positions x and y of the display for each damage
 		this.entity.p.dmgDisplayVx = 0;		// 
 		this.entity.p.dmgDisplayVy = -1;	// velocities for the display
+		
+		this.entity.on('draw', this, 'draw');
+		this.entity.on('step', this, 'step');
+		this.entity.on('takeDamage', this, 'addDmg')
 	},
 	
-	addDmg: function(dmg) {
-		console.log("adding dmg " + dmg);
+	addDmg: function(dmgAndShooter) {
+		var dmg = dmgAndShooter.dmg;
 		this.entity.p.dmgDisplayDmgList.push(dmg);
 		this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
 		this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 20, 0]); // starting position of the display is on the right of the entity

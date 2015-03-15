@@ -1,7 +1,5 @@
 "use strict";
 
-require(['src/helper-functions']);
-
 // ## So that viewport can be centered on the player
 var player;
 
@@ -34,7 +32,7 @@ Q.scene("level1",function(stage) {
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
   
 	// Insert all actors
-	insertAllActors(stage);
+	require(['src/helper-functions'], insertAllActors(stage));
 });
 
 // ## Level2 scene
@@ -66,7 +64,7 @@ Q.scene("level2",function(stage) {
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
 
 	// Insert all actors
-	insertAllActors(stage);
+	require(['src/helper-functions'], insertAllActors(stage));
 });
 
 // ## Level3 scene
