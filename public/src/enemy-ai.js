@@ -34,7 +34,7 @@ Q.Sprite.extend("Enemy",{
     // end the game unless the enemy is hit on top
     this.on("bump.left,bump.right,bump.bottom",function(collision) {
       if(collision.obj.isA("Player")) { 
-		collision.obj.takeDamage(this.p.dmg, this.p.name);
+		collision.obj.trigger('takeDamage', this.p.dmg, this.p.name);
       }
     });
 
@@ -42,7 +42,7 @@ Q.Sprite.extend("Enemy",{
     // and give the user a "hop"
     this.on("bump.top",function(collision) {
       if(collision.obj.isA("Player")) { 
-        this.takeDamage(collision.obj.p.dmg, collision.obj.p.name);
+        this.trigger('takeDamage', collision.obj.p.dmg, collision.obj.p.name);
         collision.obj.p.vy = -300;
       }
     });

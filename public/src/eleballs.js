@@ -88,7 +88,7 @@ Q.Eleball.extend("PlayerEleball", {
 	onHit: function(collision) {
 		if (collision.obj.isA("Enemy") ||
 			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId)) {
-			collision.obj.takeDamage(this.p.dmg, this.p.shooter);
+			collision.obj.trigger('takeDamage', this.p.dmg, this.p.shooter);
 		}
 		this._super(collision);
 	}
