@@ -84,19 +84,15 @@ Q.Sprite.extend("Enemy",{
 		if((angleDeg >=0 && angleDeg <=45) || (angleDeg <=360 && angleDeg>=315)){
 			// shooting angle right
 			animationName = "fire_right";
-			console.log("enemy fire right");
 		}else if(angleDeg > 45 && angleDeg <= 135){
 			// shooting angle down
 			animationName = "fire_down";
-			console.log("enemy fire down");
 		}else if(angleDeg > 135 && angleDeg <= 225){
 			// shooting angle left
 			animationName = "fire_left";
-			console.log("enemy fire left");
 		}else{
 			// shooting angle up
 			animationName = "fire_up";
-			console.log("enemy fire up");
 		}
 
 		if(this.has('animation')){
@@ -189,7 +185,7 @@ Q.Sprite.extend("Enemy",{
 					this.play("stand_front");
 				}
 			}
-	  	}
+  	}
 	},
 	
 	draw: function(ctx) {

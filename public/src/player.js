@@ -22,28 +22,28 @@ Q.Sprite.extend("Player",{
   // the init constructor is called on creation
   init: function(p, defaultP) {
 
-	require(['src/helper-functions'], function() {
-		p = mergeObjects(p, defaultP);
-	});
-	
-    // You can call the parent's constructor with this._super(..)
-    this._super(p, {
-      sheet: PLAYER_CHARACTERS[PLAYER_DEFAULT_ELEMENT],  // Setting a sprite sheet sets sprite width and height
-	  sprite: PLAYER_ANIMATION,
-      x: 410,           // You can also set additional properties that can
-      y: 90,             // be overridden on object creation
-	  cooldown: 0,		// can fire immediately
-	  canFire: true,
-	  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
-	  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
-	  name: "no_name",
-	  dmg: PLAYER_DEFAULT_DMG,
-	  type: Q.SPRITE_ACTIVE,
-	  element: PLAYER_DEFAULT_ELEMENT,
-	  fireAnimation: "no_fire",
-	  fireAngleDeg: 0, // angle 0 starts from 3 o'clock then clockwise
-	  fireAngleRad: 0
-    });
+		require(['src/helper-functions'], function() {
+			p = mergeObjects(p, defaultP);
+		});
+
+		// You can call the parent's constructor with this._super(..)
+		this._super(p, {
+			sheet: PLAYER_CHARACTERS[PLAYER_DEFAULT_ELEMENT],  // Setting a sprite sheet sets sprite width and height
+		  sprite: PLAYER_ANIMATION,
+		    x: 410,           // You can also set additional properties that can
+		    y: 90,             // be overridden on object creation
+		  cooldown: 0,		// can fire immediately
+		  canFire: true,
+		  maxHealth: PLAYER_DEFAULT_MAXHEALTH,
+		  currentHealth: PLAYER_DEFAULT_MAXHEALTH,
+		  name: "no_name",
+		  dmg: PLAYER_DEFAULT_DMG,
+		  type: Q.SPRITE_ACTIVE,
+		  element: PLAYER_DEFAULT_ELEMENT,
+		  fireAnimation: "no_fire",
+		  fireTargetX: 0, // position x of target in game world
+		  fireTargetY: 0  // possition y of target in game world
+		});
 
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
@@ -54,43 +54,42 @@ Q.Sprite.extend("Player",{
     // letting them jump.
     this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay');
 	
-	this.addEventListeners();
+		this.addEventListeners();
 
-	// Add to the game state!
-	// Kills = Deaths = 0
-	if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
-		Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
-	}
+		// Add to the game state!
+		// Kills = Deaths = 0
+		if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
+			Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
+		}
   },
   
   addEventListeners: function() {
-	  
-	var that = this;
-	
-	// Write event handlers to respond hook into behaviors.
-	// hit.sprite is called everytime the player collides with a sprite
-	this.on("hit.sprite",function(collision) {
-	  // Check the collision, if it's the Tower, you win!
-	  if(collision.obj.isA("Tower")) {
-		Q.stageScene("endGame",1, { label: "You Won!" }); 
-		this.destroy();
-	  }
-	});
-	
-	this.on('takeDamage');
-	
-	// Event listener for toggling elements
-	Q.input.on("toggleNextElement", function() {
-		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-	});					
+	  var that = this;
+		
+		// Write event handlers to respond hook into behaviors.
+		// hit.sprite is called everytime the player collides with a sprite
+		this.on("hit.sprite",function(collision) {
+		  // Check the collision, if it's the Tower, you win!
+		  if(collision.obj.isA("Tower")) {
+			Q.stageScene("endGame",1, { label: "You Won!" }); 
+			this.destroy();
+		  }
+		});
+		
+		this.on('takeDamage');
+		
+		// Event listener for toggling elements
+		Q.input.on("toggleNextElement", function() {
+			that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
+		});					
 
-	Q.el.addEventListener('mouseup', function(e){
-		that.trigger('fire', e);
-	});
+		Q.el.addEventListener('mouseup', function(e){
+			that.trigger('fire', e);
+		});
 
-	this.on('fire', this, 'fire');
+		this.on('fire', this, 'fire');
 
-	this.on('fired', this, 'fired');  
+		this.on('fired', this, 'fired');		
   },
   
   fire: function(e){
@@ -102,10 +101,11 @@ Q.Sprite.extend("Player",{
 		var touch = e.changedTouches ?  e.changedTouches[0] : e;
 		var mouseX = Q.canvasToStageX(touch.x, stage);
 		var mouseY = Q.canvasToStageY(touch.y, stage);
+		this.p.fireTargetX = mouseX;
+		this.p.fireTargetY = mouseY;
+
+		// compute firing angle for animation
 		var angleRad = Math.atan2(mouseY - this.p.y, mouseX - this.p.x) ;
-		
-		this.p.fireAngleRad = angleRad;
-		
 		var angleDeg = -angleRad * 180 / Math.PI;
 
 		if(angleDeg>0){
@@ -113,7 +113,6 @@ Q.Sprite.extend("Player",{
 		}else{
 			angleDeg = -angleDeg;
 		}
-		this.p.fireAngleDeg = angleDeg;
 
 		var animationName = "";
 		if((angleDeg >=0 && angleDeg <=45) || (angleDeg <=360 && angleDeg>=315)){
@@ -141,28 +140,38 @@ Q.Sprite.extend("Player",{
   },
 
   fired: function(){
+  	// re-compute firing angle with respect to current player position and target position
+  	var angleRad = Math.atan2(this.p.fireTargetY - this.p.y, this.p.fireTargetX - this.p.x) ;
+		var angleDeg = -angleRad * 180 / Math.PI;
+
+		if(angleDeg>0){
+			angleDeg = 360 - angleDeg;
+		}else{
+			angleDeg = -angleDeg;
+		}
+
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
 			shooterId : this.p.playerId,
 			frame : ELEBALL_FRAME,
-			angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
-			vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
-			vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
+			angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
+			vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
+			vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
 		});
 
 		// fire ball location offset from player
-		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
-		if(this.p.fireAngleDeg <= 360 && this.p.fireAngleDeg > 180){
+		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
+		if(angleDeg <= 360 && angleDeg > 180){
 			// deduct ball width due to the direction of the ball is set to be default at right direction
 			eleball.p.y = this.p.y - ballToPlayerY;
 		} else {
 			eleball.p.y = this.p.y + ballToPlayerY;
 		}
 
-		var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
-		if(this.p.fireAngleDeg <= 270 && this.p.fireAngleDeg > 90){
+		var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(angleRad)) * ELEBALL_PLAYER_SF;
+		if(angleDeg <= 270 && angleDeg > 90){
 			eleball.p.x = this.p.x - ballToPlayerX;
 		} else {
 			eleball.p.x = this.p.x + ballToPlayerX;
@@ -181,26 +190,31 @@ Q.Sprite.extend("Player",{
   takeDamage: function(dmgAndShooter) {
     var dmg = dmgAndShooter.dmg,
 		shooter = dmgAndShooter.shooter;
-	this.p.currentHealth -= dmg;
-	console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
-	socket.emit('playerTookDmg', {
-		playerId: this.p.playerId,
-		dmg: dmg
-	});
-	if (this.p.currentHealth <= 0) {
-		this.die(shooter);
-	}  
+		this.p.currentHealth -= dmg;
+		console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
+		
+		socket.emit('playerTookDmg', {
+			playerId: this.p.playerId,
+			dmg: dmg
+		});
+
+		if (this.p.currentHealth <= 0) {
+			this.die(shooter);
+		}  
   },
   
   die: function(killer) {
-	this.p.canFire = false;
-	Q.stageScene("endGame",1, { label: "You Died" }); 
-	console.log(this.p.name + " died to " + killer);
-	Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
-	socket.emit('playerDied', {
-		playerId: this.p.playerId
-	});
-	this.destroy();  
+		this.p.canFire = false;
+		Q.stageScene("endGame",1, { label: "You Died" });
+
+		console.log(this.p.name + " died to " + killer);
+	
+		Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
+	
+		socket.emit('playerDied', {
+			playerId: this.p.playerId
+		});
+		this.destroy();  
   },
   
   step: function(dt) {	  
@@ -210,33 +224,33 @@ Q.Sprite.extend("Player",{
 	  }
 
 	  if(this.has('animation')){
-		// player not jumping
-		if(this.p.vy ==0){
-			// play running animation
-			if (this.p.vx > 0) {
-				this.play("run_right");
-			} else if (this.p.vx < 0) {
-				this.play("run_left");
-			} else {
-				this.play("stand_front");
+			// player not jumping
+			if(this.p.vy ==0){
+				// play running animation
+				if (this.p.vx > 0) {
+					this.play("run_right");
+				} else if (this.p.vx < 0) {
+					this.play("run_left");
+				} else {
+					this.play("stand_front");
+				}
+			}else{
+				// player is jumping
+				// play the still frame where the direction is
+				if (this.p.vx > 0) {
+					this.play("run_right_still");
+				} else if (this.p.vx < 0) {
+					this.play("run_left_still");
+				}
+				else {
+					this.play("stand_front");
+				}
 			}
-		}else{
-			// player is jumping
-			// play the still frame where the direction is
-			if (this.p.vx > 0) {
-				this.play("run_right_still");
-			} else if (this.p.vx < 0) {
-				this.play("run_left_still");
-			}
-			else {
-				this.play("stand_front");
-			}
-		}
 	  }
 	  
 	  socket.emit('update', {
-		playerId: this.p.playerId,
-		p: this.p
+			playerId: this.p.playerId,
+			p: this.p
 	  });
   },
   
