@@ -30,6 +30,9 @@ socket.on('connected', function(data1) {
 		if (actor) {
 			actor.player.p.x = data.p.x;
 			actor.player.p.y = data.p.y;
+			actor.player.p.vx = data.p.vx;
+			actor.player.p.vy = data.p.vy;
+			actor.player.p.fireAnimation = data.p.fireAnimation;
 			actor.player.p.sheet = data.p.sheet;
 			actor.player.p.maxHealth = data.p.maxHealth;
 			actor.player.p.update = true;
@@ -57,9 +60,11 @@ socket.on('connected', function(data1) {
 		var actor = actors.filter(function(obj) {
 			return obj.playerId == data.playerId;
 		})[0];
-		if (actor) {
-			actor.player.takeDamage(data.dmg);
-		}
+
+		// REMOVED: short circuit actor damage at client side
+		// if (actor) {
+		// 	actor.player.takeDamage(data);
+		// }
 	});
 	
 	socket.on('playerDied', function(data) {
