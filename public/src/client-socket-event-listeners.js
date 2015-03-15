@@ -9,7 +9,7 @@ socket.on('connected', function(data1) {
 	selfId = data1.playerId;
 	console.log("Connected to server as player " + selfId);
 	
-	Q.stageScene('level2');
+	Q.stageScene('level3');
 	
 	// ## Event listeners for data received from server
 	socket.on('insert_object', function(data) {
