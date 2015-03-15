@@ -14,7 +14,7 @@ var ELEBALL_ELEMENT_WATER = 3;
 var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
 // TODO Change the sound files once they are ready
 var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
-var ELEBALL_DEFAULT_ELEMENT = 0; // water
+var ELEBALL_DEFAULT_ELEMENT = 0; // fire
 var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
 var ELEBALL_ANIMATION = "eleball";
