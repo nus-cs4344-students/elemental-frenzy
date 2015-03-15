@@ -3,15 +3,95 @@
 // ## Socket event listeners
 
 var selfId;
+var sessionId;
+var gameRunning = false;
+var gameState;
 var actors = [];
+
+var loadGameState = function() {
+	console.log("Loading game state...");
+	
+	// Get game state data
+	var level = gameState.level,
+		players = gameState.players,
+		eleballs = gameState.eleballs,
+		enemies = gameState.enemies;
+		
+	// Get the player and the actors
+	console.log("Getting the player and actors");
+	var player = players[selfId];
+	for (var id in players) {
+		if (id != selfId) {
+			// Not myself, its an actor
+			var temp = new Q.Actor({
+				x: players[id].p.x,
+				y: players[id].p.y,
+				vx: players[id].p.vx,
+				vy: players[id].p.vy,
+				playerId: id
+			});
+			actors[id] = {
+				playerId: id,
+				player: temp
+			};
+		}
+	}
+		
+	// Load the level
+	console.log("Loading the level " + level);
+	Q.stageScene(level);
+	
+	// Load the player
+	console.log("Loading the player");
+	player = Q.stage().insert(new Q.Player(player.p));
+	// Give the stage a moveable viewport and tell it
+	// to follow the player.
+	Q.stage().add("viewport").follow(player);
+	
+	// Load the actors
+	console.log("Loading the actors");
+	for (var key in actors) {
+		Q.stage().insert(new Q.Actor(actors[key].p));
+	}
+	
+	// Load the eleballs
+	
+	
+	// Load the enemies
+	
+}
 
 socket.on('connected', function(data1) {
 	selfId = data1.playerId;
-	console.log("Connected to server as player " + selfId);
+	sessionId = data1.sessionId;
+	gameState = data1.gameState;
+	console.log("Connected to server as player " + selfId + " in session " + sessionId);
 	
-	Q.stageScene('level2');
+	// Tell server that you have joined
+	socket.emit('joined', { playerId: selfId });
 	
 	// ## Event listeners for data received from server
+	socket.on('playerJoined', function(data) {
+		var playerId = data.playerId,
+			props = data.p;
+		console.log("Player " + playerId + " joined");
+		// Insert player into game state
+		gameState.players[playerId] = {p: props};
+		if (playerId == selfId) {
+			// It is the player himself, so it is time to load the game for the player to play!
+			loadGameState();
+			gameRunning = true;
+		} else if (gameRunning) {
+			// Game is already running, and new player joined, so insert actor
+			console.log("Inserting actor with props: " + gameState.players[playerId].p);
+			for (var key in gameState.players[playerId].p) {
+				console.log(key + ": " + gameState.players[playerId].p[key]);
+			}
+			var actor = Q.stage().insert(new Q.Actor(gameState.players[playerId].p));
+			console.log(actor);
+		}
+	});
+	
 	socket.on('insert_object', function(data) {
 		console.log(selfId + ": Message from server: insert_object");
 		if (data.object_type == 'PlayerEleball') {
@@ -24,6 +104,10 @@ socket.on('connected', function(data1) {
 	});
 	
 	socket.on('updated', function(data) {
+		// Data contains the delta (new) game state
+		updateGameState(data.gameState);
+		
+		
 		var actor = actors.filter(function(obj) {
 			return obj.playerId == data.p['playerId'];
 		})[0];
@@ -58,7 +142,7 @@ socket.on('connected', function(data1) {
 			return obj.playerId == data.playerId;
 		})[0];
 		if (actor) {
-			actor.player.takeDamage(data.dmg);
+			actor.player.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
 		}
 	});
 	

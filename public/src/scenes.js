@@ -1,8 +1,5 @@
 "use strict";
 
-// ## So that viewport can be centered on the player
-var player;
-
 // ## Level1 scene
 // Create a new scene called level 1
 Q.scene("level1",function(stage) {
@@ -10,19 +7,11 @@ Q.scene("level1",function(stage) {
 	// Add in a repeater for a little parallax action
 	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-		// Add in a tile layer, and make it the collision layer
-		stage.collisionLayer(new Q.TileLayer({
-								dataAsset: 'level1.json',
-		                        sheet:     'tiles' }));
+	// Add in a tile layer, and make it the collision layer
+	stage.collisionLayer(new Q.TileLayer({
+							dataAsset: 'level1.json',
+							sheet:     'tiles' }));
 
-
-		player = Q.stage().insert(new Q.Player({
-			playerId: selfId
-	}));
-		
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
 
 	// Add in a couple of enemies
 	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -42,19 +31,11 @@ Q.scene("level2",function(stage) {
 	// Add in a repeater for a little parallax action
 	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-		// Add in a tile layer, and make it the collision layer
-		stage.collisionLayer(new Q.TileLayer({
-		                     dataAsset: 'level2.json',
-		                     sheet:     'tiles' }));
+	// Add in a tile layer, and make it the collision layer
+	stage.collisionLayer(new Q.TileLayer({
+						 dataAsset: 'level2.json',
+						 sheet:     'tiles' }));
 
-
-		player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
 
 	// Add in a couple of enemies
 	stage.insert(new Q.Enemy({ x: 700, y: 0 }));

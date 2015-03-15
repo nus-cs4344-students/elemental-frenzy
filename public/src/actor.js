@@ -6,12 +6,13 @@ Q.Sprite.extend("Actor", {
 	init: function(p, defaultP) {
 		p = mergeObjects(p, defaultP);
 		this._super(p, {
+			sheet: "character_water",
 			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 			type: Q.SPRITE_ACTIVE,
 			update: true
 		});
 		
-		this.add('healthBar, nameBar, dmgDisplay');
+		this.add('2d, healthBar, nameBar, dmgDisplay');
 		
 		var temp = this;
 		setInterval(function() {
