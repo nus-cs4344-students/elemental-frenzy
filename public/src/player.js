@@ -72,23 +72,43 @@ Q.Sprite.extend("Player",{
 		this.destroy();
 	  }
 	});
+			
+	// ## Send key presses to the server
+	Q.el.addEventListener('keydown', function(e) {
+		socket.emit('keydown', {
+			playerId: that.p.playerId,
+			keyCode: e.keyCode
+		});
+	});
+	Q.el.addEventListener('keyup', function(e) {
+		socket.emit('keyup', {
+			playerId: that.p.playerId,
+			keyCode: e.keyCode
+		});
+	});	
+	// Event listener for firing
+	Q.el.addEventListener('mouseup', function(e){
+		var createdEvt = {changedTouches: e.changedTouches};
+		socket.emit('mouseup', {
+			playerId: that.p.playerId,
+			e: createdEvt
+		});
+		that.trigger('fire', e);
+	});
 	
+	// Listen for takeDamage events
 	this.on('takeDamage');
 	
 	// Event listener for toggling elements
 	Q.input.on("toggleNextElement", function() {
 		that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-	});					
-
-	Q.el.addEventListener('mouseup', function(e){
-		that.trigger('fire', e);
 	});
 
 	this.on('fire', function(e){
 		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
 		}
-
+		
 		var stage = Q.stage(0); 
 		var touch = e.changedTouches ?  e.changedTouches[0] : e;
 		var mouseX = Q.canvasToStageX(touch.x, stage);
@@ -121,7 +141,7 @@ Q.Sprite.extend("Player",{
 		this.p.fireAnimation=animationName;
 
 		// Magic code
-		e.preventDefault();
+		//e.preventDefault();
 	});
 
 	this.on('fired', function(){
@@ -173,7 +193,8 @@ Q.Sprite.extend("Player",{
 	console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
 	socket.emit('playerTookDmg', {
 		playerId: this.p.playerId,
-		dmg: dmg
+		dmg: dmg,
+		shooter: shooter
 	});
 	if (this.p.currentHealth <= 0) {
 		this.die(shooter);
