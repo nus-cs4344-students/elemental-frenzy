@@ -3,7 +3,11 @@
 require(['src/helper-functions']);
 
 // ## Player constants
-var PLAYER_NAME = "water";
+var PLAYER_FIRE = 0;
+var PLAYER_EARTH = 1;
+var PLAYER_LIGHTNING = 2;
+var PLAYER_WATER = 3;
+var PLAYER_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
@@ -22,7 +26,7 @@ Q.Sprite.extend("Player",{
 	
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
-      sheet: "character_" + PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
+      sheet: PLAYER_CHARACTERS[PLAYER_DEFAULT_ELEMENT],  // Setting a sprite sheet sets sprite width and height
 	  sprite: PLAYER_ANIMATION,
       x: 410,           // You can also set additional properties that can
       y: 90,             // be overridden on object creation
@@ -82,7 +86,12 @@ Q.Sprite.extend("Player",{
 		that.trigger('fire', e);
 	});
 
-	this.on('fire', function(e){
+	this.on('fire', this, 'fire');
+
+	this.on('fired', this, 'fired');  
+  },
+  
+  fire: function(e){
 		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
 		}
@@ -91,8 +100,10 @@ Q.Sprite.extend("Player",{
 		var touch = e.changedTouches ?  e.changedTouches[0] : e;
 		var mouseX = Q.canvasToStageX(touch.x, stage);
 		var mouseY = Q.canvasToStageY(touch.y, stage);
-		var angleRad = Math.atan2(mouseY - that.p.y, mouseX - that.p.x) ;
+		var angleRad = Math.atan2(mouseY - this.p.y, mouseX - this.p.x) ;
+		
 		this.p.fireAngleRad = angleRad;
+		
 		var angleDeg = -angleRad * 180 / Math.PI;
 
 		if(angleDeg>0){
@@ -116,16 +127,18 @@ Q.Sprite.extend("Player",{
 			// shooting angle up
 			animationName = "fire_up";
 		}
-		this.p.fireAnimation=animationName;
+
+		if(this.has('animation')){
+			this.play(animationName, 1);
+		}else{
+			this.trigger('fired');
+		}
 
 		// Magic code
 		e.preventDefault();
-	});
+  },
 
-	this.on('fired', function(){
-		// stop fire animation
-		this.p.fireAnimation = "no_fire";
-
+  fired: function(){
 		var eleball = new Q.PlayerEleball({
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
@@ -161,9 +174,8 @@ Q.Sprite.extend("Player",{
 		});
 		
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
-	});  
   },
-  
+
   takeDamage: function(dmg, shooter) {
 	this.p.currentHealth -= dmg;
 	console.log("Took damage. currentHealth = " + this.p.currentHealth);
@@ -193,10 +205,7 @@ Q.Sprite.extend("Player",{
 		this.p.cooldown = 0;
 	  }
 
-	  // fire animation in progress
-	  if(this.p.fireAnimation != "no_fire"){
-	  	this.play(this.p.fireAnimation);
-	  } else {
+	  if(this.has('animation')){
 		// player not jumping
 		if(this.p.vy ==0){
 			// play running animation
