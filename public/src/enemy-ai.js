@@ -34,7 +34,8 @@ Q.Sprite.extend("Enemy",{
     // end the game unless the enemy is hit on top
     this.on("bump.left,bump.right,bump.bottom",function(collision) {
       if(collision.obj.isA("Player")) { 
-		collision.obj.trigger('takeDamage', this.p.dmg, this.p.name);
+		console.log(this.p.name + " triggering takeDamage")
+		collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.name});
       }
     });
 
@@ -42,16 +43,19 @@ Q.Sprite.extend("Enemy",{
     // and give the user a "hop"
     this.on("bump.top",function(collision) {
       if(collision.obj.isA("Player")) { 
-        this.trigger('takeDamage', collision.obj.p.dmg, collision.obj.p.name);
+        this.trigger('takeDamage', {dmg: collision.obj.p.dmg, shooter: collision.obj.p.name});
         collision.obj.p.vy = -300;
       }
     });
 	
+	this.on('takeDamage');
+	
   },
   
-	takeDamage: function(dmg, shooter) {
+	takeDamage: function(dmgAndShooter) {
+		var dmg = dmgAndShooter.dmg,
+			shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
-		this.dmgDisplay.addDmg(dmg);
 		if (this.p.currentHealth <= 0) {
 			Q.state.trigger("enemyDied", shooter);
 			this.destroy();

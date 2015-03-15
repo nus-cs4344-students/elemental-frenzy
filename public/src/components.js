@@ -69,8 +69,8 @@ Q.component("dmgDisplay", {
 		this.entity.on('takeDamage', this, 'addDmg')
 	},
 	
-	addDmg: function(dmg) {
-		console.log("adding dmg " + dmg);
+	addDmg: function(dmgAndShooter) {
+		var dmg = dmgAndShooter.dmg;
 		this.entity.p.dmgDisplayDmgList.push(dmg);
 		this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
 		this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 20, 0]); // starting position of the display is on the right of the entity
