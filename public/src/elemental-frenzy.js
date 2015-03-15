@@ -1,8 +1,11 @@
 "use strict";
 
+// ## Requires
+require(['src/elemental-frenzy_ui']);
+
 var HOSTNAME = "localhost";
 var PORT = 4344;
-
+// ## Connect to the server
 var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
@@ -128,16 +131,6 @@ Q.input.keyboardControls({
 	RIGHT : "",
 	TAB : "displayScoreScreen"
 });
-// ## Mouse events
-Q.el.addEventListener('mousemove', function(e){
-});
-
-Q.el.addEventListener('mouseup',function(e) {
-	console.log("mouseup detected");
-});
-Q.el.addEventListener('mousedown',function(e) {
-	console.log("mousedown detected");
-});
 
 // ## Game State
 Q.state.reset({
@@ -200,12 +193,15 @@ Q.component("healthBar", {
 // Usage:
 //	1. Ensure the entity it is attached to has a p.name property,
 //	2. then call the draw(ctx) method of the nameBar in the draw method of the entity.
-Q.component("nameBar", {
+Q.component("nameBar", {	
 	draw: function(ctx) {
 		ctx.font = "15px Arial";
 		ctx.textAlign = "center";
+		ctx.fillStyle = "black";
+		ctx.textBaseline = "alphabetic";
 		var entity = this.entity;
 		var y = -entity.p.cy - 20;
+		console.log(ctx);
 		ctx.fillText(this.entity.p.name, 0, y);
 	}
 });
@@ -731,7 +727,8 @@ Q.Sprite.extend("Enemy",{
 		dmg: ENEMY_DEFAULT_DMG,
 		element: ENEMY_DEFAULT_ELEMENT,
 		currentHealth: ENEMY_DEFAULT_MAXHEALTH,
-		maxHealth: ENEMY_DEFAULT_MAXHEALTH
+		maxHealth: ENEMY_DEFAULT_MAXHEALTH,
+		name: 'enemyAi'
 	});
 
     // Enemies use the Bounce AI to change direction 
@@ -742,7 +739,7 @@ Q.Sprite.extend("Enemy",{
     // end the game unless the enemy is hit on top
     this.on("bump.left,bump.right,bump.bottom",function(collision) {
       if(collision.obj.isA("Player")) { 
-		collision.obj.takeDamage(this.p.dmg);
+		collision.obj.takeDamage(this.p.dmg, this.p.name);
       }
     });
 
@@ -750,7 +747,7 @@ Q.Sprite.extend("Enemy",{
     // and give the user a "hop"
     this.on("bump.top",function(collision) {
       if(collision.obj.isA("Player")) { 
-        this.takeDamage(collision.obj.p.dmg);
+        this.takeDamage(collision.obj.p.dmg, collision.obj.p.name);
         collision.obj.p.vy = -300;
       }
     });
@@ -787,7 +784,8 @@ Q.Sprite.extend("Enemy",{
 				var enemyEleball = new Q.EnemyEleball({
 					element : this.p.element,
 					sheet : ELEBALL_ELEMENTNAMES[this.p.element],
-					soundIsAnnoying : true
+					soundIsAnnoying : true,
+					shooter : this.p.name
 				});
 				enemyEleball.p.x = this.p.x - this.p.w/10 - enemyEleball.p.w/2;
 				enemyEleball.p.y = this.p.y;
