@@ -103,6 +103,24 @@ Q.component("dmgDisplay", {
 	}
 });
 
+Q.component('2dLadder', {
+	added: function(){	
+		var entity = this.entity;
+		Q._defaults(entity.p,{
+			type: Q.SPRITE_UI, // ladder is ui element
+			collisionMask: Q.SPRITE_ACTIVE // ladder only collides with player
+		});
+		entity.on('hit',this,"collision");
+	},
+
+	collision: function(col,last) {
+		if(col.obj.isA("Ladder")){
+			var entity = this.entity;
+			entity.trigger("onLadder", col);
+		}
+	}
+});
+
 // ## 2dEleball component that is an extension of the '2d' component provided by Quintus (in Quintus_2d.js)
 // 	Modifies what happens on collision with another eleball
 Q.component('2dEleball', {

@@ -44,7 +44,9 @@ Q.Sprite.extend("Player",{
 		  fireAnimation: PLAYER_NO_FIRE_ANIMATION,
 		  fireTargetX: 0, // position x of target in game world
 		  fireTargetY: 0,  // possition y of target in game world
-		  isFiring: false
+		  isFiring: false,
+		  onLadder: false,
+		  ladderX: 0
 		});
 
     // Add in pre-made components to get up and running quickly
@@ -54,7 +56,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay');
+    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
 	
 		this.addEventListeners();
 
@@ -90,8 +92,8 @@ Q.Sprite.extend("Player",{
 		});
 
 		this.on('fire', this, 'fire');
-
-		this.on('fired', this, 'fired');		
+		this.on('fired', this, 'fired');
+		this.on("onLadder", this, 'climbLadder');	
   },
   
   fire: function(e){
@@ -224,15 +226,43 @@ Q.Sprite.extend("Player",{
 		this.destroy();  
   },
   
+  climbLadder: function(col){
+			if(col.obj.isA("Ladder")) { 
+	      this.p.onLadder = true;
+	      this.p.ladderX = col.obj.p.x;
+	    }
+	},
+
   step: function(dt) {	  
 	  this.p.cooldown -= dt;
 	  if (this.p.cooldown <= 0) {
-		this.p.cooldown = 0;
+			this.p.cooldown = 0;
 	  }
 
-	  if(this.has('animation')){
+	  var processed = false;
+	  if(this.p.onLadder) {
+      this.p.gravity = 0;
+
+      if(Q.inputs['up']) {
+        this.p.vy = -this.p.speed;
+        this.p.x = this.p.ladderX;
+        this.play("run_in");
+      } else if(Q.inputs['down']) {
+        this.p.vy = this.p.speed;
+        this.p.x = this.p.ladderX;
+        this.play("run_in");
+      } else{
+      	this.p.vy = 0;
+        this.play("stand_back");
+      }
+      processed = true;
+    }
+
+    if(!processed && this.has('animation')){
+    	this.p.gravity = 1;
+    	
 			// player not jumping
-			if(this.p.vy ==0){
+			if(this.p.vy == 0){
 				// play running animation
 				if (this.p.vx > 0) {
 					this.play("run_right");
@@ -259,6 +289,8 @@ Q.Sprite.extend("Player",{
 			playerId: this.p.playerId,
 			p: this.p
 	  });
+
+	  this.p.onLadder = false;
   },
   
   draw: function(ctx) {
