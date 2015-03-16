@@ -60,8 +60,6 @@ Q.Sprite.extend("Actor", {
   },
 
 	step: function(dt) {
-		this.dmgDisplay.step(dt);
-
 		if(this.has('animation')){
 
 			if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&
@@ -95,9 +93,6 @@ Q.Sprite.extend("Actor", {
 	
 	draw: function(ctx) {
 		this._super(ctx);
-		this.healthBar.draw(ctx);
-		this.nameBar.draw(ctx);
-		this.dmgDisplay.draw(ctx);
 	}
 });
 
