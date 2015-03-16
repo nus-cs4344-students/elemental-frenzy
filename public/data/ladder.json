@@ -9,7 +9,7 @@
 	},
 	"ladder_wood": {
 		"sx": 32,
-		"sy": 0,
+		"sy": 1,
 		"cols": 1,
 		"tilew": 32,
 		"tileh": 71,
