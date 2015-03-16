@@ -95,7 +95,7 @@ Q.Sprite.extend("Player",{
 		this.on('fired', this, 'fired');
 		this.on("onLadder", this, 'climbLadder');	
   },
-  
+
   fire: function(e){
 		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
