@@ -46,7 +46,8 @@ Q.Sprite.extend("Player",{
 		  fireTargetY: 0,  // possition y of target in game world
 		  isFiring: false,
 		  onLadder: false,
-		  ladderX: 0
+		  ladderX: 0,
+		  takeDamageCooldown: 0
 		});
 
     // Add in pre-made components to get up and running quickly
@@ -197,6 +198,10 @@ Q.Sprite.extend("Player",{
   },
 
   takeDamage: function(dmgAndShooter) {
+  	if(this.p.takeDamageCooldown > 0){
+			return;
+		}
+
     var dmg = dmgAndShooter.dmg,
 		shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
@@ -207,9 +212,11 @@ Q.Sprite.extend("Player",{
 			dmg: dmg
 		});
 
+		this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
+
 		if (this.p.currentHealth <= 0) {
 			this.die(shooter);
-		}  
+		}
   },
   
   die: function(killer) {
@@ -234,10 +241,8 @@ Q.Sprite.extend("Player",{
 	},
 
   step: function(dt) {	  
-	  this.p.cooldown -= dt;
-	  if (this.p.cooldown <= 0) {
-			this.p.cooldown = 0;
-	  }
+	  this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
+	  this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
 
 	  var processed = false;
 	  if(this.p.onLadder) {

@@ -9,6 +9,7 @@ var ACTOR_CHARACTERS = ["character_fire", "character_earth" , "character_lightni
 var ACTOR_DEFAULT_ELEMENT = 0; // fire
 var ACTOR_ANIMATION = 'actor';
 var ACTOR_NO_FIRE_ANIMATION = "no_fire";
+var ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 
 // ## Actor Sprite (other players)
 Q.Sprite.extend("Actor", {
@@ -20,6 +21,7 @@ Q.Sprite.extend("Actor", {
 			sprite: ACTOR_ANIMATION,
 			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 			type: Q.SPRITE_ACTIVE,
+			takeDamageCooldown: 0,
 			update: true
 		});
 		
@@ -37,6 +39,10 @@ Q.Sprite.extend("Actor", {
 	},
 	
 	takeDamage: function(dmgAndShooter) {
+		if(this.p.takeDamageCooldown > 0){
+			return;
+		}
+
 		var dmg = dmgAndShooter.dmg;
 		var shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
@@ -44,7 +50,9 @@ Q.Sprite.extend("Actor", {
 		
 		if (this.p.currentHealth <= 0) {
 			this.die(shooter);
-		} 
+		}
+
+		this.p.takeDamageCooldown = ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 	},
 	
 	 die: function(killer) {

@@ -70,6 +70,10 @@ Q.component("dmgDisplay", {
 	},
 	
 	addDmg: function(dmgAndShooter) {
+		if(this.entity.p.takeDamageCooldown > 0){
+			return;
+		}
+
 		var dmg = dmgAndShooter.dmg;
 		this.entity.p.dmgDisplayDmgList.push(dmg);
 		this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
