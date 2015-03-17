@@ -17,6 +17,8 @@ Q.Sprite.extend("Player",{
 
   // the init constructor is called on creation
   init: function(p, defaultP) {
+	  
+	  var that = this;
 
 	require(['src/helper-functions'], function() {
 		p = mergeObjects(p, defaultP);
@@ -24,6 +26,7 @@ Q.Sprite.extend("Player",{
 	
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
+	  playerId: -1,
       sheet: "character_" + PLAYER_NAME,  // Setting a sprite sheet sets sprite width and height
 	  sprite: PLAYER_ANIMATION,
       x: 410,           // You can also set additional properties that can
@@ -38,7 +41,8 @@ Q.Sprite.extend("Player",{
 	  element: PLAYER_DEFAULT_ELEMENT,
 	  fireAnimation: "no_fire",
 	  fireAngleDeg: 0, // angle 0 starts from 3 o'clock then clockwise
-	  fireAngleRad: 0
+	  fireAngleRad: 0,
+	  isServerSide: false // a flag so that the server-simulated players will not send messages out
     });
 
     // Add in pre-made components to get up and running quickly
@@ -57,6 +61,19 @@ Q.Sprite.extend("Player",{
 	if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
 		Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
 	}
+	
+	// Server side simulation. Server Player sends updates back to the client
+	if (this.p.isServerSide) {
+		  setInterval(function() {
+			socket.emit('update', {
+				type: 'player',
+				playerId: that.p.playerId,
+				id: that.p.playerId,
+				p: that.p
+			});
+			console.log("Player " + that.p.playerId + " sending update message from SERVER TO CLIENT");
+		  }, 100);
+	  }
   },
   
   addEventListeners: function() {
@@ -75,24 +92,30 @@ Q.Sprite.extend("Player",{
 			
 	// ## Send key presses to the server
 	Q.el.addEventListener('keydown', function(e) {
-		socket.emit('keydown', {
-			playerId: that.p.playerId,
-			keyCode: e.keyCode
-		});
+		if (!that.p.isServerSide) {
+			socket.emit('keydown', {
+				playerId: that.p.playerId,
+				keyCode: e.keyCode
+			});
+		}
 	});
 	Q.el.addEventListener('keyup', function(e) {
-		socket.emit('keyup', {
-			playerId: that.p.playerId,
-			keyCode: e.keyCode
-		});
+		if (!that.p.isServerSide) {
+			socket.emit('keyup', {
+				playerId: that.p.playerId,
+				keyCode: e.keyCode
+			});
+		}
 	});	
 	// Event listener for firing
 	Q.el.addEventListener('mouseup', function(e){
-		var createdEvt = {changedTouches: e.changedTouches};
-		socket.emit('mouseup', {
-			playerId: that.p.playerId,
-			e: createdEvt
-		});
+		if (!that.p.isServerSide) {
+			var createdEvt = {changedTouches: e.changedTouches};
+			socket.emit('mouseup', {
+				playerId: that.p.playerId,
+				e: createdEvt
+			});
+		}
 		that.trigger('fire', e);
 	});
 	
@@ -246,10 +269,6 @@ Q.Sprite.extend("Player",{
 		}
 	  }
 	  
-	  socket.emit('update', {
-		playerId: this.p.playerId,
-		p: this.p
-	  });
   },
   
   draw: function(ctx) {

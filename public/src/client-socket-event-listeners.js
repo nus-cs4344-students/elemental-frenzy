@@ -69,6 +69,7 @@ socket.on('connected', function(data1) {
 	
 	// Tell server that you have joined
 	socket.emit('joined', { playerId: selfId });
+	Q.stageScene('level3');
 	
 	// ## Event listeners for data received from server
 	socket.on('playerJoined', function(data) {
@@ -104,9 +105,7 @@ socket.on('connected', function(data1) {
 	});
 	
 	socket.on('updated', function(data) {
-		// Data contains the delta (new) game state
-		updateGameState(data.gameState);
-		
+		// Data contains the delta (new) game state	
 		
 		var actor = actors.filter(function(obj) {
 			return obj.playerId == data.p['playerId'];
@@ -114,6 +113,9 @@ socket.on('connected', function(data1) {
 		if (actor) {
 			actor.player.p.x = data.p.x;
 			actor.player.p.y = data.p.y;
+			actor.player.p.vx = data.p.vx;
+			actor.player.p.vy = data.p.vy;
+			actor.player.p.fireAnimation = data.p.fireAnimation;
 			actor.player.p.sheet = data.p.sheet;
 			actor.player.p.maxHealth = data.p.maxHealth;
 			actor.player.p.update = true;

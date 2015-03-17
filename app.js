@@ -2,6 +2,72 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+
+
+// ## Import quintus library 
+var qlib = require('./quintus-all.js');
+// ## Get Quintus object
+var Q = qlib.Quintus({ 
+		audioSupported: [ 'ogg','mp3', 'wav' ],
+		imagePath: "public/images/",
+		audioPath: "public/audio/",
+		dataPath: "public/data/"
+	})
+        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
+        .controls().touch();
+
+//Q.load("character_water.png, character_water.json");
+// Sprites sheets can be created manually
+//Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
+// Or from a .json asset that defines sprite locations
+Q.compileSheets("character_earth.png", "character_earth.json");
+Q.compileSheets("character_lightning.png", "character_lightning.json");
+Q.compileSheets("character_water.png", "character_water.json");
+Q.compileSheets("character_fire.png", "character_fire.json");
+Q.compileSheets("npcs.png", "npcs.json");
+Q.compileSheets("elemental_balls.png", "elemental_balls.json");
+
+// ## Level1 scene
+// Create a new scene called level 1
+Q.scene("level1",function(stage) {
+
+	// Add in a repeater for a little parallax action
+	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+
+	// Add in a tile layer, and make it the collision layer
+	stage.collisionLayer(new Q.TileLayer({
+							dataAsset: 'level1.json',
+							sheet:     'tiles' }));
+});
+
+// ## Level2 scene
+// Create a new scene called level 2
+Q.scene("level2",function(stage) {
+
+	// Add in a repeater for a little parallax action
+	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+
+	// Add in a tile layer, and make it the collision layer
+	stage.collisionLayer(new Q.TileLayer({
+						 dataAsset: 'level2.json',
+						 sheet:     'tiles' }));
+});
+
+// ## Extend a Quintus Sprite for our server player simulation
+Q.Sprite.extend("ServerPlayer", {
+	init: function(p) {
+		this._super(p, {
+			sprite: "character_water"
+		}); 
+		this.add("2d, platformerControls")
+	}       
+});
+
+
+
+
+
+
  
 app.use(express.static(__dirname + '/public'));
  
@@ -17,6 +83,7 @@ var DEFAULT_GAMESTATE = {
 	enemies: []
 };
 
+var serverSocket;
 var sockets = [];
 var socketIdToPlayerMap = [];
 
@@ -27,6 +94,15 @@ var sessions = [];
 var idToSessionMap = [];
 
 // ## Helper functions
+var getSessionIdOfPlayer = function(playerId) {
+	return idToSessionMap[playerId];
+};
+var getGameStateOfSession = function(sessionId) {
+	return sessions[sessionId].gameState;
+}
+var getPlayerIdOfSocket = function(socketconnid) {
+	return socketIdToPlayerMap[socketconnid];
+}
 /**
  * Broadcasts to all sockets except the one with the given playerId
  */
@@ -87,7 +163,8 @@ io.on('connection', function (socket) {
 		sessions.push({
 			playerCount: 0,
 			players: [],
-			gameState: DEFAULT_GAMESTATE	
+			gameState: DEFAULT_GAMESTATE,
+			stage: new Q.stageScene(DEFAULT_GAMESTATE.level)
 		});
 		console.log("Creating new session " + sessionId);
 	}
@@ -101,58 +178,98 @@ io.on('connection', function (socket) {
 	
 	// Send message to player telling the player that he is connected
 	setTimeout(function () {
+		console.log("Emitting connected message");
+		console.log(sessions[sessionId].gameState.players);
 		socket.emit('connected', {
 			playerId: id,
 			sessionId: sessionId,
 			gameState: sessions[sessionId].gameState
 		});
+		console.log("Emitted connected message");
 		io.emit('count', { playerCount: playerCount });
 	}, 1500);
 	
-	// Player has joined the game
-	socket.on('joined', function(data) {
-		var sessionId = idToSessionMap[data.playerId];
-		console.log("Player " + data.playerId + " joined session " + sessionId);
-		// Insert the player into the game state
-		var gameState = sessions[sessionId].gameState;
-		var playerProps = {
-			playerId: data.playerId,
-			x: 300,
-			y: 100,
-			vx: 0,
-			vy: 0 
-		};
-		gameState.players.push({
-			p: playerProps
-		});
+	// Server has joined!
+	socket.on('serverJoined', function(data) {
+		serverSocket = socket;
 		
-		// Insert the player properties into the data to be broadcasted to all players in the session,
-		data.p = playerProps;
-		// Tell the other players in his session about his existence
-		broadcastToAllInSession(sessionId, 'playerJoined', data);
-	});
-
-	// Player has disconnected from the session
-	socket.on('disconnect', function (data) {
-		var playerId = socketIdToPlayerMap[socket.conn.id];
+		var playerId = data.playerId;
 		var sessionId = idToSessionMap[playerId];
 		
-		console.log("Player " + playerId + " from session " + sessionId + " disconnected...");
+		console.log("Player " + playerId + " from session " + sessionId + " disconnected... because he is a SERVER!");
 		
 		playerCount--;
-		io.emit('count', { playerCount: playerCount });
 		
 		// Update session
 		// Find index to splice players in sessionvar idx;
 		var idx1, idx2;
-		for (idx = 0; idx < sessions[sessionId].gameState.players.length; idx++) {
-			if (sessions[sessionId].gameState.players[idx] == playerId) {
+		for (idx1 = 0; idx1 < sessions[sessionId].gameState.players.length; idx1++) {
+			if (sessions[sessionId].players[idx1] == playerId) {
+				break;
+			}
+		}
+		
+		sessions[sessionId].playerCount--;
+		sessions[sessionId].players.splice(idx1, 1);
+	});
+	
+	// Player has joined the game
+	socket.on('joined', function(data) {
+		var sessionId = getSessionIdOfPlayer(data.playerId);
+		
+		console.log("Player " + data.playerId + " joined session " + sessionId);
+		
+		// Insert the player into the game state
+		var gameState = getGameStateOfSession(sessionId);
+		var playerProps = {
+			playerId: data.playerId,
+			x: 410,
+			y: 90 
+		};
+		gameState.players.push({
+			playerId: data.playerId,
+			p: playerProps
+		});		
+		
+		// Insert the player properties into the data to be broadcasted to all players in the session,
+		// and tell the other players in his session about his existence
+		data.p = playerProps;
+		broadcastToAllInSession(sessionId, 'playerJoined', data);
+		
+		// Tell the server about the new player
+		serverSocket.emit('playerJoined', {
+			playerId: data.playerId,
+			sessionId: sessionId,
+			p: playerProps
+		});
+	});
+
+	// Player has disconnected from the session
+	socket.on('disconnect', function (data) {
+		if (socket == serverSocket) {
+			// No need to do anything if it is a server!
+			console.log("Server disconnected!");
+			return;
+		}
+		
+		var playerId = getPlayerIdOfSocket(socket.conn.id);
+		var sessionId = getSessionIdOfPlayer(playerId);
+		
+		console.log("Player " + playerId + " from session " + sessionId + " disconnected...");
+		
+		playerCount--;
+		
+		// Update session
+		// Find index to splice players in sessionvar idx;
+		var idx1, idx2;
+		for (idx1 = 0; idx1 < sessions[sessionId].players.length; idx1++) {
+			if (sessions[sessionId].players[idx1] == playerId) {
 				break;
 			}
 		}
 		// Find index to splice players in gameState
-		for (idx = 0; idx < sessions[sessionId].gameState.players.length; idx++) {
-			if (sessions[sessionId].gameState.players[idx] == playerId) {
+		for (idx2 = 0; idx2 < sessions[sessionId].gameState.players.length; idx2++) {
+			if (sessions[sessionId].gameState.players[idx2].playerId == playerId) {
 				break;
 			}
 		}
@@ -163,6 +280,7 @@ io.on('connection', function (socket) {
 		
 		console.log(sessions[sessionId].gameState.players);
 		
+		// Tell everybody in the session that the player has disconnected
 		broadcastToAllInSessionExcept(sessionId, data.playerId, 'playerDisconnected', data);
 	});
 	
@@ -171,35 +289,62 @@ io.on('connection', function (socket) {
 		var playerId = data.playerId;
 		var keyCode = data.keyCode;
 		console.log("Player " + playerId + " pressed key " + keyCode);
+		
+		var sessionId = getSessionIdOfPlayer(playerId);
+		var evt = {keyCode: keyCode};
+		
+		serverSocket.emit('keydown', {
+			playerId: playerId,
+			sessionId: sessionId,
+			e: evt
+		});
 	});
 	socket.on('keyup', function(data) {
 		var playerId = data.playerId;
 		var keyCode = data.keyCode;
 		console.log("Player " + playerId + " released key " + keyCode);
+		
+		var sessionId = getSessionIdOfPlayer(playerId);
+		var evt = {keyCode: keyCode};
+		
+		serverSocket.emit('keyup', {
+			playerId: playerId,
+			sessionId: sessionId,
+			e: evt
+		});
 	});
 	socket.on('mouseup', function(data) {
 		var playerId = data.playerId;
-		var e = data.e;
+		var evt = data.e;
 		console.log("Player " + playerId + " released mouse");
+		
+		var sessionId = getSessionIdOfPlayer(playerId);
+		
+		serverSocket.emit('mouseup', {
+			playerId: playerId,
+			sessionId: sessionId,
+			e: evt
+		});
 	});
 	
-	/*
-	socket.on('insert_object', function(data) {
-		broadcastToAllExcept(data.playerId, 'insert_object', data);
-	});
+	// socket.on('insert_object', function(data) {
+		// broadcastToAllExcept(data.playerId, 'insert_object', data);
+	// });
 	
 	socket.on('update', function(data) {
-		broadcastToAllExcept(data.playerId, 'updated', data);
+		var playerId = data.playerId,
+			sessionId = getSessionIdOfPlayer(playerId);
+		
+		broadcastToAllInSession(sessionId, 'updated', data);
 	});
 	
-	socket.on('playerTookDmg', function(data) {
-		broadcastToAllExcept(data.playerId, 'playerTookDmg', data);
-	});
+	// socket.on('playerTookDmg', function(data) {
+		// broadcastToAllExcept(data.playerId, 'playerTookDmg', data);
+	// });
 	
-	socket.on('playerDied', function(data) {
-		broadcastToAllExcept(data.playerId, 'playerDied', data);
-	});
-	*/
+	// socket.on('playerDied', function(data) {
+		// broadcastToAllExcept(data.playerId, 'playerDied', data);
+	// });
   
   console.log("Accepting connection, id " + id);
 });
