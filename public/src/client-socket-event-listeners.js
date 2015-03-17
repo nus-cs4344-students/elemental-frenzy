@@ -77,7 +77,8 @@ socket.on('connected', function(data1) {
 			props = data.p;
 		console.log("Player " + playerId + " joined");
 		// Insert player into game state
-		gameState.players[playerId] = {p: props};
+		console.log(gameState);
+		gameState['players'][playerId] = {p: props};
 		if (playerId == selfId) {
 			// It is the player himself, so it is time to load the game for the player to play!
 			loadGameState();
@@ -105,36 +106,42 @@ socket.on('connected', function(data1) {
 	});
 	
 	socket.on('updated', function(data) {
-		// Data contains the delta (new) game state	
-		
-		var actor = actors.filter(function(obj) {
-			return obj.playerId == data.p['playerId'];
-		})[0];
-		if (actor) {
-			actor.player.p.x = data.p.x;
-			actor.player.p.y = data.p.y;
-			actor.player.p.vx = data.p.vx;
-			actor.player.p.vy = data.p.vy;
-			actor.player.p.fireAnimation = data.p.fireAnimation;
-			actor.player.p.sheet = data.p.sheet;
-			actor.player.p.maxHealth = data.p.maxHealth;
-			actor.player.p.update = true;
+		console.log("Got update");
+		if (data.playerId == selfId) {
+			// Player
+			
 		} else {
-			var temp = new Q.Actor({
-				type: data.p.type,
-				x: data.p.x,
-				y: data.p.y,
-				sheet: data.p.sheet,
-				name: data.p.name,
-				currentHealth: data.p.currentHealth,
-				maxHealth: data.p.maxHealth,
-				playerId: data.p.playerId
-			});
-			actors.push({
-				player: temp,
-				playerId: data.p.playerId
-			});
-			Q.stage().insert(temp);
+			// Actor
+			console.log("Actor");
+			var actor = actors.filter(function(obj) {
+				return obj.playerId == data.p['playerId'];
+			})[0];
+			if (actor) {
+				actor.player.p.x = data.p.x;
+				actor.player.p.y = data.p.y;
+				actor.player.p.vx = data.p.vx;
+				actor.player.p.vy = data.p.vy;
+			actor.player.p.fireAnimation = data.p.fireAnimation;
+				actor.player.p.sheet = data.p.sheet;
+				actor.player.p.maxHealth = data.p.maxHealth;
+				actor.player.p.update = true;
+			} else {
+				var temp = new Q.Actor({
+					type: data.p.type,
+					x: data.p.x,
+					y: data.p.y,
+					sheet: data.p.sheet,
+					name: data.p.name,
+					currentHealth: data.p.currentHealth,
+					maxHealth: data.p.maxHealth,
+					playerId: data.p.playerId
+				});
+				actors.push({
+					player: temp,
+					playerId: data.p.playerId
+				});
+				Q.stage().insert(temp);
+			}
 		}
 	});
 	
