@@ -1,5 +1,7 @@
 "use strict";
 
+require(['src/helper-functions']);
+
 // ## Actor Sprite (other players)
 Q.Sprite.extend("Actor", {
 	
@@ -16,6 +18,7 @@ Q.Sprite.extend("Actor", {
 		
 		var temp = this;
 		setInterval(function() {
+			console.log("ACTOR id " + temp.p.playerId + " update " + temp.p.update);
 			if (!temp.p.update) {
 				temp.destroy();
 			}

@@ -78,9 +78,13 @@ app.get('/', function(req, res){
 var MAX_PLAYERS_PER_SESSION = 5;
 var DEFAULT_GAMESTATE = {
 	level: 'level2',
-	players: [],
-	eleballs: [],
-	enemies: []
+	sprites: {
+		PLAYER: [],
+		ACTOR: [],
+		PLAYERELEBALL: [],
+		ENEMYELEBALL: [],
+		ENEMY: []
+	}
 };
 
 var serverSocket;
@@ -119,7 +123,7 @@ var getPlayerIdOfSocket = function(socketconnid) {
 var broadcastToAllInSession = function(sessionId, eventName, data) {
 	var goodIds = sessions[sessionId].players;
 	for (var key in goodIds) {
-		sockets[ goodIds[key] ].emit(eventName, data);
+		if (sockets[ goodIds[key] ]) { sockets[ goodIds[key] ].emit(eventName, data); }
 	}
 }
  /**
@@ -130,9 +134,22 @@ var broadcastToAllInSessionExcept = function(sessionId, dontSendId, eventName, d
 		return obj != dontSendId;
 	});
 	for (var i = 0; i < goodIds.length; i++) {
-		sockets[ goodIds[i] ].emit(eventName, data);
+		if (sockets[ goodIds[i] ]) { sockets[ goodIds[i] ].emit(eventName, data); }
 	}
 }
+/**
+ * Sends to the server socket (Server-cum-client)
+ */
+var sendToServer = function(eventName, data) {
+	if (!serverSocket) {
+		console.log("Server has not yet connected...");
+		return;
+	}
+	
+	console.log("Sending to server data with playerId " + data.playerId);
+	serverSocket.emit(eventName, data);
+};
+
  /**
   * Finds the first session that does not have max players and returns its index.
   * If all ongoing sessions are full or there are no ongoing sessions, returns -1.
@@ -145,8 +162,29 @@ var findGoodSession = function() {
 	}
 	return -1;
 }
+
+/**
+ * Get the next id useable for the session and the data type
+ */
+var getNextId = function(sessionId, type) {
+	console.log("Accessing sessionId " + sessionId + " and type " + type);
+	var length = sessions[sessionId].gameState.sprites[type].length;
+	sessions[sessionId].gameState.sprites[type].push(type);
+	console.log("Get next Id for session " + sessionId + " and type " + type + " returns " + length + 
+				" and new next id is " + sessions[sessionId].gameState.sprites[type].length);
+	return length;
+}
  
 io.on('connection', function (socket) {
+	console.log(socket.handshake.headers.referer);
+	console.log(socket.handshake.headers.referer.indexOf('server.html'));
+	console.log("length = " + socket.handshake.headers.referer.length);
+	if ( !serverSocket && 
+		(socket.handshake.headers.referer.length < 11 || 
+		socket.handshake.headers.referer.indexOf('server.html') != socket.handshake.headers.referer.length-11) ) {
+			console.log("Reject connection");
+			return;
+	}
 	playerCount++;
 	id++;
 	
@@ -179,7 +217,6 @@ io.on('connection', function (socket) {
 	// Send message to player telling the player that he is connected
 	setTimeout(function () {
 		console.log("Emitting connected message");
-		console.log(sessions[sessionId].gameState.players);
 		socket.emit('connected', {
 			playerId: id,
 			sessionId: sessionId,
@@ -200,46 +237,40 @@ io.on('connection', function (socket) {
 		
 		playerCount--;
 		
-		// Update session
-		// Find index to splice players in sessionvar idx;
-		var idx1, idx2;
-		for (idx1 = 0; idx1 < sessions[sessionId].gameState.players.length; idx1++) {
-			if (sessions[sessionId].players[idx1] == playerId) {
-				break;
-			}
-		}
-		
+		sessions[sessionId].players.splice(playerId, 1);
+		sockets.splice(playerId, 1);
+		idToSessionMap.splice(id, 1);
 		sessions[sessionId].playerCount--;
-		sessions[sessionId].players.splice(idx1, 1);
 	});
 	
 	// Player has joined the game
 	socket.on('joined', function(data) {
-		var sessionId = getSessionIdOfPlayer(data.playerId);
+		var sessId = getSessionIdOfPlayer(data.playerId);
 		
-		console.log("Player " + data.playerId + " joined session " + sessionId);
+		console.log("Player " + data.playerId + " joined session " + sessId);
 		
 		// Insert the player into the game state
-		var gameState = getGameStateOfSession(sessionId);
+		var gameState = getGameStateOfSession(sessId);
 		var playerProps = {
 			playerId: data.playerId,
 			x: 410,
 			y: 90 
 		};
-		gameState.players.push({
+		gameState.sprites['PLAYER'][data.playerId] = {
 			playerId: data.playerId,
 			p: playerProps
-		});		
+		};		
 		
 		// Insert the player properties into the data to be broadcasted to all players in the session,
 		// and tell the other players in his session about his existence
 		data.p = playerProps;
-		broadcastToAllInSession(sessionId, 'playerJoined', data);
+		broadcastToAllInSession(sessId, 'playerJoined', data);
 		
 		// Tell the server about the new player
-		serverSocket.emit('playerJoined', {
+		console.log("Telling server player " + data.playerId + " joined session " + sessId);
+		sendToServer('playerJoined', {
 			playerId: data.playerId,
-			sessionId: sessionId,
+			sessionId: sessId,
 			p: playerProps
 		});
 	});
@@ -247,8 +278,8 @@ io.on('connection', function (socket) {
 	// Player has disconnected from the session
 	socket.on('disconnect', function (data) {
 		if (socket == serverSocket) {
-			// No need to do anything if it is a server!
 			console.log("Server disconnected!");
+			serverSocket = null;
 			return;
 		}
 		
@@ -261,27 +292,33 @@ io.on('connection', function (socket) {
 		
 		// Update session
 		// Find index to splice players in sessionvar idx;
-		var idx1, idx2;
-		for (idx1 = 0; idx1 < sessions[sessionId].players.length; idx1++) {
-			if (sessions[sessionId].players[idx1] == playerId) {
+		for (var idx in sessions[sessionId].players) {
+			if (sessions[sessionId].players[idx] == playerId) {
+				sessions[sessionId].players.splice(idx, 1);
 				break;
 			}
 		}
 		// Find index to splice players in gameState
-		for (idx2 = 0; idx2 < sessions[sessionId].gameState.players.length; idx2++) {
-			if (sessions[sessionId].gameState.players[idx2].playerId == playerId) {
+		for (var idx in sessions[sessionId].gameState.sprites['PLAYER']) {
+			if (sessions[sessionId].gameState.sprites['PLAYER'][idx].playerId == playerId) {
+				sessions[sessionId].gameState.sprites['PLAYER'].splice(idx, 1);
 				break;
 			}
 		}
 		
 		sessions[sessionId].playerCount--;
-		sessions[sessionId].players.splice(idx1, 1);
-		sessions[sessionId].gameState.players.splice(idx2, 1);
-		
-		console.log(sessions[sessionId].gameState.players);
 		
 		// Tell everybody in the session that the player has disconnected
-		broadcastToAllInSessionExcept(sessionId, data.playerId, 'playerDisconnected', data);
+		broadcastToAllInSessionExcept(sessionId, playerId, 'playerDisconnected', {
+			playerId: playerId,
+			sessionId: sessionId
+		});
+		
+		// Tell the server that the player has disconnected
+		sendToServer('playerDisconnected', {
+			playerId: playerId,
+			sessionId: sessionId
+		});
 	});
 	
 	// ## Keyboard/mouse event listeners
@@ -293,7 +330,7 @@ io.on('connection', function (socket) {
 		var sessionId = getSessionIdOfPlayer(playerId);
 		var evt = {keyCode: keyCode};
 		
-		serverSocket.emit('keydown', {
+		sendToServer('keydown', {
 			playerId: playerId,
 			sessionId: sessionId,
 			e: evt
@@ -307,7 +344,7 @@ io.on('connection', function (socket) {
 		var sessionId = getSessionIdOfPlayer(playerId);
 		var evt = {keyCode: keyCode};
 		
-		serverSocket.emit('keyup', {
+		sendToServer('keyup', {
 			playerId: playerId,
 			sessionId: sessionId,
 			e: evt
@@ -320,7 +357,7 @@ io.on('connection', function (socket) {
 		
 		var sessionId = getSessionIdOfPlayer(playerId);
 		
-		serverSocket.emit('mouseup', {
+		sendToServer('mouseup', {
 			playerId: playerId,
 			sessionId: sessionId,
 			e: evt
@@ -335,6 +372,10 @@ io.on('connection', function (socket) {
 		var playerId = data.playerId,
 			sessionId = getSessionIdOfPlayer(playerId);
 		
+		if (data.type != 'PLAYER') {
+			var id = getNextId(sessionId, data.type);
+			data['id'] = id;
+		}
 		broadcastToAllInSession(sessionId, 'updated', data);
 	});
 	

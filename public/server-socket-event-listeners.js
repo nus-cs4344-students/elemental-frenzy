@@ -2,26 +2,39 @@
 
 var gameStates = []; // indexed by session id
 
+var serverId;
 
 socket.on('connected', function(data) {
 	console.log("Connected as SERVER");
 	console.log("Gamestate: " + data.gameState);
 	
-	gameStates[data.sessionId] = data.gameState;
-	gameStates[data.sessionId].players = []; // should not have any players
+	serverId = data.playerId;
 	
+	// Connected. Initializing game state to the one app.js sent
+	gameStates[data.sessionId] = data.gameState;
+	gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = []; // should not have any players
+	
+	// Tell app.js that we have joined!
 	socket.emit('serverJoined', {playerId: data.playerId});
 	
+	// Load the game state
 	loadGameState(gameStates[data.sessionId]);
 });
 
-socket.on('playerJoined', function(data) {
+socket.on('playerDisconnected', function(data) {	
+	console.log("Player " + data.playerId + " from session " + data.sessionId + " disconnected!");
+	
+	// Destroy player and remove him from game state
+	destroyPlayer(data.sessionId, data.playerId);
+});
+
+socket.on('playerJoined', function(data) {	
+	console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
+	console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
 	console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
 	data.p.isServerSide = true;
-	var player = gameStates[data.sessionId].stage.insert(new Q.Player(data.p));
-	player.del('platformerControls');
-	player.add("serverPlatformerControls");
-	gameStates[data.sessionId].players.push(player);
+	addPlayer(data.sessionId, new Q.Player(data.p));
+	console.log("Number of players: " + gameStates[data.sessionId].sprites['PLAYER'].length);
 });
 
 socket.on('keydown', function(data) {
@@ -51,6 +64,8 @@ socket.on('mouseup', function(data) {
 		e = data.e;
 	var player = getPlayer(sessionId, playerId);
 	
+	console.log("Player " + playerId + " released mouse!");
+	
 	player.trigger('fire', e);
 });
 
@@ -68,9 +83,6 @@ var loadGameState = function(gameState) {
 	console.log("Loading the level " + level);
 	Q.stageScene(level);
 	gameState.stage = Q.stage();
-	
-	// Remove the server player from the game state
-	gameState.players.splice(0, 1);
 	
 	// Viewport
 	Q.stage().add("viewport");
@@ -192,9 +204,36 @@ Q.component("serverPlatformerControls", {
 
 // ## Helper functions
 var getPlayer = function(sessionId, playerId) {
-	return gameStates[sessionId].players.filter(function(obj) {
-		return obj.p.playerId == playerId;
-	})[0];
+	return gameStates[sessionId].sprites['PLAYER'].filter(function(obj) {
+		return obj.sprite.p.playerId == playerId;
+	})[0].sprite;
+}
+
+var addSprite = function(sessionId, type, id, sprite) {
+	gameStates[sessionId].sprites[type][id] = {
+		sprite: sprite
+	};
+}
+
+var addPlayer = function(sessionId, player) {
+	player.del('platformerControls');
+	player.add("serverPlatformerControls");
+	
+	addSprite(sessionId, 'PLAYER', player.p.playerId, player);
+	insertIntoStage(sessionId, player);
+}
+
+var destroyPlayer = function(sessionId, playerId) {
+	if (gameStates[sessionId].sprites['PLAYER']) {
+		if (gameStates[sessionId].sprites['PLAYER'][playerId]) {
+			gameStates[sessionId].sprites['PLAYER'][playerId].sprite.destroy();
+		}
+		gameStates[sessionId].sprites['PLAYER'].splice(playerId, 1);
+	}
+}
+
+var insertIntoStage = function(sessionId, sprite) {
+	return gameStates[sessionId].stage.insert(sprite);
 }
 
 var pressKey = function(player, keyCode) {

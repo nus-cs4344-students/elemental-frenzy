@@ -5,11 +5,40 @@
 var selfId;
 var sessionId;
 var gameRunning = false;
-var gameState;
+var gameState = {
+	level: '',
+	sprites: {
+		PLAYER: [],
+		ACTOR: [],
+		PLAYERELEBALL: [],
+		ENEMYELEBALL: [],
+		ENEMY: []
+	}
+}; 
 var actors = [];
 
+// The sprites currently in the game, all indexed by id
+var sprites = {
+	PLAYER: [],			
+	ACTOR: [],			
+	PLAYERELEBALL: [],
+	ENEMYELEBALL: [],
+	ENEMY: []
+};
+
+// ## Functions to create sprites for our game
+var creates = {
+	PLAYER: function(p) { return new Q.Player(p); },
+	ACTOR: function(p) { return new Q.Actor(p); },
+	PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
+	ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
+	ENEMY: function(p) { return new Q.Enemy(p); }
+};
+
+// ## Loads the game state.
+// To be used once when the player has joined the game.
 var loadGameState = function() {
-	console.log("Loading game state...");
+	console.log("Loading game state... selfId " + selfId);
 	
 	// Get game state data
 	var level = gameState.level,
@@ -17,80 +46,90 @@ var loadGameState = function() {
 		eleballs = gameState.eleballs,
 		enemies = gameState.enemies;
 		
-	// Get the player and the actors
-	console.log("Getting the player and actors");
-	var player = players[selfId];
-	for (var id in players) {
-		if (id != selfId) {
-			// Not myself, its an actor
-			var temp = new Q.Actor({
-				x: players[id].p.x,
-				y: players[id].p.y,
-				vx: players[id].p.vx,
-				vy: players[id].p.vy,
-				playerId: id
-			});
-			actors[id] = {
-				playerId: id,
-				player: temp
-			};
-		}
-	}
-		
 	// Load the level
 	console.log("Loading the level " + level);
 	Q.stageScene(level);
 	
-	// Load the player
-	console.log("Loading the player");
-	player = Q.stage().insert(new Q.Player(player.p));
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-	
-	// Load the actors
-	console.log("Loading the actors");
-	for (var key in actors) {
-		Q.stage().insert(new Q.Actor(actors[key].p));
+	var player;
+	// Create and load sprites
+	console.log("There are " + gameState.sprites['PLAYER'].length + " players!!!");
+	for (var attrName in gameState.sprites) {
+		for (var i in gameState.sprites[attrName]) {	
+			if ( !gameState.sprites[attrName][i] || gameState.sprites[attrName][i].sprite) {
+				// Been deleted, or already has a sprite created!
+				continue;
+			} else if (attrName == 'PLAYER' && gameState.sprites[attrName][i].p.playerId != selfId) {
+				// Not a true PLAYER, don't create sprite
+				continue;
+			} else {	
+				// Else, create sprite!
+				if (gameState.sprites[attrName][i]) {
+					console.log("Creating sprite " + attrName + " for id " + i);//gameState.sprites[attrName][i].p.playerId);
+					console.log(gameState.sprites[attrName][i].p);
+					var sprite = creates[attrName](gameState.sprites[attrName][i].p);
+					gameState.sprites[attrName][i] = {
+						sprite: sprite
+					};
+					Q.stage().insert(sprite);
+					
+					if (attrName == 'PLAYER' && sprite.p.playerId == selfId) {
+						console.log("Player FOUND");
+						player = sprite;
+					}
+				}
+			}
+		}
 	}
-	
-	// Load the eleballs
-	
-	
-	// Load the enemies
-	
+	Q.stage().add("viewport").follow(player);
+}
+
+// ## Helper function to get the sprite stored in the game state of the 
+var getSprite = function(type, id) {
+	return gameState.sprites[type][id].sprite;
+}
+// ## Helper function to check if the <type, id> pair exists at all.
+// This does NOT mean that the sprite has been created.
+var checkSpriteExists = function(type, id) {
+	return (typeof gameState.sprites[type][id] != 'undefined');
 }
 
 socket.on('connected', function(data1) {
 	selfId = data1.playerId;
 	sessionId = data1.sessionId;
-	gameState = data1.gameState;
+	gameState = {
+		level: data1.gameState.level,
+		sprites: data1.gameState.sprites
+	}
+	
 	console.log("Connected to server as player " + selfId + " in session " + sessionId);
 	
 	// Tell server that you have joined
 	socket.emit('joined', { playerId: selfId });
-	Q.stageScene('level3');
+	//Q.stageScene('level3');
 	
 	// ## Event listeners for data received from server
 	socket.on('playerJoined', function(data) {
-		var playerId = data.playerId,
-			props = data.p;
-		console.log("Player " + playerId + " joined");
-		// Insert player into game state
-		console.log(gameState);
-		gameState['players'][playerId] = {p: props};
-		if (playerId == selfId) {
+		console.log("Player " + data.playerId + " joined");
+		
+		if (data.playerId == selfId) {
 			// It is the player himself, so it is time to load the game for the player to play!
+			gameState.sprites['PLAYER'][data.playerId] = {
+				p: data.p
+			};
 			loadGameState();
 			gameRunning = true;
-		} else if (gameRunning) {
-			// Game is already running, and new player joined, so insert actor
-			console.log("Inserting actor with props: " + gameState.players[playerId].p);
-			for (var key in gameState.players[playerId].p) {
-				console.log(key + ": " + gameState.players[playerId].p[key]);
+		}
+	});
+	
+	socket.on('playerDisconnected', function(data) {
+		console.log("Player " + data.playerId + " disconnected");
+		
+		if (gameState.sprites['ACTOR'][data.playerId]) {
+			var sprite = getSprite('ACTOR', data.playerId);
+			if (sprite) {
+				sprite.destroy();
+				gameState.sprites['ACTOR'].splice(data.playerId, 1);
 			}
-			var actor = Q.stage().insert(new Q.Actor(gameState.players[playerId].p));
-			console.log(actor);
 		}
 	});
 	
@@ -106,42 +145,43 @@ socket.on('connected', function(data1) {
 	});
 	
 	socket.on('updated', function(data) {
-		console.log("Got update");
-		if (data.playerId == selfId) {
-			// Player
-			
-		} else {
-			// Actor
-			console.log("Actor");
-			var actor = actors.filter(function(obj) {
-				return obj.playerId == data.p['playerId'];
-			})[0];
-			if (actor) {
-				actor.player.p.x = data.p.x;
-				actor.player.p.y = data.p.y;
-				actor.player.p.vx = data.p.vx;
-				actor.player.p.vy = data.p.vy;
-			actor.player.p.fireAnimation = data.p.fireAnimation;
-				actor.player.p.sheet = data.p.sheet;
-				actor.player.p.maxHealth = data.p.maxHealth;
-				actor.player.p.update = true;
-			} else {
-				var temp = new Q.Actor({
-					type: data.p.type,
-					x: data.p.x,
-					y: data.p.y,
-					sheet: data.p.sheet,
-					name: data.p.name,
-					currentHealth: data.p.currentHealth,
-					maxHealth: data.p.maxHealth,
-					playerId: data.p.playerId
-				});
-				actors.push({
-					player: temp,
-					playerId: data.p.playerId
-				});
-				Q.stage().insert(temp);
+		console.log("Got update from id " + data.id);
+		
+		// No longer server side
+		data.p.isServerSide = false;
+		
+		if (data.type == 'PLAYER') {
+			// Check if the data.type is player and if the playerId is myself or not
+			// If it is not then it is an ACTOR!
+			if (!selfId || data.playerId != selfId) {
+				data.type = 'ACTOR';
 			}
+		}
+		
+		if ( !gameState.sprites[data.type][data.id] || !gameState.sprites[data.type][data.id].sprite) {
+			// New sprite! Create it and add into gamestate and add it to the stage (if game is running)
+			if (gameRunning) {
+				// Insert sprite only if running
+				var sprite = creates[data.type](data.p);
+				gameState.sprites[data.type][data.id] = {
+					sprite: sprite
+				}
+				console.log("Creating sprite " + data.type + " for id " + data.id);
+				Q.stage().insert(sprite);
+			} else {
+				// Otherwise just insert the properties for loadGameState to do the sprite insertion
+				gameState.sprites[data.type][data.id] = {
+					p: data.p
+				}
+			}
+		} else {
+			// Sprite exists, so just update it (if it is not the player)
+			//if (data.type != 'PLAYER') {
+				console.log("Updating player " + data.id);
+				data.p.update = true;
+				var sprite = getSprite(data.type, data.id);
+				sprite.p = data.p;
+			//}
 		}
 	});
 	

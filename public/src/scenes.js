@@ -19,9 +19,6 @@ Q.scene("level1",function(stage) {
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
-  
-	// Insert all actors
-	require(['src/helper-functions'], insertAllActors(stage));
 });
 
 // ## Level2 scene
@@ -43,9 +40,6 @@ Q.scene("level2",function(stage) {
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
-
-	// Insert all actors
-	require(['src/helper-functions'], insertAllActors(stage));
 });
 
 // To display a game over / game won popup box, 

@@ -63,12 +63,13 @@ Q.Sprite.extend("Player",{
 	}
 	
 	// Server side simulation. Server Player sends updates back to the client
+	// Remember to clearInterval this when destroying the object!!
 	if (this.p.isServerSide) {
-		  setInterval(function() {
+		  this.p.serverUpdateInterval = setInterval(function() {
 			socket.emit('update', {
-				type: 'player',
-				playerId: that.p.playerId,
+				type: 'PLAYER',
 				id: that.p.playerId,
+				playerId: that.p.playerId,
 				p: that.p
 			});
 			console.log("Player " + that.p.playerId + " sending update message from SERVER TO CLIENT");
@@ -109,13 +110,19 @@ Q.Sprite.extend("Player",{
 	});	
 	// Event listener for firing
 	Q.el.addEventListener('mouseup', function(e){
+		// Client side player fires the event!
 		if (!that.p.isServerSide) {
-			var createdEvt = {changedTouches: e.changedTouches};
+			var createdEvt = {
+				changedTouches: e.changedTouches,
+				x: e.x,
+				y: e.y
+			};
 			socket.emit('mouseup', {
 				playerId: that.p.playerId,
 				e: createdEvt
 			});
 		}
+		
 		that.trigger('fire', e);
 	});
 	
@@ -198,12 +205,23 @@ Q.Sprite.extend("Player",{
 			eleball.p.x = this.p.x + ballToPlayerX;
 		}
 		
-		Q.stage().insert(eleball);
-		socket.emit('insert_object', {
-			playerId: this.p.playerId,
-			object_type: 'PlayerEleball',
-			object_properties: eleball.p
-		});
+		// Only on the server side do we insert this immediately.
+		// On the client side we have to wait for the update message
+		if (this.p.isServerSide) {
+			Q.stage().insert(eleball);
+		} else {
+			eleball.destroy();
+		}
+		
+		// On the server side, we need to send this new eleball information to all other players
+		if (this.p.isServerSide) {
+			socket.emit('update', {
+				playerId: this.p.playerId,
+				type: 'PLAYERELEBALL',
+				id: -1,
+				p: eleball.p
+			})
+		}
 		
 		this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
 	});  
@@ -273,6 +291,13 @@ Q.Sprite.extend("Player",{
   
   draw: function(ctx) {
 	  this._super(ctx);
+  },
+  
+  destroy: function() {
+	  if (this.p.serverUpdateInterval) {
+		  clearInterval(this.p.serverUpdateInterval);
+	  }
+	  this._super();
   }
 
 });
