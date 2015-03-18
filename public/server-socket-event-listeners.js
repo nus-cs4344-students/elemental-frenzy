@@ -133,6 +133,11 @@ Q.component("serverPlatformerControls", {
 
     step: function(dt) {
       var p = this.entity.p;
+	  
+	  console.log("Step, inputs[right] is " + this.entity.inputs['right']);
+	  if (this.entity.inputs['right']) {
+		  console.log("Should be moving right");
+	  }
 
       if(p.ignoreControls === undefined || !p.ignoreControls) {
         var collision = null;
@@ -239,7 +244,9 @@ var insertIntoStage = function(sessionId, sprite) {
 var pressKey = function(player, keyCode) {
 	if(Q.input.keys[keyCode]) {
 	  var actionName = Q.input.keys[keyCode];
+	  console.log("Pressing key " + keyCode + " with action name " + actionName);
 	  player.inputs[actionName] = true;
+	  console.log("Inputs[" + actionName + "] is " + player.inputs[actionName]);
 	  Q.input.trigger(actionName);
 	  Q.input.trigger('keydown',keyCode);
 	}

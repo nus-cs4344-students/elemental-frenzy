@@ -32,7 +32,8 @@ Q.Sprite.extend("Player",{
 
 		// You can call the parent's constructor with this._super(..)
 		this._super(p, {
-	  playerId: -1,
+		  playerId: -1,
+		  sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
 		  sprite: PLAYER_ANIMATION,
 		    x: 410,           // You can also set additional properties that can
 		    y: 90,             // be overridden on object creation
@@ -90,15 +91,15 @@ Q.Sprite.extend("Player",{
   addEventListeners: function() {
 	  var that = this;
 		
-		// Write event handlers to respond hook into behaviors.
-		// hit.sprite is called everytime the player collides with a sprite
-		this.on("hit.sprite",function(collision) {
-		  // Check the collision, if it's the Tower, you win!
-		  if(collision.obj.isA("Tower")) {
+	  // Write event handlers to respond hook into behaviors.
+	  // hit.sprite is called everytime the player collides with a sprite
+	  this.on("hit.sprite",function(collision) {
+	    // Check the collision, if it's the Tower, you win!
+	    if(collision.obj.isA("Tower")) {
 			Q.stageScene("endGame",1, { label: "You Won!" }); 
 			this.destroy();
-		  }
-		});
+	    }
+	  });
 	
 	// ## Send key presses to the server
 	Q.el.addEventListener('keydown', function(e) {
@@ -264,8 +265,8 @@ Q.Sprite.extend("Player",{
 
   takeDamage: function(dmgAndShooter) {
   	if(this.p.takeDamageCooldown > 0){
-			return;
-		}
+		return;
+	}
 
     var dmg = dmgAndShooter.dmg,
 		shooter = dmgAndShooter.shooter;
@@ -274,8 +275,8 @@ Q.Sprite.extend("Player",{
 		
 		socket.emit('playerTookDmg', {
 			playerId: this.p.playerId,
-		dmg: dmg,
-		shooter: shooter
+			dmg: dmg,
+			shooter: shooter
 		});
 
 		var that = this;
@@ -368,10 +369,6 @@ Q.Sprite.extend("Player",{
 	  this.p.onLadder = false;
 	  this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
 	  this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
-  },
-  
-  draw: function(ctx) {
-	  this._super(ctx);
   },
   
   destroy: function() {
