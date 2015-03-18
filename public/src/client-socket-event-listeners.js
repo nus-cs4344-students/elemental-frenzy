@@ -35,6 +35,7 @@ var creates = {
 
 // ## Loads the game state.
 // To be used once when the player has joined the game.
+var loadGameState = function() {
 	console.log("Loading game state... selfId " + selfId);
 	var player;
 	// Create and load sprites
@@ -77,6 +78,8 @@ var getSprite = function(type, id) {
 // This does NOT mean that the sprite has been created.
 var checkSpriteExists = function(type, id) {
 	return (typeof gameState.sprites[type][id] != 'undefined');
+}
+
 socket.on('connected', function(data1) {
 	selfId = data1.playerId;
 	console.log("Connected to server as player " + selfId);
@@ -85,17 +88,19 @@ socket.on('connected', function(data1) {
 		sprites: data1.gameState.sprites
 	}
 	
-	
 	Q.stageScene('level2');
 	//Q.stageScene('level3');
 	
 	// ## Event listeners for data received from server
+	socket.on('playerJoined', function(data) {
 		console.log("Player " + data.playerId + " joined");
 		
 		if (data.playerId == selfId) {
 			gameState.sprites['PLAYER'][data.playerId] = {
 				p: data.p
 			};
+			loadGameState();
+			gameRunning = true;
 		}
 	});
 	
@@ -108,6 +113,9 @@ socket.on('connected', function(data1) {
 				sprite.destroy();
 				gameState.sprites['ACTOR'].splice(data.playerId, 1);
 			}
+		}
+	});
+	
 	socket.on('insert_object', function(data) {
 		console.log(selfId + ": Message from server: insert_object");
 		if (data.object_type == 'PlayerEleball') {

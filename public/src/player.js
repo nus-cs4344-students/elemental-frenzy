@@ -48,7 +48,7 @@ Q.Sprite.extend("Player",{
 		  fireTargetX: 0, // position x of target in game world
 		  fireTargetY: 0,  // possition y of target in game world
 		  isFiring: false,
-		  isServerSide: false // a flag so that the server-simulated players will not send messages out
+		  isServerSide: false, // a flag so that the server-simulated players will not send messages out
 		  onLadder: false,
 		  ladderX: 0,
 		  takeDamageCooldown: 0,

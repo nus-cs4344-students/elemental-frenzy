@@ -12,17 +12,8 @@ Q.scene("level1",function(stage) {
 
 		// Add in a tile layer, and make it the collision layer
 		stage.collisionLayer(new Q.TileLayer({
-              							dataAsset: 'level1.json',
+              					dataAsset: 'level1.json',
 		                        sheet:     'tiles' }));
-
-
-		player = Q.stage().insert(new Q.Player({
-			playerId: selfId
-	}));
-		
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
 
 	// Add in a couple of enemies
 	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
@@ -44,15 +35,6 @@ Q.scene("level2",function(stage) {
 		                     dataAsset: 'level2.json',
 		                     sheet:     'tiles' }));
 
-
-		player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-
 	// Add in a couple of enemies
 	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
 	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
@@ -73,11 +55,6 @@ Q.scene("level3",function(stage) {
 		                     dataAsset: 'level3.json',
 		                     sheet:     'map_tiles' }));
 
-
-		player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-
 	// Give the stage a moveable viewport and tell it
 	// to follow the player.
 	Q.stage().add("viewport").follow(player);
@@ -93,9 +70,6 @@ Q.scene("level3",function(stage) {
   stage.insert(new Q.Ladder({ x: 100, y: 242 }));
   stage.insert(new Q.Ladder({ x: 100, y: 313 }));
   stage.insert(new Q.Ladder({ x: 100, y: 384 }));
-
-	// Insert all actors
-	insertAllActors(stage);
 });
 
 // To display a game over / game won popup box, 
