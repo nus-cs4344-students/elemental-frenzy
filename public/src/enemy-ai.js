@@ -62,7 +62,7 @@ Q.Sprite.extend("Enemy",{
   
 	takeDamage: function(dmgAndShooter) {
 		var dmg = dmgAndShooter.dmg,
-			shooter = dmgAndShooter.shooter;
+		shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
 		if (this.p.currentHealth <= 0) {
 			Q.state.trigger("enemyDied", shooter);
@@ -70,13 +70,13 @@ Q.Sprite.extend("Enemy",{
 		}
 	},
   	
-  	fire: function(angle){
+	fire: function(angle){
 		if (this.p.cooldown > 0) {
 			return;
 		}
 		var angleDeg = Math.min(360, Math.max(180, angle));
 		var angleRad = angleDeg * Math.PI / 180;
-		
+
 		this.p.fireAngleRad = angleRad;
 		this.p.fireAngleDeg = angleDeg;
 
@@ -190,8 +190,6 @@ Q.Sprite.extend("Enemy",{
 	
 	draw: function(ctx) {
 		this._super(ctx);
-		this.healthBar.draw(ctx);
-		this.dmgDisplay.draw(ctx);
 	}
 });
 

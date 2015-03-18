@@ -9,6 +9,7 @@ var ACTOR_CHARACTERS = ["character_fire", "character_earth" , "character_lightni
 var ACTOR_DEFAULT_ELEMENT = 0; // fire
 var ACTOR_ANIMATION = 'actor';
 var ACTOR_NO_FIRE_ANIMATION = "no_fire";
+var ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 
 // ## Actor Sprite (other players)
 Q.Sprite.extend("Actor", {
@@ -20,6 +21,7 @@ Q.Sprite.extend("Actor", {
 			sprite: ACTOR_ANIMATION,
 			maxHealth: PLAYER_DEFAULT_MAXHEALTH,
 			type: Q.SPRITE_ACTIVE,
+			takeDamageCooldown: 0,
 			update: true
 		});
 		
@@ -37,6 +39,10 @@ Q.Sprite.extend("Actor", {
 	},
 	
 	takeDamage: function(dmgAndShooter) {
+		if(this.p.takeDamageCooldown > 0){
+			return;
+		}
+
 		var dmg = dmgAndShooter.dmg;
 		var shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
@@ -44,7 +50,9 @@ Q.Sprite.extend("Actor", {
 		
 		if (this.p.currentHealth <= 0) {
 			this.die(shooter);
-		} 
+		}
+
+		this.p.takeDamageCooldown = ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 	},
 	
 	 die: function(killer) {
@@ -52,8 +60,6 @@ Q.Sprite.extend("Actor", {
   },
 
 	step: function(dt) {
-		this.dmgDisplay.step(dt);
-
 		if(this.has('animation')){
 
 			if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&
@@ -87,9 +93,6 @@ Q.Sprite.extend("Actor", {
 	
 	draw: function(ctx) {
 		this._super(ctx);
-		this.healthBar.draw(ctx);
-		this.nameBar.draw(ctx);
-		this.dmgDisplay.draw(ctx);
 	}
 });
 
@@ -105,7 +108,7 @@ Q.animations(ACTOR_ANIMATION, {
 	fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: 1/13, trigger: "fired", loop: false},
 	fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: 1/13, trigger: "fired", loop: false}, 
 	fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: 1/13, trigger: "fired", loop: false}, 
-	fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103,103], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103], rate: 1/13, trigger: "fired", loop: false}, 
 
 	stand_back: { frames: [7], rate: 1/3 },
 	stand_left: { frames: [20], rate: 1/3 },
