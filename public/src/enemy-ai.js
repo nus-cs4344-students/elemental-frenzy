@@ -28,35 +28,46 @@ Q.Sprite.extend("Enemy",{
 		maxHealth: ENEMY_DEFAULT_MAXHEALTH,
 		name: 'enemyAi',
 		fireAngleRad: 0,
-		fireAngleDeg: 0
-	});
+		fireAngleDeg: 0,
+		isServerSide: false,
+		update: true
+		});
 
-	// Enemies use the Bounce AI to change direction 
-	// whenver they run into something.
-	this.add('2d, aiBounce, healthBar, dmgDisplay, animation');
+		// Enemies use the Bounce AI to change direction 
+		// whenver they run into something.
+		this.add('2d, aiBounce, healthBar, dmgDisplay, animation');
 
-	// Listen for a sprite collision, if it's the player,
-	// end the game unless the enemy is hit on top
-	this.on("bump.left,bump.right,bump.bottom",function(collision) {
-		if(collision.obj.isA("Player")) { 
-		console.log(this.p.name + " triggering takeDamage")
-		collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.name});
-		}
-	});
+		// Listen for a sprite collision, if it's the player,
+		// end the game unless the enemy is hit on top
+		this.on("bump.left,bump.right,bump.bottom",function(collision) {
+			if(collision.obj.isA("Player")) { 
+			console.log(this.p.name + " triggering takeDamage")
+			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.name});
+			}
+		});
 
-	// If the enemy gets hit on the top, destroy it
-	// and give the user a "hop"
-	this.on("bump.top",function(collision) {
-		if(collision.obj.isA("Player")) { 
-        this.trigger('takeDamage', {dmg: collision.obj.p.dmg, shooter: collision.obj.p.name});
-		collision.obj.p.vy = -300;
-		}
-	});
-	
-	this.on('takeDamage');
-	
-	this.on('fire', this, 'fire');  
-	this.on('fired', this, 'fired');  
+		// If the enemy gets hit on the top, destroy it
+		// and give the user a "hop"
+		this.on("bump.top",function(collision) {
+			if(collision.obj.isA("Player")) { 
+			this.trigger('takeDamage', {dmg: collision.obj.p.dmg, shooter: collision.obj.p.name});
+			collision.obj.p.vy = -300;
+			}
+		});
+		
+		this.on('takeDamage');
+		
+		this.on('fire', this, 'fire');  
+		this.on('fired', this, 'fired');  
+		
+		// If not updated for 3 seconds, remove it
+		var temp = this;
+		setInterval(function() {
+			if (!temp.p.update) {
+				temp.destroy();
+			}
+			temp.p.update = false;
+		}, 3000);		
 
     },
   
@@ -130,12 +141,23 @@ Q.Sprite.extend("Enemy",{
 			eleball.p.x = this.p.x + ballToPlayerX;
 		}
 		
-		Q.stage().insert(eleball);
-		// socket.emit('insert_object', {
-		// 	playerId: this.p.playerId,
-		// 	object_type: 'EnemyEleball',
-		// 	object_properties: eleball.p
-		// });
+		// Only on the server side do we insert this immediately.
+		// On the client side we have to wait for the update message
+		if (this.p.isServerSide) {
+			Q.stage().insert(eleball);
+		} else {
+			eleball.destroy();
+		}
+		
+		// On the server side, we need to send this new eleball information to all other players
+		if (this.p.isServerSide) {
+			socket.emit('update', {
+				type: 'ENEMYELEBALL',
+				sessionId: sessionId,
+				id: getNextId(sessionId, 'ENEMYELEBALL'),
+				p: eleball.p
+			})
+		}
 	},
 	
 	step: function(dt) {

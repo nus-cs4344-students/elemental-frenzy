@@ -12,7 +12,11 @@ var STAGE_GAME = 0;
 var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
 
-var actors = [];
+
+var gameStates = []; // indexed by session id
+
+var serverId;
+var stage;
 
 // # Quintus platformer example
 //
@@ -55,6 +59,8 @@ require(['src/components']);
 require(['src/eleballs']);
 // ## Player sprite
 require(['src/player']);
+// ## Ladder sprite
+require(['src/ladder']);
 // ## Actor sprite (other players)
 require(['src/actor']);
 // ## Enemy sprite
@@ -68,7 +74,7 @@ require(['src/scenes']);
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png,\
+Q.load("npcs.png, npcs.json, level1.json, level2.json, level3.json, tiles.png, background-wall.png,\
 	elemental_balls.png, elemental_balls.json, \
     character_earth.png, character_earth.json, \
     character_lightning.png, character_lightning.json, \

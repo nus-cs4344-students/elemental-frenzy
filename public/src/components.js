@@ -215,3 +215,139 @@ Q.component('2dEleball', {
 		}
 	}
 });
+
+// ## Attach to server side entities for them to send updates at a regular interval
+Q.component("serverSide", {
+	added: function() {
+		var entity = this.entity;
+		
+		entity.p.isServerSide = true;
+		
+		// Server side sprites will send updates periodically
+		this.serverUpdateInterval = setInterval(function() {
+			var idToUse, playerIdToUse;
+			if (entity.p.entityType == 'PLAYER') {
+				idToUse = playerIdToUse = entity.p.playerId;
+			} else {
+				idToUse = getNextId(sessionId, entity.p.entityType);
+			}
+			socket.emit('update', {
+				entityType: entity.p.entityType,
+				sessionId: entity.p.sessionId,
+				id: idToUse,
+				playerId: playerIdToUse,
+				p: entity.p
+			});
+		}, 100);
+		
+		entity.on('destroyed', this, 'destroy');
+	},
+	
+	destroy: function() {
+		console.log("Destroying server side updating interval");
+		clearInterval(this.serverUpdateInterval);
+	}
+});
+
+// ## Attached to players on the server side for simulation
+Q.component("serverPlatformerControls", {
+    defaults: {
+      speed: 200,
+      jumpSpeed: -300,
+      collisions: []
+    },
+
+    added: function() {
+      var p = this.entity.p;
+	  
+	  this.entity.inputs = [];
+
+      Q._defaults(p,this.defaults);
+
+      this.entity.on("step",this,"step");
+      this.entity.on("bump.bottom",this,"landed");
+
+      p.landed = 0;
+      p.direction ='right';
+    },
+
+    landed: function(col) {
+      var p = this.entity.p;
+      p.landed = 1/5;
+    },
+
+    step: function(dt) {
+      var p = this.entity.p;
+	  
+	  console.log("Step, inputs[right] is " + this.entity.inputs['right']);
+	  if (this.entity.inputs['right']) {
+		  console.log("Should be moving right");
+	  }
+
+      if(p.ignoreControls === undefined || !p.ignoreControls) {
+        var collision = null;
+
+        // Follow along the current slope, if possible.
+        if(p.collisions !== undefined && p.collisions.length > 0 && (this.entity.inputs['left'] || this.entity.inputs['right'] || p.landed > 0)) {
+          if(p.collisions.length === 1) {
+            collision = p.collisions[0];
+          } else {
+            // If there's more than one possible slope, follow slope with negative Y normal
+            collision = null;
+
+            for(var i = 0; i < p.collisions.length; i++) {
+              if(p.collisions[i].normalY < 0) {
+                collision = p.collisions[i];
+              }
+            }
+          }
+
+          // Don't climb up walls.
+          if(collision !== null && collision.normalY > -0.3 && collision.normalY < 0.3) {
+            collision = null;
+          }
+        }
+
+        if(this.entity.inputs['left']) {
+          p.direction = 'left';
+          if(collision && p.landed > 0) {
+            p.vx = p.speed * collision.normalY;
+            p.vy = -p.speed * collision.normalX;
+          } else {
+            p.vx = -p.speed;
+          }
+        } else if(this.entity.inputs['right']) {
+          p.direction = 'right';
+          if(collision && p.landed > 0) {
+            p.vx = -p.speed * collision.normalY;
+            p.vy = p.speed * collision.normalX;
+          } else {
+            p.vx = p.speed;
+          }
+        } else {
+          p.vx = 0;
+          if(collision && p.landed > 0) {
+            p.vy = 0;
+          }
+        }
+
+        if(p.landed > 0 && (this.entity.inputs['up'] || this.entity.inputs['action']) && !p.jumping) {
+          p.vy = p.jumpSpeed;
+          p.landed = -dt;
+          p.jumping = true;
+        } else if(this.entity.inputs['up'] || this.entity.inputs['action']) {
+          this.entity.trigger('jump', this.entity);
+          p.jumping = true;
+        }
+
+        if(p.jumping && !(this.entity.inputs['up'] || this.entity.inputs['action'])) {
+          p.jumping = false;
+          this.entity.trigger('jumped', this.entity);
+          if(p.vy < p.jumpSpeed / 3) {
+            p.vy = p.jumpSpeed / 3;
+          }
+        }
+      }
+      p.landed -= dt;
+    }
+  });

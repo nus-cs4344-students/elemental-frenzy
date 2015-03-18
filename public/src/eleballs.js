@@ -34,6 +34,7 @@ Q.Sprite.extend("Eleball", {
 		p = mergeObjects(p, defaultP);
 		
 		this._super(p, {
+			entityType: 'ELEBALL',
 			element : ELEBALL_DEFAULT_ELEMENT,
 			sheet : ELEBALL_ELEMENTNAMES[ELEBALL_DEFAULT_ELEMENT],
 			sprite : ELEBALL_ANIMATION,
@@ -82,7 +83,9 @@ Q.Eleball.extend("PlayerEleball", {
 	
 		p = mergeObjects(p, defaultP);
 		
-		this._super(p);
+		this._super(p, {
+			entityType: 'PLAYERELEBALL'
+		});
 	},
 	
 	// Player eleballs only damage enemies
@@ -104,6 +107,7 @@ Q.Eleball.extend("EnemyEleball", {
 		p = mergeObjects(p, defaultP);
 		
 		this._super(p, {
+			entityType: 'ENEMYELEBALL',
 			dmg : ENEMY_ELEBALL_DEFAULT_DMG,
 			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
 		});	

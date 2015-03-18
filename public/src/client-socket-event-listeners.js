@@ -84,13 +84,13 @@ var loadGameState = function() {
 }
 
 // ## Helper function to get the sprite stored in the game state of the 
-var getSprite = function(type, id) {
-	return gameState.sprites[type][id].sprite;
+var getSprite = function(entityType, id) {
+	return gameState.sprites[entityType][id].sprite;
 }
-// ## Helper function to check if the <type, id> pair exists at all.
+// ## Helper function to check if the <entityType, id> pair exists at all.
 // This does NOT mean that the sprite has been created.
-var checkSpriteExists = function(type, id) {
-	return (typeof gameState.sprites[type][id] != 'undefined');
+var checkSpriteExists = function(entityType, id) {
+	return (typeof gameState.sprites[entityType][id] != 'undefined');
 }
 
 socket.on('connected', function(data1) {
@@ -150,36 +150,36 @@ socket.on('connected', function(data1) {
 		// No longer server side
 		data.p.isServerSide = false;
 		
-		if (data.type == 'PLAYER') {
-			// Check if the data.type is player and if the playerId is myself or not
+		if (data.entityType == 'PLAYER') {
+			// Check if the data.entityType is player and if the playerId is myself or not
 			// If it is not then it is an ACTOR!
 			if (!selfId || data.playerId != selfId) {
-				data.type = 'ACTOR';
+				data.entityType = 'ACTOR';
 			}
 		}
 		
-		if ( !gameState.sprites[data.type][data.id] || !gameState.sprites[data.type][data.id].sprite) {
+		if ( !gameState.sprites[data.entityType][data.id] || !gameState.sprites[data.entityType][data.id].sprite) {
 			// New sprite! Create it and add into gamestate and add it to the stage (if game is running)
 			if (gameRunning) {
 				// Insert sprite only if running
-				var sprite = creates[data.type](data.p);
-				gameState.sprites[data.type][data.id] = {
+				var sprite = creates[data.entityType](data.p);
+				gameState.sprites[data.entityType][data.id] = {
 					sprite: sprite
 				}
-				console.log("Creating sprite " + data.type + " for id " + data.id);
+				console.log("Creating sprite " + data.entityType + " for id " + data.id);
 				Q.stage().insert(sprite);
 			} else {
 				// Otherwise just insert the properties for loadGameState to do the sprite insertion
-				gameState.sprites[data.type][data.id] = {
+				gameState.sprites[data.entityType][data.id] = {
 					p: data.p
 				}
 			}
 		} else {
 			// Sprite exists, so just update it (if it is not the player)
-			//if (data.type != 'PLAYER') {
+			//if (data.entityType != 'PLAYER') {
 				console.log("Updating player " + data.id);
 				data.p.update = true;
-				var sprite = getSprite(data.type, data.id);
+				var sprite = getSprite(data.entityType, data.id);
 				sprite.p = data.p;
 			//}
 		}

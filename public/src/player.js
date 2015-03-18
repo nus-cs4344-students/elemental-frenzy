@@ -33,6 +33,7 @@ Q.Sprite.extend("Player",{
 		// You can call the parent's constructor with this._super(..)
 		this._super(p, {
 		  playerId: -1,
+		  entityType: 'PLAYER',
 		  sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
 		  sprite: PLAYER_ANIMATION,
 		    x: 410,           // You can also set additional properties that can
@@ -252,10 +253,12 @@ Q.Sprite.extend("Player",{
 		
 		// On the server side, we need to send this new eleball information to all other players
 		if (this.p.isServerSide) {
+			eleball.p.sessionId = this.p.sessionId,
 			socket.emit('update', {
 				playerId: this.p.playerId,
-				type: 'PLAYERELEBALL',
-				id: -1,
+				sessionId: this.p.sessionId,
+				entityType: 'PLAYERELEBALL',
+				id: getNextId(this.p.sessionId, 'PLAYERELEBALL'),
 				p: eleball.p
 			})
 		}
@@ -369,13 +372,6 @@ Q.Sprite.extend("Player",{
 	  this.p.onLadder = false;
 	  this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
 	  this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
-  },
-  
-  destroy: function() {
-	  if (this.p.serverUpdateInterval) {
-		  clearInterval(this.p.serverUpdateInterval);
-	  }
-	  this._super();
   }
 
 });

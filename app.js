@@ -164,14 +164,14 @@ var findGoodSession = function() {
 }
 
 /**
- * Get the next id useable for the session and the data type
+ * Get the next id useable for the session and the data entityType
  */
-var getNextId = function(sessionId, type) {
-	console.log("Accessing sessionId " + sessionId + " and type " + type);
-	var length = sessions[sessionId].gameState.sprites[type].length;
-	sessions[sessionId].gameState.sprites[type].push(type);
-	console.log("Get next Id for session " + sessionId + " and type " + type + " returns " + length + 
-				" and new next id is " + sessions[sessionId].gameState.sprites[type].length);
+var getNextId = function(sessionId, entityType) {
+	console.log("Accessing sessionId " + sessionId + " and entityType " + entityType);
+	var length = sessions[sessionId].gameState.sprites[entityType].length;
+	sessions[sessionId].gameState.sprites[entityType].push(entityType);
+	console.log("Get next Id for session " + sessionId + " and entityType " + entityType + " returns " + length + 
+				" and new next id is " + sessions[sessionId].gameState.sprites[entityType].length);
 	return length;
 }
  
@@ -369,13 +369,18 @@ io.on('connection', function (socket) {
 	// });
 	
 	socket.on('update', function(data) {
-		var playerId = data.playerId,
+		var playerId = data.playerId;
+		var sessionId;
+		if (playerId) {
 			sessionId = getSessionIdOfPlayer(playerId);
-		
-		if (data.type != 'PLAYER') {
-			var id = getNextId(sessionId, data.type);
-			data['id'] = id;
+		} else {
+			sessionId = data.sessionId;
 		}
+		
+		// if (data.entityType != 'PLAYER') {
+			// var id = getNextId(sessionId, data.entityType);
+			// data['id'] = id;
+		// }
 		broadcastToAllInSession(sessionId, 'updated', data);
 	});
 	

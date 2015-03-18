@@ -16,8 +16,8 @@ Q.scene("level1",function(stage) {
 		                        sheet:     'tiles' }));
 
 	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
@@ -36,8 +36,8 @@ Q.scene("level2",function(stage) {
 		                     sheet:     'tiles' }));
 
 	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));
@@ -54,14 +54,10 @@ Q.scene("level3",function(stage) {
 		stage.collisionLayer(new Q.TileLayer({
 		                     dataAsset: 'level3.json',
 		                     sheet:     'map_tiles' }));
-
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-
+							 
 	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+	//stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
 	// Finally add in the tower goal
 	stage.insert(new Q.Tower({ x: 180, y: 50 }));

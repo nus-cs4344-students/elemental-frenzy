@@ -8,9 +8,9 @@ var KEYBOARD_CONTROLS = {
 	D : "right",
 	SPACE : "toggleNextElement",
 	Z : "",
-	LEFT : "",
-	UP : "",
-	DOWN : "",
-	RIGHT : "",
+	LEFT : "server_left",
+	UP : "server_up",
+	DOWN : "server_down",
+	RIGHT : "server_right",
 	TAB : "displayScoreScreen"
 };
