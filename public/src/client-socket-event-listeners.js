@@ -45,38 +45,40 @@ var loadGameState = function() {
 		
 	// Load the level
 	console.log("Loading the level " + level);
-	Q.stageScene(level);
+	gameState.stage = Q.stageScene(level);
 	
 	var player;
 	// Create and load sprites
 	console.log("There are " + gameState.sprites['PLAYER'].length + " players!!!");
 	for (var attrName in gameState.sprites) {
 		for (var i in gameState.sprites[attrName]) {	
-			if ( !gameState.sprites[attrName][i] || gameState.sprites[attrName][i].sprite) {
+			if ( !gameState.sprites[attrName][i] || !gameState.sprites[attrName][i].p) {
 				// Been deleted, or already has a sprite created!
 				continue;
 			} else if (attrName == 'PLAYER' && gameState.sprites[attrName][i].p.playerId != selfId) {
-				// Not a true PLAYER, don't create sprite
+				// Not a true PLAYER, don't create sprite (this is handled during the update step)
 				continue;
 			} else {	
 				// Else, create sprite!
 				if (gameState.sprites[attrName][i]) {
-					console.log("Creating sprite " + attrName + " for id " + i);//gameState.sprites[attrName][i].p.playerId);
+					console.log("Creating sprite " + attrName + " for id " + i);
 					console.log(gameState.sprites[attrName][i].p);
 					var sprite = creates[attrName](gameState.sprites[attrName][i].p);
+					gameState.stage.insert(sprite);
 					gameState.sprites[attrName][i] = {
 						sprite: sprite
 					};
-					Q.stage().insert(sprite);
 					
 					if (attrName == 'PLAYER' && sprite.p.playerId == selfId) {
 						console.log("Player FOUND");
 						player = sprite;
+						console.log(player.p.sheet);
 					}
 				}
 			}
 		}
 	}
+	gameState.stage.insert(sprite);
 	Q.stage().add("viewport").follow(player);
 }
 
@@ -174,7 +176,7 @@ socket.on('connected', function(data1) {
 		} else {
 			// Sprite exists, so just update it
 			data.p.update = true;
-			console.log("Updating player " + data.id + " with update " + data.p.update);
+			console.log("Updating " + data.entityType + " with id " + data.id + " with update " + data.p.update);
 			var sprite = getSprite(data.entityType, data.id);
 			sprite.p = data.p;
 		}

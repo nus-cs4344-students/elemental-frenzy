@@ -2,72 +2,6 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-
-
-// ## Import quintus library 
-var qlib = require('./quintus-all.js');
-// ## Get Quintus object
-var Q = qlib.Quintus({ 
-		audioSupported: [ 'ogg','mp3', 'wav' ],
-		imagePath: "public/images/",
-		audioPath: "public/audio/",
-		dataPath: "public/data/"
-	})
-        .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
-        .controls().touch();
-
-//Q.load("character_water.png, character_water.json");
-// Sprites sheets can be created manually
-//Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
-// Or from a .json asset that defines sprite locations
-Q.compileSheets("character_earth.png", "character_earth.json");
-Q.compileSheets("character_lightning.png", "character_lightning.json");
-Q.compileSheets("character_water.png", "character_water.json");
-Q.compileSheets("character_fire.png", "character_fire.json");
-Q.compileSheets("npcs.png", "npcs.json");
-Q.compileSheets("elemental_balls.png", "elemental_balls.json");
-
-// ## Level1 scene
-// Create a new scene called level 1
-Q.scene("level1",function(stage) {
-
-	// Add in a repeater for a little parallax action
-	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
-
-	// Add in a tile layer, and make it the collision layer
-	stage.collisionLayer(new Q.TileLayer({
-							dataAsset: 'level1.json',
-							sheet:     'tiles' }));
-});
-
-// ## Level2 scene
-// Create a new scene called level 2
-Q.scene("level2",function(stage) {
-
-	// Add in a repeater for a little parallax action
-	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
-
-	// Add in a tile layer, and make it the collision layer
-	stage.collisionLayer(new Q.TileLayer({
-						 dataAsset: 'level2.json',
-						 sheet:     'tiles' }));
-});
-
-// ## Extend a Quintus Sprite for our server player simulation
-Q.Sprite.extend("ServerPlayer", {
-	init: function(p) {
-		this._super(p, {
-			sprite: "character_water"
-		}); 
-		this.add("2d, platformerControls")
-	}       
-});
-
-
-
-
-
-
  
 app.use(express.static(__dirname + '/public'));
  
@@ -77,7 +11,7 @@ app.get('/', function(req, res){
 
 var MAX_PLAYERS_PER_SESSION = 5;
 var DEFAULT_LEVEL = 'level2';
-var DEFAULT_ENEMIES = [];//[{p: {x: 700, y: 0}}, {p: {x: 700, y: 0}}];
+var DEFAULT_ENEMIES = [];//[{}, {p: {x: 700, y: 0, id: 1}}, {p: {x: 800, y: 0, id: 2}}]; // For some reason, the first element MUST be empty or we will have bugs
 var DEFAULT_GAMESTATE = {
 	level: DEFAULT_LEVEL,
 	sprites: {
@@ -192,7 +126,6 @@ io.on('connection', function (socket) {
 			playerCount: 0,
 			players: [],
 			gameState: DEFAULT_GAMESTATE,
-			stage: new Q.stageScene(DEFAULT_GAMESTATE.level)
 		});
 		console.log("Creating new session " + sessionId);
 	}
@@ -243,6 +176,7 @@ io.on('connection', function (socket) {
 		var gameState = getGameStateOfSession(sessId);
 		var playerProps = {
 			playerId: data.playerId,
+			entityType: 'PLAYER',
 			x: 410,
 			y: 90 
 		};
@@ -367,11 +301,28 @@ io.on('connection', function (socket) {
 			sessionId = data.sessionId;
 		}
 		
+		if (data.entityType) {
+			if (sessions[sessionId].gameState.sprites[data.entityType][data.id]) {
+				// Old! Update.
+				console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
+				sessions[sessionId].gameState.sprites[data.entityType][data.id].p = data.p;
+			} else {
+				// New!!! Insert.
+				console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
+				sessions[sessionId].gameState.sprites[data.entityType].push({p: data.p});
+			}
+		}
+		
 		// if (data.entityType != 'PLAYER') {
 			// var id = getNextId(sessionId, data.entityType);
 			// data['id'] = id;
 		// }
 		broadcastToAllInSession(sessionId, 'updated', data);
+	});
+	
+	socket.on('destroyed', function(data) {
+		delete sessions[data.sessionId].gameState.sprites[data.entityType][data.id];
+		console.log("After deleting entity " + data.entityType + " id " + data.id + ", " + sessions[data.sessionId].gameState.sprites[data.entityType][data.id]);
 	});
 	
 	// socket.on('playerTookDmg', function(data) {

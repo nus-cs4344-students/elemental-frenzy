@@ -58,6 +58,14 @@ Q.Sprite.extend("Eleball", {
 		
 		this.on("onHit", this, "onHit");
 		
+		// Destroy itself after 10 seconds
+		var that = this;
+		setTimeout(function() {
+			if (that) {
+				that.destroy();
+			}
+		}, 10000)
+		
 		// Play fire sound when eleball is launched
 		if ( !this.p.soundIsAnnoying) {
 			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
@@ -86,6 +94,8 @@ Q.Eleball.extend("PlayerEleball", {
 		this._super(p, {
 			entityType: 'PLAYERELEBALL'
 		});
+		
+		this.on('destroyed');
 	},
 	
 	// Player eleballs only damage enemies
@@ -96,6 +106,21 @@ Q.Eleball.extend("PlayerEleball", {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
+	},
+	
+	destroyed: function() {
+		if (this.p.isServerSide) {
+			if (typeof this.p.id == 'undefined'){
+				console.log("getting new id for " + this.p.id);
+				this.p.id = getNextId(this.p.sessionId, this.p.entityType);
+			}
+			socket.emit('destroyed', {
+				entityType: 'ENEMYELEBALL',
+				sessionId: this.p.sessionId,
+				id: this.p.id,
+				p: this.p
+			});
+		}
 	}
 });
 
@@ -111,6 +136,8 @@ Q.Eleball.extend("EnemyEleball", {
 			dmg : ENEMY_ELEBALL_DEFAULT_DMG,
 			collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
 		});	
+		
+		this.on('destroyed');
 	},
 	
 	// Enemy eleballs only damage players
@@ -119,6 +146,21 @@ Q.Eleball.extend("EnemyEleball", {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
+	},
+	
+	destroyed: function() {
+		if (this.p.isServerSide) {
+			if (typeof this.p.id == 'undefined'){
+				console.log("getting new id for " + this.p.id);
+				this.p.id = getNextId(this.p.sessionId, this.p.entityType);
+			}
+			socket.emit('destroyed', {
+				entityType: 'ENEMYELEBALL',
+				sessionId: this.p.sessionId,
+				id: this.p.id,
+				p: this.p
+			});
+		}
 	}
 });
 

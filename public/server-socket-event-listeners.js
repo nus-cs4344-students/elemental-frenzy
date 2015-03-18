@@ -114,11 +114,13 @@ var loadGameState = function(gameState, sessionId) {
 			continue;
 		} else {	
 			// Else, create sprite!
-			if (gameState.sprites['ENEMY'][i]) {
+			if (gameState.sprites['ENEMY'][i] && gameState.sprites['ENEMY'][i].p) {
 				console.log("Creating sprite " + 'ENEMY' + " for id " + i);
 				console.log(gameState.sprites['ENEMY'][i].p);
 				gameState.sprites['ENEMY'][i].p.sessionId = sessionId;
+				console.log(gameState.sprites['ENEMY'][i].p.id);
 				var sprite = creates['ENEMY'](gameState.sprites['ENEMY'][i].p);
+				console.log(sprite.p.id);
 				sprite.add("serverSide");
 				gameState.sprites['ENEMY'][i] = {
 					sprite: sprite

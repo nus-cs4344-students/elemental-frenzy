@@ -225,17 +225,18 @@ Q.component("serverSide", {
 		
 		// Server side sprites will send updates periodically
 		this.serverUpdateInterval = setInterval(function() {
-			var idToUse, playerIdToUse;
+			var playerIdToUse;
 			if (entity.p.entityType == 'PLAYER') {
-				entity.p.id = idToUse = playerIdToUse = entity.p.playerId;
-			} else if (!entity.p.id){
-				entity.p.id = idToUse = getNextId(entity.p.sessionId, entity.p.entityType);
+				entity.p.id = playerIdToUse = entity.p.playerId;
+			} else if (typeof entity.p.id == 'undefined'){
+				console.log("getting new id for " + entity.p.id);
+				entity.p.id = getNextId(entity.p.sessionId, entity.p.entityType);
 			}
-			console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client, pos " + entity.p.x + "," + entity.p.y);
+			console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client from session " + entity.p.sessionId + " with playerId " + playerIdToUse);
 			socket.emit('update', {
 				entityType: entity.p.entityType,
 				sessionId: entity.p.sessionId,
-				id: idToUse,
+				id: entity.p.id,
 				playerId: playerIdToUse,
 				p: entity.p
 			});

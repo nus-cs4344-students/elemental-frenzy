@@ -217,6 +217,8 @@ Q.Sprite.extend("Player",{
 		}
 
 		var eleball = new Q.PlayerEleball({
+			isServerSide: this.p.isServerSide,
+			sessionId: this.p.sessionId,
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
@@ -226,6 +228,7 @@ Q.Sprite.extend("Player",{
 			vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
 			vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
 		});
+		console.log("Eleball is server side? " + eleball.p.isServerSide);
 
 		// fire ball location offset from player
 		var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
@@ -253,7 +256,6 @@ Q.Sprite.extend("Player",{
 		
 		// On the server side, we need to send this new eleball information to all other players
 		if (this.p.isServerSide) {
-			eleball.p.sessionId = this.p.sessionId,
 			socket.emit('update', {
 				playerId: this.p.playerId,
 				sessionId: this.p.sessionId,

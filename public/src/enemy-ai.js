@@ -119,6 +119,8 @@ Q.Sprite.extend("Enemy",{
 
   fired: function(){
 		var eleball = new Q.EnemyEleball({
+			isServerSide : this.p.isServerSide,
+			sessionId : this.p.sessionId,
 			element : this.p.element,
 			sheet : ELEBALL_ELEMENTNAMES[this.p.element],
 			shooter : this.p.name,
