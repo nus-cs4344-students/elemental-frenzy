@@ -76,14 +76,16 @@ app.get('/', function(req, res){
 });
 
 var MAX_PLAYERS_PER_SESSION = 5;
+var DEFAULT_LEVEL = 'level2';
+var DEFAULT_ENEMIES = [];//[{p: {x: 700, y: 0}}, {p: {x: 700, y: 0}}];
 var DEFAULT_GAMESTATE = {
-	level: 'level2',
+	level: DEFAULT_LEVEL,
 	sprites: {
 		PLAYER: [],
 		ACTOR: [],
 		PLAYERELEBALL: [],
 		ENEMYELEBALL: [],
-		ENEMY: []
+		ENEMY: DEFAULT_ENEMIES
 	}
 };
 
@@ -161,18 +163,6 @@ var findGoodSession = function() {
 		}
 	}
 	return -1;
-}
-
-/**
- * Get the next id useable for the session and the data entityType
- */
-var getNextId = function(sessionId, entityType) {
-	console.log("Accessing sessionId " + sessionId + " and entityType " + entityType);
-	var length = sessions[sessionId].gameState.sprites[entityType].length;
-	sessions[sessionId].gameState.sprites[entityType].push(entityType);
-	console.log("Get next Id for session " + sessionId + " and entityType " + entityType + " returns " + length + 
-				" and new next id is " + sessions[sessionId].gameState.sprites[entityType].length);
-	return length;
 }
  
 io.on('connection', function (socket) {

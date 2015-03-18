@@ -41,10 +41,7 @@ var loadGameState = function() {
 	console.log("Loading game state... selfId " + selfId);
 	
 	// Get game state data
-	var level = gameState.level,
-		players = gameState.players,
-		eleballs = gameState.eleballs,
-		enemies = gameState.enemies;
+	var level = gameState.level;
 		
 	// Load the level
 	console.log("Loading the level " + level);
@@ -175,13 +172,11 @@ socket.on('connected', function(data1) {
 				}
 			}
 		} else {
-			// Sprite exists, so just update it (if it is not the player)
-			//if (data.entityType != 'PLAYER') {
-				console.log("Updating player " + data.id);
-				data.p.update = true;
-				var sprite = getSprite(data.entityType, data.id);
-				sprite.p = data.p;
-			//}
+			// Sprite exists, so just update it
+			data.p.update = true;
+			console.log("Updating player " + data.id + " with update " + data.p.update);
+			var sprite = getSprite(data.entityType, data.id);
+			sprite.p = data.p;
 		}
 	});
 	

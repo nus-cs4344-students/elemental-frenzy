@@ -15,6 +15,7 @@ Q.Sprite.extend("Enemy",{
 	
 	init: function(p) {
 		this._super(p, { 
+		entityType: 'ENEMY',
 		sheet: ENEMY_CHARACTERS[Math.random() > 0.5 ? 0 : 1],
 		sprite: ENEMY_ANIMATION,
 		vx: 100,  
@@ -62,7 +63,10 @@ Q.Sprite.extend("Enemy",{
 		
 		// If not updated for 3 seconds, remove it
 		var temp = this;
-		setInterval(function() {
+		this.p.destroyWhenNoUpdateInterval = setInterval(function() {
+			if (temp.p.isServerSide) {
+				clearInterval(temp.p.destroyWhenNoUpdateInterval)
+			}
 			if (!temp.p.update) {
 				temp.destroy();
 			}
@@ -152,9 +156,9 @@ Q.Sprite.extend("Enemy",{
 		// On the server side, we need to send this new eleball information to all other players
 		if (this.p.isServerSide) {
 			socket.emit('update', {
-				type: 'ENEMYELEBALL',
-				sessionId: sessionId,
-				id: getNextId(sessionId, 'ENEMYELEBALL'),
+				entityType: 'ENEMYELEBALL',
+				sessionId: this.p.sessionId,
+				id: getNextId(this.p.sessionId, 'ENEMYELEBALL'),
 				p: eleball.p
 			})
 		}

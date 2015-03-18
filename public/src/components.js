@@ -227,10 +227,11 @@ Q.component("serverSide", {
 		this.serverUpdateInterval = setInterval(function() {
 			var idToUse, playerIdToUse;
 			if (entity.p.entityType == 'PLAYER') {
-				idToUse = playerIdToUse = entity.p.playerId;
-			} else {
-				idToUse = getNextId(sessionId, entity.p.entityType);
+				entity.p.id = idToUse = playerIdToUse = entity.p.playerId;
+			} else if (!entity.p.id){
+				entity.p.id = idToUse = getNextId(entity.p.sessionId, entity.p.entityType);
 			}
+			console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client, pos " + entity.p.x + "," + entity.p.y);
 			socket.emit('update', {
 				entityType: entity.p.entityType,
 				sessionId: entity.p.sessionId,
@@ -279,7 +280,6 @@ Q.component("serverPlatformerControls", {
     step: function(dt) {
       var p = this.entity.p;
 	  
-	  console.log("Step, inputs[right] is " + this.entity.inputs['right']);
 	  if (this.entity.inputs['right']) {
 		  console.log("Should be moving right");
 	  }

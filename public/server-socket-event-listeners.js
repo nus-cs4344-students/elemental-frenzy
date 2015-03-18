@@ -6,6 +6,15 @@ var gameStates = []; // indexed by session id
 var serverId;
 var stage;
 
+// ## Functions to create sprites for our game
+var creates = {
+	PLAYER: function(p) { return new Q.Player(p); },
+	ACTOR: function(p) { return new Q.Actor(p); },
+	PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
+	ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
+	ENEMY: function(p) { return new Q.Enemy(p); }
+};
+
 /**
  * Get the next id useable for the session and the data type
  */
@@ -32,7 +41,7 @@ socket.on('connected', function(data) {
 	socket.emit('serverJoined', {playerId: data.playerId});
 	
 	// Load the game state
-	loadGameState(gameStates[data.sessionId]);
+	loadGameState(gameStates[data.sessionId], data.sessionId);
 });
 
 socket.on('playerDisconnected', function(data) {	
@@ -84,21 +93,40 @@ socket.on('mouseup', function(data) {
 });
 
 // ## Helper Functions
-var loadGameState = function(gameState) {
+var loadGameState = function(gameState, sessionId) {
 	console.log("Loading game state...");
 	
 	// Get game state data
-	var level = gameState.level,
-		players = gameState.players,
-		eleballs = gameState.eleballs,
-		enemies = gameState.enemies;
+	var level = gameState.level;
 	
 	// Load the level, and insert the stage into the gameState
 	console.log("Loading the level " + level);
 	Q.stageScene(level);
 	gameState.stage = Q.stage();
 	
-	// Load some enemies
+	// Load enemies, if any
+	for (var i in gameState.sprites['ENEMY']) {	
+		if ( !gameState.sprites['ENEMY'][i] || gameState.sprites['ENEMY'][i].sprite) {
+			// Been deleted, or already has a sprite created!
+			continue;
+		} else if ('ENEMY' == 'PLAYER' && gameState.sprites['ENEMY'][i].p.playerId != selfId) {
+			// Not a true PLAYER, don't create sprite
+			continue;
+		} else {	
+			// Else, create sprite!
+			if (gameState.sprites['ENEMY'][i]) {
+				console.log("Creating sprite " + 'ENEMY' + " for id " + i);
+				console.log(gameState.sprites['ENEMY'][i].p);
+				gameState.sprites['ENEMY'][i].p.sessionId = sessionId;
+				var sprite = creates['ENEMY'](gameState.sprites['ENEMY'][i].p);
+				sprite.add("serverSide");
+				gameState.sprites['ENEMY'][i] = {
+					sprite: sprite
+				};
+				gameState.stage.insert(sprite);
+			}
+		}
+	}
 	
 	// Viewport
 	Q.stage().add("viewport");

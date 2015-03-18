@@ -13,11 +13,6 @@ var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
 
 
-var gameStates = []; // indexed by session id
-
-var serverId;
-var stage;
-
 // # Quintus platformer example
 //
 // [Run the example](../quintus/examples/platformer/index.html)
@@ -74,12 +69,15 @@ require(['src/scenes']);
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level1.json, level2.json, level3.json, tiles.png, background-wall.png,\
-	elemental_balls.png, elemental_balls.json, \
+Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, level3.json, \
+	  elemental_balls.png, elemental_balls.json, \
+    character_orc.png, character_orc.json, \
+    character_skeleton.png, character_skeleton.json, \
     character_earth.png, character_earth.json, \
     character_lightning.png, character_lightning.json, \
     character_water.png, character_water.json, \
-    character_fire.png, character_fire.json", function() {
+    character_fire.png, character_fire.json, \
+    map_tiles.png, ladder.png, ladder.json", function() {
 
   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
