@@ -1,0 +1,42 @@
+{
+	"asphalt": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 16,
+		"tilew": 32,
+		"tileh": 32,
+		"frames": 176
+	},	
+    "grass": {
+		"sx": 256,
+		"sy": 32,
+		"cols": 16,
+		"tilew": 32,
+		"tileh": 32,
+		"frames": 176
+	},
+    "vines": {
+		"sx": 0,
+		"sy": 160,
+		"cols": 16,
+		"tilew": 32,
+		"tileh": 32,
+		"frames": 176
+	},
+    "wood": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 16,
+		"tilew": 32,
+		"tileh": 32,
+		"frames": 176
+	},
+    "ice": {
+		"sx": 0,
+		"sy": 0,
+		"cols": 16,
+		"tilew": 32,
+		"tileh": 32,
+		"frames": 176
+	}
+}

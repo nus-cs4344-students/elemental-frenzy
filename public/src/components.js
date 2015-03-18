@@ -70,6 +70,10 @@ Q.component("dmgDisplay", {
 	},
 	
 	addDmg: function(dmgAndShooter) {
+		if(this.entity.p.takeDamageCooldown > 0){
+			return;
+		}
+
 		var dmg = dmgAndShooter.dmg;
 		this.entity.p.dmgDisplayDmgList.push(dmg);
 		this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
@@ -99,6 +103,24 @@ Q.component("dmgDisplay", {
 		for (var i = 0; i < this.entity.p.dmgDisplayDmgList.length; i++) {
 			ctx.fillText(this.entity.p.dmgDisplayDmgList[i], 
 						this.entity.p.dmgDisplayPosList[i][0], this.entity.p.dmgDisplayPosList[i][1]);
+		}
+	}
+});
+
+Q.component('2dLadder', {
+	added: function(){	
+		var entity = this.entity;
+		Q._defaults(entity.p,{
+			type: Q.SPRITE_UI, // ladder is ui element
+			collisionMask: Q.SPRITE_ACTIVE // ladder only collides with player
+		});
+		entity.on('hit',this,"collision");
+	},
+
+	collision: function(col,last) {
+		if(col.obj.isA("Ladder")){
+			var entity = this.entity;
+			entity.trigger("onLadder", col);
 		}
 	}
 });

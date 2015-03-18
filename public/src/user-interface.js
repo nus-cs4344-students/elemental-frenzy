@@ -14,17 +14,15 @@ var UI_PADDING_VALUE = 20; //in pixels
 // This is the example from the website homepage, it consists
 // a simple, non-animated platformer with some enemies and a 
 // target for the player.
-window.addEventListener("load",function() {
-
 Q.el.addEventListener('keyup',function(e) {
-	//TAB KEY
+	//9 == TAB KEY
 	if (e.keyCode == 9) {
 		Q.clearStage(STAGE_UI);
 	}
 });
 
 Q.el.addEventListener('keydown',function(e) {
-	//TAB KEY
+	//9 == TAB KEY
 	if (e.keyCode == 9) {
 		Q.clearStage(STAGE_UI);
 		Q.stageScene("scoreScreen", STAGE_UI); 
@@ -32,7 +30,6 @@ Q.el.addEventListener('keydown',function(e) {
 });
 
 Q.scene('scoreScreen', function(stage) {
-
 	//every line takes about 30 pixels
 	var offsetY = 30;
 
@@ -43,7 +40,7 @@ Q.scene('scoreScreen', function(stage) {
       fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
       border: 5,
       //x, y coordinates here are relative to canvas and top left = (0,0)
-      x: Q.width/2 - 15,
+      x: Q.width/2,
       y: Q.height/5
     }));
 	
@@ -72,9 +69,10 @@ Q.scene('scoreScreen', function(stage) {
 	** Set up Titles
 	*/
 
-	// placeholder, ignore
+	// placeholder to set up the overlay
 	stage.insert(new Q.UI.Text({ 
-	      label: "invisible placeholder",
+	      //invisible placeholder
+	      label: "i",
 	      color: "rgba(1,1,1,0)",
 	      x: 0,
 	      y: 0,
@@ -118,8 +116,14 @@ Q.scene('scoreScreen', function(stage) {
 	
 	var line = 1;
 	for (var name in kills) {
-		stage.insert(new Q.UI.Text({ 
-	      label: "invisible placeholder",
+
+		if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
+	    	continue;
+	    }
+
+		stage.insert(new Q.UI.Text({
+	      //invisible placeholder
+	      label: "i",
 	      color: "rgba(1,1,1,0)",
 	      x: 0,
 	      y: line*offsetY,
@@ -157,10 +161,8 @@ Q.scene('scoreScreen', function(stage) {
 	}
 	
 	//padding between stuff in container and border of container
-	overlayContainer.fit(UI_PADDING_VALUE, Q.width / 3.6); // magic number. need to decide aspect ratio first.
+	overlayContainer.fit(UI_PADDING_VALUE, 5*Q.width/12 + UI_PADDING_VALUE);
 	nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 	killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 	deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 })
-
-});

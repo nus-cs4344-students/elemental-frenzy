@@ -3,8 +3,6 @@
 // ## Socket event listeners
 
 var selfId;
-var sessionId;
-var gameRunning = false;
 var gameState = {
 	level: '',
 	sprites: {
@@ -37,19 +35,7 @@ var creates = {
 
 // ## Loads the game state.
 // To be used once when the player has joined the game.
-var loadGameState = function() {
 	console.log("Loading game state... selfId " + selfId);
-	
-	// Get game state data
-	var level = gameState.level,
-		players = gameState.players,
-		eleballs = gameState.eleballs,
-		enemies = gameState.enemies;
-		
-	// Load the level
-	console.log("Loading the level " + level);
-	Q.stageScene(level);
-	
 	var player;
 	// Create and load sprites
 	console.log("There are " + gameState.sprites['PLAYER'].length + " players!!!");
@@ -91,33 +77,25 @@ var getSprite = function(type, id) {
 // This does NOT mean that the sprite has been created.
 var checkSpriteExists = function(type, id) {
 	return (typeof gameState.sprites[type][id] != 'undefined');
-}
-
 socket.on('connected', function(data1) {
 	selfId = data1.playerId;
-	sessionId = data1.sessionId;
+	console.log("Connected to server as player " + selfId);
 	gameState = {
 		level: data1.gameState.level,
 		sprites: data1.gameState.sprites
 	}
 	
-	console.log("Connected to server as player " + selfId + " in session " + sessionId);
 	
-	// Tell server that you have joined
-	socket.emit('joined', { playerId: selfId });
+	Q.stageScene('level2');
 	//Q.stageScene('level3');
 	
 	// ## Event listeners for data received from server
-	socket.on('playerJoined', function(data) {
 		console.log("Player " + data.playerId + " joined");
 		
 		if (data.playerId == selfId) {
-			// It is the player himself, so it is time to load the game for the player to play!
 			gameState.sprites['PLAYER'][data.playerId] = {
 				p: data.p
 			};
-			loadGameState();
-			gameRunning = true;
 		}
 	});
 	
@@ -130,9 +108,6 @@ socket.on('connected', function(data1) {
 				sprite.destroy();
 				gameState.sprites['ACTOR'].splice(data.playerId, 1);
 			}
-		}
-	});
-	
 	socket.on('insert_object', function(data) {
 		console.log(selfId + ": Message from server: insert_object");
 		if (data.object_type == 'PlayerEleball') {
@@ -146,10 +121,8 @@ socket.on('connected', function(data1) {
 	
 	socket.on('updated', function(data) {
 		console.log("Got update from id " + data.id);
-		
 		// No longer server side
 		data.p.isServerSide = false;
-		
 		if (data.type == 'PLAYER') {
 			// Check if the data.type is player and if the playerId is myself or not
 			// If it is not then it is an ACTOR!
@@ -190,9 +163,11 @@ socket.on('connected', function(data1) {
 		var actor = actors.filter(function(obj) {
 			return obj.playerId == data.playerId;
 		})[0];
-		if (actor) {
-			actor.player.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
-		}
+
+		// REMOVED: short circuit actor damage at client side
+		// if (actor) {
+		// 	actor.player.takeDamage(data);
+		// }
 	});
 	
 	socket.on('playerDied', function(data) {

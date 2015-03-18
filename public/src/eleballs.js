@@ -14,11 +14,12 @@ var ELEBALL_ELEMENT_WATER = 3;
 var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
 // TODO Change the sound files once they are ready
 var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
-var ELEBALL_DEFAULT_ELEMENT = 0; // water
+var ELEBALL_DEFAULT_ELEMENT = 0; // fire
 var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
 var ELEBALL_ANIMATION = "eleball";
 var ELEBALL_PLAYER_SF = 0.5;
+var ELEBALL_ENEMY_SF = 0.5;
 
 // Load element sounds
 for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
@@ -60,8 +61,6 @@ Q.Sprite.extend("Eleball", {
 		if ( !this.p.soundIsAnnoying) {
 			Q.audio.play(ELEBALL_ELEMENTSOUNDS[this.p.element]);
 		}
-
-		this.play("fire");
 	},
 
 	onHit: function(collision) {
@@ -71,6 +70,8 @@ Q.Sprite.extend("Eleball", {
 	step: function(dt) {
 		this.p.x += this.p.vx * dt;
 		this.p.y += this.p.vy * dt;
+
+		this.play("fire");
 	}
 });
 
@@ -87,7 +88,8 @@ Q.Eleball.extend("PlayerEleball", {
 	// Player eleballs only damage enemies
 	onHit: function(collision) {
 		if (collision.obj.isA("Enemy") ||
-			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId)) {
+			(collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId) ||
+			collision.obj.isA("Actor")) {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
@@ -109,7 +111,7 @@ Q.Eleball.extend("EnemyEleball", {
 	
 	// Enemy eleballs only damage players
 	onHit: function(collision) {
-		if (collision.obj.isA("Player")) {
+		if (collision.obj.isA("Player") || collision.obj.isA("Actor")) {
 			collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
 		}
 		this._super(collision);
