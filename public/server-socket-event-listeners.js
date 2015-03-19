@@ -2,6 +2,26 @@
 
 require(['src/helper-functions']);
 
+var DEFAULT_LEVEL = 'level2';
+var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, id: 1}}, "2": {p: {x: 800, y: 0, id: 2}}};
+var DEFAULT_GAMESTATE = {
+	level: DEFAULT_LEVEL,
+	sprites: {
+		PLAYER: {},
+		ACTOR: {},
+		PLAYERELEBALL: {},
+		ENEMYELEBALL: {},
+		ENEMY: DEFAULT_ENEMIES
+	},
+	nextId: {
+		PLAYER: 5,
+		ACTOR: 1,
+		PLAYERELEBALL: 1,
+		ENEMYELEBALL: 1,
+		ENEMY: 3
+	}
+};
+
 var gameStates = []; // indexed by session id
 
 var serverId;
@@ -21,15 +41,9 @@ var creates = {
  */
 var getNextId = function(sessionId, type) {
 	console.log("Accessing sessionId " + sessionId + " and type " + type);
-	var nextId;
-	if ( !gameStates[sessionId].sprites[type].nextId) {
-		nextId = 0;
-		gameStates[sessionId].sprites[type].nextId = 1;
-	} else {
-		nextId = gameStates[sessionId].sprites[type].nextId++;
-	}
+	var nextId = gameStates[sessionId].nextId[type]++;
 	console.log("Get next Id for session " + sessionId + " and type " + type + " returns " + length + 
-				" and new next id is " + sizeOfObject(gameStates[sessionId].sprites[type]));
+				" and new next id is " + gameStates[sessionId].nextId[type]);
 	return length;
 }
 
@@ -40,8 +54,8 @@ socket.on('connected', function(data) {
 	serverId = data.playerId;
 	
 	// Connected. Initializing game state to the one app.js sent
-	gameStates[data.sessionId] = data.gameState;
-	gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = {}; // should not have any players
+	gameStates[data.sessionId] = DEFAULT_GAMESTATE;
+	//gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = {}; // should not have any players
 	
 	// Tell app.js that we have joined!
 	socket.emit('serverJoined', {playerId: data.playerId});

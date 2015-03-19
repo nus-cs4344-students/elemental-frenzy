@@ -54,7 +54,9 @@ Q.Sprite.extend("Player",{
 		  onLadder: false,
 		  ladderX: 0,
 		  takeDamageCooldown: 0,
-		  takeDamageIntervalId: -1
+		  takeDamageIntervalId: -1,
+		  update: true//,
+		  //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
 		});
 
     // Add in pre-made components to get up and running quickly
@@ -277,7 +279,7 @@ Q.Sprite.extend("Player",{
   	if(this.p.takeDamageCooldown > 0){
 		return;
 	}
-
+	
     var dmg = dmgAndShooter.dmg,
 		shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
@@ -330,6 +332,9 @@ Q.Sprite.extend("Player",{
   		clearInterval(this.p.takeDamageIntervalId);
   		this.p.takeDamageIntervalId = -1;
   	}
+	
+	// Update countdown
+	//this.p.updateCountdown -= dt;
 
 	  if(this.p.onLadder) {
       this.p.gravity = 0;

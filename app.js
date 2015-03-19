@@ -11,15 +11,22 @@ app.get('/', function(req, res){
 
 var MAX_PLAYERS_PER_SESSION = 5;
 var DEFAULT_LEVEL = 'level2';
-var DEFAULT_ENEMIES = {nextId: 3, "1": {p: {x: 700, y: 0, id: 1}}, "2": {p: {x: 800, y: 0, id: 2}}};
+var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, id: 1}}, "2": {p: {x: 800, y: 0, id: 2}}};
 var DEFAULT_GAMESTATE = {
 	level: DEFAULT_LEVEL,
 	sprites: {
-		PLAYER: {nextId: 1},
-		ACTOR: {nextId: 1},
-		PLAYERELEBALL: {nextId: 1},
-		ENEMYELEBALL: {nextId: 1},
+		PLAYER: {},
+		ACTOR: {},
+		PLAYERELEBALL: {},
+		ENEMYELEBALL: {},
 		ENEMY: DEFAULT_ENEMIES
+	},
+	nextId: {
+		PLAYER: 2,
+		ACTOR: 1,
+		PLAYERELEBALL: 1,
+		ENEMYELEBALL: 1,
+		ENEMY: 3
 	}
 };
 
@@ -199,6 +206,8 @@ io.on('connection', function (socket) {
 		// Insert the player properties into the data to be broadcasted to all players in the session,
 		// and tell the other players in his session about his existence
 		data.p = playerProps;
+		data.p.sessionId = sessId;
+		if (typeof data.p.sessionId == 'undefined') console.log("SESSION ID IS UNDEFINED IN APP.JS");
 		broadcastToAllInSession(sessId, 'playerJoined', data);
 		
 		// Tell the server about the new player
@@ -302,10 +311,6 @@ io.on('connection', function (socket) {
 		});
 	});
 	
-	// socket.on('insert_object', function(data) {
-		// broadcastToAllExcept(data.playerId, 'insert_object', data);
-	// });
-	
 	socket.on('update', function(data) {
 		var playerId = data.playerId;
 		var sessionId;
@@ -315,16 +320,19 @@ io.on('connection', function (socket) {
 			sessionId = data.sessionId;
 		}
 		
-		if (data.entityType) {
-			console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
+		if (data.entityType && typeof sessionId != 'undefined') {
+			console.log("Trying to access on session " + sessionId + ", entity type " + data.entityType + " data id " + data.id);
 			sessions[sessionId].gameState.sprites[data.entityType][data.id] = {p: data.p};
 		}
 		
-		broadcastToAllInSession(sessionId, 'updated', data);
+		if (typeof sessionId != 'undefined') {
+			broadcastToAllInSession(sessionId, 'updated', data);
+		}
 	});
 	
 	socket.on('destroyed', function(data) {
 		if (sessions[data.sessionId].gameState.sprites[data.entityType][data.id]) {
+			console.log("DESTROYING " + data.entityType + " id " + data.id);
 			console.log("Old length " + sizeOfObject(sessions[data.sessionId].gameState.sprites[data.entityType]));
 			delete sessions[data.sessionId].gameState.sprites[data.entityType][data.id];
 			console.log("After deleting from session " + data.sessionId + " entity " + data.entityType + " id " + data.id + ", " + sessions[data.sessionId].gameState.sprites[data.entityType][data.id]);

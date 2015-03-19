@@ -8,22 +8,22 @@ var gameRunning = false;
 var gameState = {
 	level: '',
 	sprites: {
-		PLAYER: [],
-		ACTOR: [],
-		PLAYERELEBALL: [],
-		ENEMYELEBALL: [],
-		ENEMY: []
+		PLAYER: {},
+		ACTOR: {},
+		PLAYERELEBALL: {},
+		ENEMYELEBALL: {},
+		ENEMY: {}
 	}
 }; 
-var actors = [];
+var initialPlayerProps;
 
 // The sprites currently in the game, all indexed by id
 var sprites = {
-	PLAYER: [],			
-	ACTOR: [],			
-	PLAYERELEBALL: [],
-	ENEMYELEBALL: [],
-	ENEMY: []
+	PLAYER: {},			
+	ACTOR: {},			
+	PLAYERELEBALL: {},
+	ENEMYELEBALL: {},
+	ENEMY: {}
 };
 
 // ## Functions to create sprites for our game
@@ -49,7 +49,6 @@ var loadGameState = function() {
 	
 	var player;
 	// Create and load sprites
-	console.log("There are " + sizeOfObject(gameState.sprites['PLAYER']) + " players!!!");
 	for (var attrName in gameState.sprites) {
 		for (var i in gameState.sprites[attrName]) {	
 			if ( !gameState.sprites[attrName][i] || !gameState.sprites[attrName][i].p) {
@@ -61,10 +60,10 @@ var loadGameState = function() {
 			} else {	
 				// Else, create sprite!
 				if (gameState.sprites[attrName][i]) {
-					console.log("Creating sprite " + attrName + " for id " + i);
+					gameState.sprites[attrName][i].p.sessionId = sessionId;
+					console.log("Creating sprite " + attrName + " for id " + i + " in session " + gameState.sprites[attrName][i].p.sessionId);
 					console.log(gameState.sprites[attrName][i].p);
 					var sprite = creates[attrName](gameState.sprites[attrName][i].p);
-					gameState.stage.insert(sprite);
 					gameState.sprites[attrName][i] = {
 						sprite: sprite
 					};
@@ -72,13 +71,18 @@ var loadGameState = function() {
 					if (attrName == 'PLAYER' && sprite.p.playerId == selfId) {
 						console.log("Player FOUND");
 						player = sprite;
+						player.p.playerId = selfId;
+						player.p.id = selfId;
 						console.log(player.p.sheet);
+					} else {
+						gameState.stage.insert(sprite);
 					}
 				}
 			}
 		}
 	}
-	gameState.stage.insert(sprite);
+	initialPlayerProps = player.p; // for debugging later on in loadGameState
+	gameState.stage.insert(player);
 	Q.stage().add("viewport").follow(player);
 }
 
@@ -116,10 +120,8 @@ socket.on('connected', function(data1) {
 				p: data.p
 			};
 			
-			setTimeout(function () {
-				loadGameState();
-				gameRunning = true;
-			}, 1000);
+			loadGameState();
+			gameRunning = true;
 		}
 	});
 	
@@ -178,10 +180,10 @@ socket.on('connected', function(data1) {
 			}
 		} else {
 			// Sprite exists, so just update it
+			var sprite = getSprite(data.entityType, data.id);
 			data.p.update = true;
 			console.log("Updating " + data.entityType + " with id " + data.id + " with update " + data.p.update);
-			var sprite = getSprite(data.entityType, data.id);
-			sprite.p = data.p;
+			sprite.p = data.p;	
 		}
 	});
 	
