@@ -1,6 +1,6 @@
 "use strict";
 
-// ## Socket event listeners
+require(['src/helper-functions']);
 
 var selfId;
 var sessionId;
@@ -49,7 +49,7 @@ var loadGameState = function() {
 	
 	var player;
 	// Create and load sprites
-	console.log("There are " + gameState.sprites['PLAYER'].length + " players!!!");
+	console.log("There are " + sizeOfObject(gameState.sprites['PLAYER']) + " players!!!");
 	for (var attrName in gameState.sprites) {
 		for (var i in gameState.sprites[attrName]) {	
 			if ( !gameState.sprites[attrName][i] || !gameState.sprites[attrName][i].p) {
@@ -115,8 +115,11 @@ socket.on('connected', function(data1) {
 			gameState.sprites['PLAYER'][data.playerId] = {
 				p: data.p
 			};
-			loadGameState();
-			gameRunning = true;
+			
+			setTimeout(function () {
+				loadGameState();
+				gameRunning = true;
+			}, 1000);
 		}
 	});
 	

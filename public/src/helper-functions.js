@@ -29,3 +29,14 @@ var insertAllActors = function(stage) {
 		stage.insert(actors[attrName].player);
 	}
 };
+
+/**
+ * Finds the size of an object
+ */
+var sizeOfObject = function(obj) {
+	var size = 0;
+	for (var key in obj) {
+		size++;
+	}
+	return size;
+}

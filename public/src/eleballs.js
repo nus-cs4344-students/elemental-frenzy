@@ -61,9 +61,7 @@ Q.Sprite.extend("Eleball", {
 		// Destroy itself after 10 seconds
 		var that = this;
 		setTimeout(function() {
-			if (that) {
-				that.destroy();
-			}
+			that.destroy();
 		}, 10000)
 		
 		// Play fire sound when eleball is launched
@@ -114,8 +112,9 @@ Q.Eleball.extend("PlayerEleball", {
 				console.log("getting new id for " + this.p.id);
 				this.p.id = getNextId(this.p.sessionId, this.p.entityType);
 			}
+			console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
 			socket.emit('destroyed', {
-				entityType: 'ENEMYELEBALL',
+				entityType: 'PLAYERELEBALL',
 				sessionId: this.p.sessionId,
 				id: this.p.id,
 				p: this.p
@@ -154,6 +153,7 @@ Q.Eleball.extend("EnemyEleball", {
 				console.log("getting new id for " + this.p.id);
 				this.p.id = getNextId(this.p.sessionId, this.p.entityType);
 			}
+			console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
 			socket.emit('destroyed', {
 				entityType: 'ENEMYELEBALL',
 				sessionId: this.p.sessionId,

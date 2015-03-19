@@ -256,11 +256,16 @@ Q.Sprite.extend("Player",{
 		
 		// On the server side, we need to send this new eleball information to all other players
 		if (this.p.isServerSide) {
+			if (typeof eleball.p.id == 'undefined'){
+				console.log("getting new id for " + eleball.p.id);
+				eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
+			}
+			console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
 			socket.emit('update', {
 				playerId: this.p.playerId,
 				sessionId: this.p.sessionId,
 				entityType: 'PLAYERELEBALL',
-				id: getNextId(this.p.sessionId, 'PLAYERELEBALL'),
+				id: eleball.p.id,
 				p: eleball.p
 			})
 		}

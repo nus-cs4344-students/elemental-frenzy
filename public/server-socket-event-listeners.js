@@ -1,5 +1,6 @@
 "use strict";
 
+require(['src/helper-functions']);
 
 var gameStates = []; // indexed by session id
 
@@ -20,10 +21,15 @@ var creates = {
  */
 var getNextId = function(sessionId, type) {
 	console.log("Accessing sessionId " + sessionId + " and type " + type);
-	var length = gameStates[sessionId].sprites[type].length;
-	gameStates[sessionId].sprites[type].push(type);
+	var nextId;
+	if ( !gameStates[sessionId].sprites[type].nextId) {
+		nextId = 0;
+		gameStates[sessionId].sprites[type].nextId = 1;
+	} else {
+		nextId = gameStates[sessionId].sprites[type].nextId++;
+	}
 	console.log("Get next Id for session " + sessionId + " and type " + type + " returns " + length + 
-				" and new next id is " + gameStates[sessionId].sprites[type].length);
+				" and new next id is " + sizeOfObject(gameStates[sessionId].sprites[type]));
 	return length;
 }
 
@@ -35,7 +41,7 @@ socket.on('connected', function(data) {
 	
 	// Connected. Initializing game state to the one app.js sent
 	gameStates[data.sessionId] = data.gameState;
-	gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = []; // should not have any players
+	gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = {}; // should not have any players
 	
 	// Tell app.js that we have joined!
 	socket.emit('serverJoined', {playerId: data.playerId});
@@ -57,7 +63,7 @@ socket.on('playerJoined', function(data) {
 	console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
 	data.p.sessionId = data.sessionId;
 	addPlayer(data.sessionId, new Q.Player(data.p));
-	console.log("Number of players: " + gameStates[data.sessionId].sprites['PLAYER'].length);
+	console.log("Number of players: " + sizeOfObject(gameStates[data.sessionId].sprites['PLAYER']));
 });
 
 socket.on('keydown', function(data) {
@@ -66,11 +72,11 @@ socket.on('keydown', function(data) {
 		e = data.e;
 	var player = getPlayer(sessionId, playerId);
 	
-	console.log("Player " + playerId + " pressed key of keycode " + e.keyCode);
-	console.log("Player " + playerId + " OLD position " + player.p.x + "," + player.p.y);
+	console.log("Player " + playerId + " of session " + sessionId + " pressed key of keycode " + e.keyCode);
+	console.log("Player " + playerId + " of session " + sessionId + " OLD position " + player.p.x + "," + player.p.y);
 	// Simulate player pressing the key
 	pressKey(player, e.keyCode);
-	console.log("Player " + playerId + " NEW position " + player.p.x + "," + player.p.y);
+	console.log("Player " + playerId + " of session " + sessionId + " NEW position " + player.p.x + "," + player.p.y);
 });
 socket.on('keyup', function(data) {
 	var playerId = data.playerId,
@@ -106,11 +112,8 @@ var loadGameState = function(gameState, sessionId) {
 	
 	// Load enemies, if any
 	for (var i in gameState.sprites['ENEMY']) {	
-		if ( !gameState.sprites['ENEMY'][i] || gameState.sprites['ENEMY'][i].sprite) {
-			// Been deleted, or already has a sprite created!
-			continue;
-		} else if ('ENEMY' == 'PLAYER' && gameState.sprites['ENEMY'][i].p.playerId != selfId) {
-			// Not a true PLAYER, don't create sprite
+		if (gameState.sprites['ENEMY'][i].sprite) {
+			// Already has a sprite created!
 			continue;
 		} else {	
 			// Else, create sprite!
@@ -153,13 +156,13 @@ var loadGameState = function(gameState, sessionId) {
 
 // ## Helper functions
 var getPlayer = function(sessionId, playerId) {
-	return gameStates[sessionId].sprites['PLAYER'].filter(function(obj) {
-		return obj.sprite.p.playerId == playerId;
-	})[0].sprite;
+	console.log("Getting player sessionId " + sessionId + " player id " + playerId);
+	return gameStates[sessionId].sprites['PLAYER'][playerId].sprite;
 }
 
-var addSprite = function(sessionId, type, id, sprite) {
-	gameStates[sessionId].sprites[type][id] = {
+var addSprite = function(sessionId, entityType, id, sprite) {
+	console.log("Adding sprite sessionId " + sessionId + " player id " + id + " entityType " + entityType);
+	gameStates[sessionId].sprites[entityType][id] = {
 		sprite: sprite
 	};
 }
@@ -178,7 +181,8 @@ var destroyPlayer = function(sessionId, playerId) {
 		if (gameStates[sessionId].sprites['PLAYER'][playerId]) {
 			gameStates[sessionId].sprites['PLAYER'][playerId].sprite.destroy();
 		}
-		gameStates[sessionId].sprites['PLAYER'].splice(playerId, 1);
+		delete gameStates[sessionId].sprites['PLAYER'][playerId];
+		console.log("Destroyed sprite player id " + playerId);
 	}
 }
 

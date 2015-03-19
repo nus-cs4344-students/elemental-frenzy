@@ -157,10 +157,15 @@ Q.Sprite.extend("Enemy",{
 		
 		// On the server side, we need to send this new eleball information to all other players
 		if (this.p.isServerSide) {
+			if (typeof eleball.p.id == 'undefined'){
+				console.log("getting new id for " + eleball.p.id);
+				eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
+			}
+			console.log("New ENEMYELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
 			socket.emit('update', {
 				entityType: 'ENEMYELEBALL',
 				sessionId: this.p.sessionId,
-				id: getNextId(this.p.sessionId, 'ENEMYELEBALL'),
+				id: eleball.p.id,
 				p: eleball.p
 			})
 		}

@@ -11,14 +11,14 @@ app.get('/', function(req, res){
 
 var MAX_PLAYERS_PER_SESSION = 5;
 var DEFAULT_LEVEL = 'level2';
-var DEFAULT_ENEMIES = [];//[{}, {p: {x: 700, y: 0, id: 1}}, {p: {x: 800, y: 0, id: 2}}]; // For some reason, the first element MUST be empty or we will have bugs
+var DEFAULT_ENEMIES = {nextId: 3, "1": {p: {x: 700, y: 0, id: 1}}, "2": {p: {x: 800, y: 0, id: 2}}};
 var DEFAULT_GAMESTATE = {
 	level: DEFAULT_LEVEL,
 	sprites: {
-		PLAYER: [],
-		ACTOR: [],
-		PLAYERELEBALL: [],
-		ENEMYELEBALL: [],
+		PLAYER: {nextId: 1},
+		ACTOR: {nextId: 1},
+		PLAYERELEBALL: {nextId: 1},
+		ENEMYELEBALL: {nextId: 1},
 		ENEMY: DEFAULT_ENEMIES
 	}
 };
@@ -97,6 +97,17 @@ var findGoodSession = function() {
 		}
 	}
 	return -1;
+}
+
+/**
+ * Finds the size of an object
+ */
+var sizeOfObject = function(obj) {
+	var size = 0;
+	for (var key in obj) {
+		size++;
+	}
+	return size;
 }
  
 io.on('connection', function (socket) {
@@ -223,12 +234,15 @@ io.on('connection', function (socket) {
 			}
 		}
 		// Find index to splice players in gameState
+		/*
 		for (var idx in sessions[sessionId].gameState.sprites['PLAYER']) {
 			if (sessions[sessionId].gameState.sprites['PLAYER'][idx].playerId == playerId) {
 				sessions[sessionId].gameState.sprites['PLAYER'].splice(idx, 1);
 				break;
 			}
 		}
+		*/
+		delete sessions[sessionId].gameState.sprites['PLAYER'][playerId];
 		
 		sessions[sessionId].playerCount--;
 		
@@ -302,27 +316,20 @@ io.on('connection', function (socket) {
 		}
 		
 		if (data.entityType) {
-			if (sessions[sessionId].gameState.sprites[data.entityType][data.id]) {
-				// Old! Update.
-				console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
-				sessions[sessionId].gameState.sprites[data.entityType][data.id].p = data.p;
-			} else {
-				// New!!! Insert.
-				console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
-				sessions[sessionId].gameState.sprites[data.entityType].push({p: data.p});
-			}
+			console.log("Trying to access entity type " + data.entityType + " data id " + data.id);
+			sessions[sessionId].gameState.sprites[data.entityType][data.id] = {p: data.p};
 		}
 		
-		// if (data.entityType != 'PLAYER') {
-			// var id = getNextId(sessionId, data.entityType);
-			// data['id'] = id;
-		// }
 		broadcastToAllInSession(sessionId, 'updated', data);
 	});
 	
 	socket.on('destroyed', function(data) {
-		delete sessions[data.sessionId].gameState.sprites[data.entityType][data.id];
-		console.log("After deleting entity " + data.entityType + " id " + data.id + ", " + sessions[data.sessionId].gameState.sprites[data.entityType][data.id]);
+		if (sessions[data.sessionId].gameState.sprites[data.entityType][data.id]) {
+			console.log("Old length " + sizeOfObject(sessions[data.sessionId].gameState.sprites[data.entityType]));
+			delete sessions[data.sessionId].gameState.sprites[data.entityType][data.id];
+			console.log("After deleting from session " + data.sessionId + " entity " + data.entityType + " id " + data.id + ", " + sessions[data.sessionId].gameState.sprites[data.entityType][data.id]);
+			console.log("New length " + sizeOfObject(sessions[data.sessionId].gameState.sprites[data.entityType]));
+		}
 	});
 	
 	// socket.on('playerTookDmg', function(data) {
