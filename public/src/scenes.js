@@ -12,7 +12,7 @@ Q.scene("level1",function(stage) {
 
 		// Add in a tile layer, and make it the collision layer
 		stage.collisionLayer(new Q.TileLayer({
-								dataAsset: 'level1.json',
+              							dataAsset: 'level1.json',
 		                        sheet:     'tiles' }));
 
 

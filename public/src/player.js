@@ -14,6 +14,7 @@ var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
+var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -46,7 +47,9 @@ Q.Sprite.extend("Player",{
 		  fireTargetY: 0,  // possition y of target in game world
 		  isFiring: false,
 		  onLadder: false,
-		  ladderX: 0
+		  ladderX: 0,
+		  takeDamageCooldown: 0,
+		  takeDamageIntervalId: -1
 		});
 
     // Add in pre-made components to get up and running quickly
@@ -79,7 +82,31 @@ Q.Sprite.extend("Player",{
 			this.destroy();
 		  }
 		});
-		
+	
+	// ## Send key presses to the server
+	Q.el.addEventListener('keydown', function(e) {
+		socket.emit('keydown', {
+			playerId: that.p.playerId,
+			keyCode: e.keyCode
+		});
+	});
+	Q.el.addEventListener('keyup', function(e) {
+		socket.emit('keyup', {
+			playerId: that.p.playerId,
+			keyCode: e.keyCode
+		});
+	});	
+	// Event listener for firing
+	Q.el.addEventListener('mouseup', function(e){
+		var createdEvt = {changedTouches: e.changedTouches};
+		socket.emit('mouseup', {
+			playerId: that.p.playerId,
+			e: createdEvt
+		});
+		that.trigger('fire', e);
+	});
+	
+	// Listen for takeDamage events
 		this.on('takeDamage');
 		
 		// Event listener for toggling elements
@@ -90,7 +117,6 @@ Q.Sprite.extend("Player",{
 		Q.el.addEventListener('mouseup', function(e){
 			that.trigger('fire', e);
 		});
-
 		this.on('fire', this, 'fire');
 		this.on('fired', this, 'fired');
 		this.on("onLadder", this, 'climbLadder');	
@@ -100,7 +126,7 @@ Q.Sprite.extend("Player",{
 		if (this.p.cooldown > 0 || !this.p.canFire) {
 			return;
 		}
-
+		
 		var stage = Q.stage(0); 
 		var touch = e.changedTouches ?  e.changedTouches[0] : e;
 		var mouseX = Q.canvasToStageX(touch.x, stage);
@@ -142,7 +168,7 @@ Q.Sprite.extend("Player",{
 		}
 
 		// Magic code
-		e.preventDefault();
+		//e.preventDefault();
   },
 
   fired: function(){
@@ -197,6 +223,10 @@ Q.Sprite.extend("Player",{
   },
 
   takeDamage: function(dmgAndShooter) {
+  	if(this.p.takeDamageCooldown > 0){
+			return;
+		}
+
     var dmg = dmgAndShooter.dmg,
 		shooter = dmgAndShooter.shooter;
 		this.p.currentHealth -= dmg;
@@ -204,12 +234,22 @@ Q.Sprite.extend("Player",{
 		
 		socket.emit('playerTookDmg', {
 			playerId: this.p.playerId,
-			dmg: dmg
+		dmg: dmg,
+		shooter: shooter
 		});
+
+		var that = this;
+		if(this.p.takeDamageIntervalId == -1){
+				var playTakeDamage = function (){
+					that.play("take_damage", 3);
+				}
+				this.p.takeDamageIntervalId = setInterval(playTakeDamage, 200);
+		}
+		this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 
 		if (this.p.currentHealth <= 0) {
 			this.die(shooter);
-		}  
+		}
   },
   
   die: function(killer) {
@@ -233,13 +273,13 @@ Q.Sprite.extend("Player",{
 	    }
 	},
 
-  step: function(dt) {	  
-	  this.p.cooldown -= dt;
-	  if (this.p.cooldown <= 0) {
-			this.p.cooldown = 0;
-	  }
+  step: function(dt) {
+  	// stop interval when player can take damage
+  	if(this.p.takeDamageCooldown <= 0 && this.p.takeDamageIntervalId != -1){
+  		clearInterval(this.p.takeDamageIntervalId);
+  		this.p.takeDamageIntervalId = -1;
+  	}
 
-	  var processed = false;
 	  if(this.p.onLadder) {
       this.p.gravity = 0;
 
@@ -255,12 +295,11 @@ Q.Sprite.extend("Player",{
       	this.p.vy = 0;
         this.play("stand_back");
       }
-      processed = true;
+    }else{
+    	this.p.gravity = 1;
     }
 
-    if(!processed && this.has('animation')){
-    	this.p.gravity = 1;
-    	
+    if(!this.p.onLadder && this.has('animation')){
 			// player not jumping
 			if(this.p.vy == 0){
 				// play running animation
@@ -291,6 +330,8 @@ Q.Sprite.extend("Player",{
 	  });
 
 	  this.p.onLadder = false;
+	  this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
+	  this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
   },
   
   draw: function(ctx) {
@@ -311,7 +352,9 @@ Q.animations(PLAYER_ANIMATION, {
 	fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: 1/13, trigger: "fired", loop: false},
 	fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: 1/13, trigger: "fired", loop: false}, 
 	fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: 1/13, trigger: "fired", loop: false}, 
-	fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103,103], rate: 1/13, trigger: "fired", loop: false}, 
+	fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103], rate: 1/13, trigger: "fired", loop: false}, 
+
+	take_damage: {frames: [104], rate:1/3, loop:false},
 
 	stand_back: { frames: [7], rate: 1/3 },
 	stand_left: { frames: [20], rate: 1/3 },
