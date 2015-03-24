@@ -202,9 +202,8 @@ Quintus["2D"] = function(Q) {
           this.tileCollisionObjects[k] = colObj;
         }
       }
-
     },
-
+    
     load: function(dataAsset) {
       var fileParts = dataAsset.split("."),
           fileExt = fileParts[fileParts.length-1].toLowerCase(),

@@ -4,7 +4,7 @@
 		"sy": 0,
 		"cols": 1,
 		"tilew": 32,
-		"tileh": 71,
+		"tileh": 63,
 		"frames": 1
 	},
 	"ladder_wood": {
@@ -12,23 +12,15 @@
 		"sy": 0,
 		"cols": 1,
 		"tilew": 32,
-		"tileh": 71,
+		"tileh": 63,
 		"frames": 1
 	},
 	"rope": {
 		"sx": 64,
 		"sy": 0,
 		"cols": 1,
-		"tilew": 32,
-		"tileh": 78,
+		"tilew": 6,
+		"tileh": 63,
 		"frames": 1
-	},
-    "rope_vine": {
-        "sx": 96,
-		"sy": 0,
-		"cols": 1,
-		"tilew": 32,
-		"tileh": 60,
-		"frames": 1  
-    }
+	}
 }
