@@ -78,17 +78,17 @@ Q.Sprite.extend("Player",{
   
     // Server side simulation. Server Player sends updates back to the client
     // Remember to clearInterval this when destroying the object!!
-    if (this.p.isServerSide) {
-      this.p.serverUpdateInterval = setInterval(function() {
-      socket.emit('update', {
-        type: 'PLAYER',
-        id: that.p.playerId,
-        playerId: that.p.playerId,
-        p: that.p
-      });
-      console.log("Player " + that.p.playerId + " sending update message from SERVER TO CLIENT");
-      }, 100);
-    }
+    // if (this.p.isServerSide) {
+    //   this.p.serverUpdateInterval = setInterval(function() {
+    //   socket.emit('update', {
+    //     type: 'PLAYER',
+    //     id: that.p.playerId,
+    //     playerId: that.p.playerId,
+    //     p: that.p
+    //   });
+    //   console.log("Player " + that.p.playerId + " sending update message from SERVER TO CLIENT");
+    //   }, 100);
+    // }
   },
   
   addEventListeners: function() {

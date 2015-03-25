@@ -99,6 +99,7 @@ var addSprite = function(entityType, id, properties) {
 
   var sprite = creates[entityType](properties);
   sprite.p.isServerSide = true;
+  
   switch(entityType){
     case 'PLAYER':{
       sprite.p.playerId = id;
@@ -112,6 +113,13 @@ var addSprite = function(entityType, id, properties) {
       sprite.p.id = id;
       break;
     }
+  }
+
+  // disable keyboard controls and listen to controls' event
+  if(sprite.has('platformerControls')){
+    sprite.del('platformerControls');
+    sprite.add('serverPlatformerControls');
+    // sprite.add('serverSide');
   }
 
   // store sprite reference
