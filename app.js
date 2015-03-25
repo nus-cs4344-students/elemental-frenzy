@@ -113,6 +113,8 @@ var removeSession = function(sessionId){
   delete sessionIdToSocketMap[sessionId];
   delete sessionIdToPlayerIdMap[sessionId];
   delete socketIdToSessionIdMap[s.conn.id];
+
+  delete sessions[sessionId];
 }
 
 var removePlayersFromSession = function(sessionId){

@@ -173,6 +173,7 @@ var destroyPlayer = function(playerId) {
     // if there exists a "PLAYER" sprite with playerId
     if (gameState.sprites['PLAYER'][playerId]) {
       gameState.sprites['PLAYER'][playerId].sprite.destroy();
+      console.log("Calling Destroy()");
     }
     delete gameState.sprites['PLAYER'][playerId];
     console.log("Destroyed sprite player id " + playerId);
@@ -211,7 +212,7 @@ socket.on('join', function(data) {
   
   if(isJoined){
     // player joined and creates sprite for it
-    var sprite = creates['PLAYER'](data.playerId);
+    var sprite = creates['PLAYER']({playerId: data.playerId});
     addPlayer(sprite);
 
     // update app.js regarding session info
