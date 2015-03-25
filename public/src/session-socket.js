@@ -3,71 +3,203 @@
 require(['src/helper-functions']);
 
 var DEFAULT_LEVEL = 'level2';
-var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1}}, 
-                      "2": {p: {x: 800, y: 0, enemyId: 2}}};
+var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}}, 
+                       "2": {p: {x: 800, y: 0, enemyId: 2, isServerSide: true}}};
+var DEFAULT_SPRITES = { PLAYER: {},
+                        ACTOR: {},
+                        PLAYERELEBALL: {},
+                        ENEMYELEBALL: {},
+                        ENEMY: {}};
 
 var DEFAULT_GAMESTATE = {
   level: DEFAULT_LEVEL,
-  sprites: {
-    PLAYER: {},
-    ACTOR: {},
-    PLAYERELEBALL: {},
-    ENEMYELEBALL: {},
-    ENEMY: DEFAULT_ENEMIES
-  },
-  nextId: {
-    PLAYER: 5,
-    ACTOR: 1,
-    PLAYERELEBALL: 1,
-    ENEMYELEBALL: 1,
-    ENEMY: 3
-  }
+  sprites: {PLAYER: {},
+            ACTOR: {},
+            PLAYERELEBALL: {},
+            ENEMYELEBALL: {},
+            ENEMY: {}}
 };
 
-var DEFAULT_SESSION ={
+var DEFAULT_SESSION = {
   playerCount: 0,
   playerMaxCount: 5,
   playerIds: {},
   sessionId: 0
-}
+};
 
 var gameState;
 var session;
+var allSprites;
+
+var creates = {
+  PLAYER: function(p) { return new Q.Player(p); },
+  ACTOR: function(p) { return new Q.Actor(p); },
+  PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
+  ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
+  ENEMY: function(p) { return new Q.Enemy(p); }
+};
+
+var getJSON = function(obj){
+  return JSON.stringify(obj, null, 4);
+}
 
 var cloneObject = function (obj){
   var clone = {};
   for(var oKey in obj){
-    clone[oKey] = obj[oKey];
+    var item = obj[oKey];
+    clone[oKey] = typeof item === 'object' ? cloneObject(item) : item; 
   }
 
   return clone;
-}
+};
+
+var getSprite = function(entityType, id) {
+  console.log("Getting properties of "+entityType+" id " + id);
+  return allSprites[entityType][id];
+};
+
+var getPlayerSprite = function(playerId) {
+  return getSprite('PLAYER' , playerId);
+};
+
+var getEnemySprite  = function(enemyId) {
+  return getSprite('ENEMY' , enemyId);
+};
+
+var getSpriteProperties = function(entityType, id) {
+  console.log("Getting "+entityType+" id " + id);
+  var s = gameState.sprites[entityType][id];
+  return s ? s.p : undefined;
+};
+
+var getPlayerProperties = function(playerId) {
+  return getSpriteProperties('PLAYER' , playerId);
+};
+
+var getEnemyProperties  = function(enemyId) {
+  return getSpriteProperties('ENEMY' , enemyId);
+};
+
+
+/*
+ Create and add sprite into game state and insert it into active stage
+ */
+var addSprite = function(entityType, id, properties) {
+  console.log("Adding sprite " + entityType + " id " + id);
+
+  if(allSprites[entityType][id]){
+    // sprite already exists
+    console.log("Sprite " + entityType + " id " + id + "already exists");
+    return false;
+  }
+
+  if(!properties){
+    properties = {};
+  }
+
+  var sprite = creates[entityType](properties);
+  sprite.p.isServerSide = true;
+  switch(entityType){
+    case 'PLAYER':{
+      sprite.p.playerId = id;
+      break;
+    }
+    case 'ENEMY':{
+      sprite.p.enemyId = id;
+      break;
+    }
+    default:{
+      sprite.p.id = id;
+      break;
+    }
+  }
+
+  // store sprite reference
+  allSprites[entityType][id] = sprite;
+  
+  // store sprite properties into game state
+  gameState.sprites[entityType][id] = {p: sprite.p};
+
+  insertIntoStage(sprite);
+  return true;
+};
+
+var addPlayer = function(playerId, properties){
+  return addSprite('PLAYER', playerId, properties);
+};
+
+
+var addEnemy = function(enemyId, properties){
+  return addSprite('ENEMY', enemyId, properties);
+};
+
+/*
+ Delete and remove sprite from game state and remove it from active stage
+ */
+var removeSprite = function(entityType, id){
+  console.log("Removing sprite " + entityType + " id " + id);
+
+  if(!allSprites[entityType][id]){
+    // sprite does not exists
+    console.log("Sprite " + entityType + " id " + id + "does not exists");
+    return false;
+  }
+
+  var sDel = allSprites[entityType][id];
+  !sDel.p.serverUpdateInterval || clearInterval(sDel.p.serverUpdateInterval);
+  sDel.destroy();
+  delete allSprites[entityType][id];
+
+  return true;
+};
+
+var removePlayer = function(playerId) {
+  return removeSprite('PLAYER', playerId);
+};
+
+
+var removeEnemy = function(enemyId) {
+  return removeSprite('ENEMY', enemyId);
+};
+
+var insertIntoStage = function(sprite) {
+  return Q.stage().insert(sprite);
+};
+
 
 // ## Helper Functions
 var loadGameSession = function(sessionId) {
   console.log("Loading game state...");
-  
+
   // initialize game state and sesion
   gameState = cloneObject(DEFAULT_GAMESTATE);
   session = cloneObject(DEFAULT_SESSION);
   session.sessionId = sessionId;
-  
-  // Load gameState default level, and insert the stage into the gameState
+  allSprites = cloneObject(DEFAULT_SPRITES);
+
+  // Load gameState default level
   Q.stageScene(gameState.level);
-  gameState.stage = Q.stage();
-  
-  // Load enemies, if any
-  for (var i in gameState.sprites['ENEMY']) { 
-    if (gameState.sprites['ENEMY'][i].sprite) {
-      // Already has a sprite created!
-      continue;
-    } else if(gameState.sprites['ENEMY'][i] && gameState.sprites['ENEMY'][i].p) {
-      // if there are valid properties
-      var sprite = creates['ENEMY'](gameState.sprites['ENEMY'][i].p);
-      addEnemy(sprite);
+
+
+  // Create and load all sprites
+  for (var entityType in gameState.sprites) {
+    for (var eId in gameState.sprites[entityType]) { 
+      if (!gameState.sprites[entityType][eId]){
+        // Invalid sprite entry
+        continue;
+      } else if(allSprites[entityType][eId]) {
+        // Already has a sprite created!
+        console.log("Sprites "+entityType+" "+eId+" already exists");
+        continue;
+      } else if(gameState.sprites[entityType][eId].p) {
+        // if there are valid properties
+        addSprite(entityType, eId, gameState.sprites[entityType][eId].p);
+      } else{
+        console.log("Unknown sprites properties");
+      }
     }
   }
-  
+
   // Viewport
   Q.stage().add("viewport");
   Q.input.on('keydown', function(keyCode) {
@@ -88,15 +220,6 @@ var loadGameSession = function(sessionId) {
     }
   });
 }
-
-var creates = {
-  PLAYER: function(p) { return new Q.Player(p); },
-  ACTOR: function(p) { return new Q.Actor(p); },
-  PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
-  ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
-  ENEMY: function(p) { return new Q.Enemy(p); }
-};
-
 
 var joinSession = function(playerId) {
  
@@ -123,7 +246,7 @@ var joinSession = function(playerId) {
   session.playerCount++;
 
   return true;
-}
+};
 
 var leaveSession = function(playerId) {
  
@@ -142,51 +265,21 @@ var leaveSession = function(playerId) {
   session.playerCount--;
 
   return true;
-}
+};
 
-var getPlayer = function(playerId) {
-  console.log("Getting player with player id " + playerId);
-  return gameState.sprites['PLAYER'][playerId].sprite;
-}
-
-var addSprite = function(entityType, id, sprite) {
-  console.log("Adding sprite with id " + id + " entityType " + entityType);
-  gameState.sprites[entityType][id] = {
-    sprite: sprite
-  };
-  insertIntoStage(sprite);
-}
-
-var addPlayer = function(player) {
-  player.isServerSide = true;
-  addSprite('PLAYER', player.p.playerId, player);
-}
-
-var addEnemy = function(enemy) {
-  enemy.isServerSide = true;
-  addSprite('ENEMY', enemy.p.enemyId, enemy);
-}
-
-var destroyPlayer = function(playerId) {
-  // if there exists any "PLAYER" sprite
-  if (gameState.sprites['PLAYER']) {
-    // if there exists a "PLAYER" sprite with playerId
-    if (gameState.sprites['PLAYER'][playerId]) {
-      gameState.sprites['PLAYER'][playerId].sprite.destroy();
-      console.log("Calling Destroy()");
+var getOtherPlayers = function(playerId){
+  var others = {};
+  for(var p in session.players){
+    if(p !== playerId){
+      others[p] = session.players[p];
     }
-    delete gameState.sprites['PLAYER'][playerId];
-    console.log("Destroyed sprite player id " + playerId);
   }
-}
-
-var insertIntoStage = function(sprite) {
-  return gameState.stage.insert(sprite);
-}
+  return others;
+};
 
 var sendToApp = function(eventName, eventData){
-  socket.emit('session', {eventName: eventName, eventData: eventData, senderId:session.sessionId});
-}
+  socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
+};
 
 
 
@@ -202,7 +295,6 @@ socket.on('connected', function(data) {
 });
 
 
-
 // when a player request to join
 socket.on('join', function(data) {  
   console.log("Player " + data.playerId + " requests to join");
@@ -211,15 +303,21 @@ socket.on('join', function(data) {
   var isJoined = joinSession(data.playerId);
   
   if(isJoined){
-    // player joined and creates sprite for it
-    var sprite = creates['PLAYER']({playerId: data.playerId});
-    addPlayer(sprite);
+    // console.log("gameState joined - "+getJSON(gameState));
 
+    // add player and creates sprite for it
+    addPlayer(data.playerId);
+    
     // update app.js regarding session info
     sendToApp('updateSession', session);
+    // update the new player
+    sendToApp('joinSuccessful', {playerId: data.playerId, gameState: gameState, sessionId: session.sessionId});
+    // update other players
+    var pList = getOtherPlayers(data.playerId);
+    sendToApp('addSprite', {players: pList, p: getPlayerProperties(data.playerId)});
   }else{
     // update app.js regarding joinSession failed
-    sendToApp('joinFailed', {playerId: data.playerId});
+    sendToApp('joinFailed', {playerId: data.playerId, senderId: session.sessionId});
   }
 });
 
@@ -230,14 +328,17 @@ socket.on('playerDisconnected', function(data) {
   // remove player from the session
   leaveSession(data.playerId);
   // Destroy player and remove him from game state
-  destroyPlayer(data.playerId);
+  removePlayer(data.playerId);
   // update app.js regarding session info
   sendToApp('updateSession', session);
+  // inform every other player about the player disconnection
+  var pList = getOtherPlayers(data.playerId);
+  sendToApp('removeSprite', {players: pList, p: getPlayerProperties(data.playerId)});
 });
 
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  // resetGameSession();
+  Q.stage().pause();
 });

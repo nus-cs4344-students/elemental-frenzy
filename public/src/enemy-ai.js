@@ -59,8 +59,8 @@ Q.Sprite.extend("Enemy",{
     
     this.on('takeDamage');
     
-    this.on('fire', this, 'fire');  
-    this.on('fired', this, 'fired');  
+    this.on('fire');  
+    this.on('fired');  
     
     // If not updated for 3 seconds, remove it
     // var temp = this;
@@ -73,6 +73,21 @@ Q.Sprite.extend("Enemy",{
     //   }
     //   temp.p.update = false;
     // }, 3000);    
+
+    // Server side simulation. Server Player sends updates back to the client
+    // Remember to clearInterval this when destroying the object!!
+    if (this.p.isServerSide) {
+      var enemyProps = cloneObject(this.p);
+      enemyProps.isServerSide = false;
+      this.p.serverUpdateInterval = setInterval(function() {
+        sendToApp('updateEnemy', {
+            type: 'ENEMY',
+            id: enemyProps.enemyId,
+            p: enemyProps
+          });
+        // console.log("Enemy " + enemyProps.enemyId + " sending update message from SERVER TO APP");
+      }, 100);
+    }
 
     },
   
@@ -119,6 +134,7 @@ Q.Sprite.extend("Enemy",{
   },
 
   fired: function(){
+
     var eleball = new Q.EnemyEleball({
       isServerSide : this.p.isServerSide,
       sessionId : this.p.sessionId,
@@ -151,6 +167,7 @@ Q.Sprite.extend("Enemy",{
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
     if (this.p.isServerSide) {
+      console.log("creating enemy eleball on server side");
       Q.stage().insert(eleball);
     } else {
       eleball.destroy();
@@ -158,17 +175,19 @@ Q.Sprite.extend("Enemy",{
     
     // On the server side, we need to send this new eleball information to all other players
     if (this.p.isServerSide) {
+
       if (typeof eleball.p.id == 'undefined'){
         console.log("getting new id for " + eleball.p.id);
         eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
       }
       console.log("New ENEMYELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
-      socket.emit('update', {
-        entityType: 'ENEMYELEBALL',
-        sessionId: this.p.sessionId,
-        id: eleball.p.id,
-        p: eleball.p
-      })
+      
+      sendToApp('updateEnemy', {
+            entityType: 'ENEMYELEBALL',
+            sessionId: this.p.sessionId,
+            id: eleball.p.id,
+            p: eleball.p
+      });
     }
   },
   
