@@ -28,21 +28,21 @@ window.addEventListener("load",function() {
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
 var Q = window.Q = Quintus({ 
-		audioSupported: [ 'ogg','mp3', 'wav' ],
-		imagePath: "/images/",
-		audioPath: "/audio/",
-		dataPath: "/data/"
-	})
+    audioSupported: [ 'ogg','mp3', 'wav' ],
+    imagePath: "/images/",
+    audioPath: "/audio/",
+    dataPath: "/data/"
+  })
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
         .controls().touch()
-		.enableSound();
-		
+    .enableSound();
+    
 // ## Set keyboard controls
 require(['src/keyboard-controls'], function() {
-	Q.input.keyboardControls(KEYBOARD_CONTROLS);
+  Q.input.keyboardControls(KEYBOARD_CONTROLS);
 });
 // ## HUD
 require(['src/user-interface']);
@@ -70,7 +70,7 @@ require(['src/scenes']);
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
 Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, level3.json, \
-	  elemental_balls.png, elemental_balls.json, \
+    elemental_balls.png, elemental_balls.json, \
     character_orc.png, character_orc.json, \
     character_skeleton.png, character_skeleton.json, \
     character_earth.png, character_earth.json, \
@@ -98,7 +98,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 });
 
 // ## Set socket event listeners
-require(['./server-socket-event-listeners']);
+require(['./src/session-socket']);
 
 // ## Possible Experimentations:
 // 
