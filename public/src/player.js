@@ -91,12 +91,12 @@ Q.Sprite.extend("Player",{
     });
   
     // ## Send key presses to the server
-    if (!that.p.isServerSide) {console.log("adding listener");
+    if (!that.p.isServerSide) {
       Q.el.addEventListener('keydown', function(e) {
           var createdEvt = {
             keyCode: e.keyCode
           };
-          
+
           sendToApp('keydown', {
             sessionId: that.p.sessionId,
             playerId: that.p.playerId,

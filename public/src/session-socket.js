@@ -116,13 +116,6 @@ var getEnemyProperties  = function(enemyId) {
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties) {
-  console.log("Adding sprite " + entityType + " id " + id);
-
-  if(allSprites[entityType][id]){
-    // sprite already exists
-    console.log("Sprite " + entityType + " id " + id + "already exists");
-    return false;
-  }
 
   if(!properties){
     properties = {};
@@ -150,6 +143,14 @@ var addSprite = function(entityType, id, properties) {
       break;
     }
   }
+
+  if(allSprites[entityType][id]){
+    // sprite already exists
+    console.log("Sprite " + entityType + " id " + id + "already exists");
+    return false;
+  }
+  
+  console.log("Adding sprite " + entityType + " id " + id);
   var sprite = creates[entityType](properties);
 
   // disable keyboard controls and listen to controls' event
@@ -234,8 +235,9 @@ var loadGameSession = function(sessionId) {
 
 
   // Create and load all sprites
+  var spritesToAdd = [];
   for (var entityType in gameState.sprites) {
-    for (var eId in gameState.sprites[entityType]) { 
+    for (var eId in gameState.sprites[entityType]) {
       if (!gameState.sprites[entityType][eId]){
         // Invalid sprite entry
         continue;
@@ -245,11 +247,17 @@ var loadGameSession = function(sessionId) {
         continue;
       } else if(gameState.sprites[entityType][eId].p) {
         // if there are valid properties
-        addSprite(entityType, eId, gameState.sprites[entityType][eId].p);
+        spritesToAdd.push({entityType: entityType, eId: eId, props: gameState.sprites[entityType][eId].p});
       } else{
         console.log("Unknown sprites properties");
       }
     }
+  }
+
+  for(var i =0; i< spritesToAdd.length; i++){
+    addSprite(spritesToAdd[i].entityType, 
+              spritesToAdd[i].eId, 
+              spritesToAdd[i].props);
   }
 
   // Viewport
@@ -341,9 +349,9 @@ var leaveSession = function(playerId) {
 
 var getOtherPlayers = function(playerId){
   var others = {};
-  for(var p in session.players){
-    if(p !== playerId){
-      others[p] = session.players[p];
+  for(var p in session.playerIds){
+    if(p != playerId){
+      others[p] = session.playerIds[p];
     }
   }
   return others;
@@ -387,6 +395,7 @@ socket.on('join', function(data) {
     sendToApp('joinSuccessful', {playerId: data.playerId, gameState: gameState, sessionId: session.sessionId});
     // update other players
     var pList = getOtherPlayers(data.playerId);
+    console.log("other players: "+getJSON(pList));
     sendToApp('addSprite', {players: pList, p: getPlayerProperties(data.playerId)});
   }else{
     // update app.js regarding joinSession failed

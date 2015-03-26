@@ -132,13 +132,6 @@ var getActorProperties  = function(actorId) {
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties) {
-  console.log("Adding sprite " + entityType + " id " + id);
-
-  if(allSprites[entityType][id]){
-    // sprite already exists
-    console.log("Sprite " + entityType + " id " + id + "already exists");
-    return false;
-  }
 
   if(!properties){
     properties = {};
@@ -166,8 +159,14 @@ var addSprite = function(entityType, id, properties) {
     }
   }
 
+  if(getSprite(entityType,id)){
+    // sprite already exists
+    console.log("Sprite " + entityType + " id " + id + "already exists");
+    return false;
+  }
+
+  console.log("Adding sprite " + entityType + " id " + id);
   var sprite = creates[entityType](properties);
-  console.log("selfId "+selfId+" adding sprite "+entityType+" id "+id +" props "+getJSON(sprite.p));
 
   // store sprite reference
   allSprites[entityType][id] = sprite;
@@ -241,6 +240,7 @@ var loadGameSession = function() {
   
 
   // Create and load all sprites
+  var spritesToAdd = [];
   for (var entityType in gameState.sprites) {
     for (var eId in gameState.sprites[entityType]) {
       if (!gameState.sprites[entityType][eId]){
@@ -252,13 +252,18 @@ var loadGameSession = function() {
         continue;
       } else if(gameState.sprites[entityType][eId].p) {
         // if there are valid properties
-        addSprite(entityType, eId, gameState.sprites[entityType][eId].p);
+        spritesToAdd.push({entityType: entityType, eId: eId, props: gameState.sprites[entityType][eId].p});
       } else{
         console.log("Unknown sprites properties");
       }
     }
   }
 
+  for(var i =0; i< spritesToAdd.length; i++){
+    addSprite(spritesToAdd[i].entityType, 
+              spritesToAdd[i].eId, 
+              spritesToAdd[i].props);
+  }
 }
 
 var sendToApp = function(eventName, eventData){
@@ -295,15 +300,19 @@ socket.on('joinFailed', function(data){
 // add sprite
 socket.on('addSprite', function(data){
   if(getSprite(data.p.entityType, data.p.id)){
-    console.log("Sprite does not exists with receiving update"+getJSON(data));
+    console.log("Sprite already exists "+getJSON(data));
     return;
   }
+  console.log("data received: ");
+  addSprite(data.p.entityType, data.p.id, data.p);
+  console.log("game State "+getJSON(gameState));
 });
 
 // update sprite
 socket.on('updateSprite', function(data){
-  if(getSprite(data.p.entityType, data.p.id)){
-    console.log("Sprite already exists "+getJSON(data));
+  if(!getSprite(data.p.entityType, data.p.id)){
+    
+    console.log("Sprite does not exists with receiving update"+getJSON(data));
     return;
   }
 

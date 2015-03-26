@@ -147,7 +147,7 @@ var sendToPlayer = function(playerId, eventName, eventData) {
     return false;
   }
   
-  // console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
+  console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
   getSocketOfPlayerId(playerId).emit(eventName, eventData);
   return true;
 };
@@ -314,7 +314,7 @@ io.on('connection', function (socket) {
         }
         break;
       }
-      case 'addSprite':
+      case 'addSprite':console.log("Sending to multiple players from session "+sId+" -> "+getJSON(data));
       case 'updateSprite':
       case 'removeSprite':{
         sendToPlayers(data.eventData.players, data.eventName, data.eventData);

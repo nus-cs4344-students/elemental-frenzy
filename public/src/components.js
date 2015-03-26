@@ -233,7 +233,7 @@ Q.component("serverSide", {
         // entity.p.id = getNextId(entity.p.sessionId, entity.p.entityType);
       }
       
-      // console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client from session " + entity.p.sessionId + " with playerId " + playerIdToUse);
+      // console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " in session "+entity.p.sessionId+" sending update from server");
       
       sendToApp('updateSprite', {
         entityType: entity.p.entityType,
