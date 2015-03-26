@@ -75,20 +75,6 @@ Q.Sprite.extend("Player",{
     if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
       Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
     }
-  
-    // Server side simulation. Server Player sends updates back to the client
-    // Remember to clearInterval this when destroying the object!!
-    // if (this.p.isServerSide) {
-    //   this.p.serverUpdateInterval = setInterval(function() {
-    //   socket.emit('update', {
-    //     type: 'PLAYER',
-    //     id: that.p.playerId,
-    //     playerId: that.p.playerId,
-    //     p: that.p
-    //   });
-    //   console.log("Player " + that.p.playerId + " sending update message from SERVER TO CLIENT");
-    //   }, 100);
-    // }
   },
   
   addEventListeners: function() {
@@ -99,59 +85,62 @@ Q.Sprite.extend("Player",{
     this.on("hit.sprite",function(collision) {
       // Check the collision, if it's the Tower, you win!
       if(collision.obj.isA("Tower")) {
-      Q.stageScene("endGame",1, { label: "You Won!" }); 
-      this.destroy();
+        Q.stageScene("endGame",1, { label: "You Won!" }); 
+        this.destroy();
       }
     });
   
-  // ## Send key presses to the server
-  Q.el.addEventListener('keydown', function(e) {
-    if (!that.p.isServerSide) {
-      socket.emit('keydown', {
-        playerId: that.p.playerId,
-        keyCode: e.keyCode
+    // ## Send key presses to the server
+    if (!that.p.isServerSide) {console.log("adding listener");
+      Q.el.addEventListener('keydown', function(e) {
+          var createdEvt = {
+            keyCode: e.keyCode
+          };
+          
+          sendToApp('keydown', {
+            sessionId: that.p.sessionId,
+            playerId: that.p.playerId,
+            e: createdEvt
+          });
       });
-    }
-  });
-  Q.el.addEventListener('keyup', function(e) {
-    if (!that.p.isServerSide) {
-      socket.emit('keyup', {
-        playerId: that.p.playerId,
-        keyCode: e.keyCode
-      });
-    }
-  });  
-  // Event listener for firing
-  Q.el.addEventListener('mouseup', function(e){
-    // Client side player fires the event!
-    if (!that.p.isServerSide) {
-      var createdEvt = {
-        changedTouches: e.changedTouches,
-        x: e.x,
-        y: e.y
-      };
-      socket.emit('mouseup', {
-        playerId: that.p.playerId,
-        e: createdEvt
-      });
-    }
-    
-    that.trigger('fire', e);
-  });
-  
-  // Listen for takeDamage events
-    this.on('takeDamage');
-    
-    // Event listener for toggling elements
-    Q.input.on("toggleNextElement", function() {
-      that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-    });          
 
-    Q.el.addEventListener('mouseup', function(e){
-      that.trigger('fire', e);
-    });
-    this.on('fire', this, 'fire');
-    this.on('fired', this, 'fired');
+      Q.el.addEventListener('keyup', function(e) {
+          var createdEvt = {
+            keyCode: e.keyCode
+          };
+
+          sendToApp('keyup', {
+            sessionId: that.p.sessionId,
+            playerId: that.p.playerId,
+            e: createdEvt
+          });
+      });  
+      // Event listener for firing
+      Q.el.addEventListener('mouseup', function(e){
+        // Client side player fires the event!
+          var createdEvt = {
+            changedTouches: e.changedTouches,
+            x: e.x,
+            y: e.y
+          };
+
+          sendToApp('mouseup', {
+            sessionId: that.p.sessionId,
+            playerId: that.p.playerId,
+            e: createdEvt
+          });
+          that.trigger('fire', e);
+      });
+    } else{
+      // Event listener for toggling elements
+      Q.input.on("toggleNextElement", function() {
+        that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
+      });   
+    }
+  
+    this.on('takeDamage');       
+    this.on('fire');
+    this.on('fired');
     this.on("onLadder", this, 'climbLadder');  
   },
 
@@ -230,7 +219,8 @@ Q.Sprite.extend("Player",{
       vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
       vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
     });
-    console.log("Eleball is server side? " + eleball.p.isServerSide);
+    
+    // console.log("Eleball is server side? " + eleball.p.isServerSide);
 
     // fire ball location offset from player
     var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
@@ -263,7 +253,7 @@ Q.Sprite.extend("Player",{
         eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
       }
       console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
-      socket.emit('update', {
+      sendToApp('update', {
         playerId: this.p.playerId,
         sessionId: this.p.sessionId,
         entityType: 'PLAYERELEBALL',
@@ -285,7 +275,7 @@ Q.Sprite.extend("Player",{
     this.p.currentHealth -= dmg;
     console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
     
-    socket.emit('playerTookDmg', {
+    sendToApp('playerTookDmg', {
       playerId: this.p.playerId,
       dmg: dmg,
       shooter: shooter
@@ -313,7 +303,7 @@ Q.Sprite.extend("Player",{
   
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
   
-    socket.emit('playerDied', {
+    sendToApp('playerDied', {
       playerId: this.p.playerId
     });
     this.destroy();  

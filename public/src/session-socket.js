@@ -47,10 +47,41 @@ var cloneObject = function (obj){
   var clone = {};
   for(var oKey in obj){
     var item = obj[oKey];
-    clone[oKey] = typeof item === 'object' ? cloneObject(item) : item; 
+    if(item instanceof Array){
+      clone[oKey] = cloneArray(item);
+    }else if(typeof item === 'object') {
+      clone[oKey] = cloneObject(item);
+    }else{
+      clone[oKey] = item;
+    }
   }
 
   return clone;
+};
+
+var cloneArray = function (arr){
+  var clone = [];
+  for(var i = 0; i<arr.length; i++){
+    var item = arr[i];
+    if(item instanceof Array){
+      clone.push(cloneArray(item));
+    }else if(typeof item === 'object') {
+      clone.push(cloneObject(item));
+    }else{
+      clone.push(item);
+    }
+  }
+  return clone;
+};
+
+var clone = function(item){
+  if(item instanceof Array){
+    return cloneArray(item);
+  }else if(typeof item === 'object') {
+    return cloneObject(item);
+  }else{
+    return item;
+  }
 };
 
 var getSprite = function(entityType, id) {
@@ -97,38 +128,48 @@ var addSprite = function(entityType, id, properties) {
     properties = {};
   }
 
-  var sprite = creates[entityType](properties);
-  sprite.p.isServerSide = true;
-  
+  properties.isServerSide = true;  
+  properties.sessionId = session.sessionId;
+
+  var spriteNeedUpdateInterval = false;
   switch(entityType){
-    case 'PLAYER':{
-      sprite.p.playerId = id;
+    case 'PLAYER':
+    case 'ACTOR':{
+      properties.playerId = id;
+      spriteNeedUpdateInterval = true;
       break;
     }
     case 'ENEMY':{
-      sprite.p.enemyId = id;
+      properties.enemyId = id;
+      spriteNeedUpdateInterval = true;
       break;
     }
     default:{
-      sprite.p.id = id;
+      properties.id = id;
+      spriteNeedUpdateInterval = false;
       break;
     }
   }
+  var sprite = creates[entityType](properties);
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
     sprite.del('platformerControls');
     sprite.add('serverPlatformerControls');
-    // sprite.add('serverSide');
+  }
+
+  if(spriteNeedUpdateInterval){
+    sprite.add('serverSide'); 
   }
 
   // store sprite reference
   allSprites[entityType][id] = sprite;
+
+  insertIntoStage(sprite);
   
   // store sprite properties into game state
   gameState.sprites[entityType][id] = {p: sprite.p};
-
-  insertIntoStage(sprite);
+ 
   return true;
 };
 
@@ -158,6 +199,9 @@ var removeSprite = function(entityType, id){
   sDel.destroy();
   delete allSprites[entityType][id];
 
+  // remove sprite properties from game state
+  delete gameState.sprites[entityType][id];
+
   return true;
 };
 
@@ -180,10 +224,10 @@ var loadGameSession = function(sessionId) {
   console.log("Loading game state...");
 
   // initialize game state and sesion
-  gameState = cloneObject(DEFAULT_GAMESTATE);
-  session = cloneObject(DEFAULT_SESSION);
+  gameState = clone(DEFAULT_GAMESTATE);
+  session = clone(DEFAULT_SESSION);
   session.sessionId = sessionId;
-  allSprites = cloneObject(DEFAULT_SPRITES);
+  allSprites = clone(DEFAULT_SPRITES);
 
   // Load gameState default level
   Q.stageScene(gameState.level);
@@ -227,7 +271,27 @@ var loadGameSession = function(sessionId) {
       }
     }
   });
-}
+};
+
+var pressKey = function(player, keyCode) {
+  if(Q.input.keys[keyCode]) {
+    var actionName = Q.input.keys[keyCode];
+    console.log("Pressing key " + keyCode + " with action name " + actionName);
+    player.inputs[actionName] = true;
+    console.log("Inputs[" + actionName + "] is " + player.inputs[actionName]);
+    Q.input.trigger(actionName);
+    Q.input.trigger('keydown',keyCode);
+  }
+};
+
+var releaseKey = function(player, keyCode) {
+  if(Q.input.keys[keyCode]) {
+    var actionName = Q.input.keys[keyCode];
+    player.inputs[actionName] = false;
+    Q.input.trigger(actionName + "Up");
+    Q.input.trigger('keyup',keyCode);
+  }
+};
 
 var joinSession = function(playerId) {
  
@@ -319,6 +383,7 @@ socket.on('join', function(data) {
     // update app.js regarding session info
     sendToApp('updateSession', session);
     // update the new player
+
     sendToApp('joinSuccessful', {playerId: data.playerId, gameState: gameState, sessionId: session.sessionId});
     // update other players
     var pList = getOtherPlayers(data.playerId);
@@ -349,4 +414,34 @@ socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
   Q.stage().pause();
+});
+
+
+socket.on('keydown', function(data) {
+  var playerId = data.playerId,
+      sessionId = data.sessionId,
+      e = data.e;
+  var player = getPlayerSprite(playerId);
+  
+  // Simulate player pressing the key
+  pressKey(player, e.keyCode);
+});
+
+socket.on('keyup', function(data) {
+  var playerId = data.playerId,
+      sessionId = data.sessionId,
+      e = data.e;
+  var player = getPlayerSprite(playerId);
+  
+  // Simulate player releasing the key
+  releaseKey(player, e.keyCode);
+});
+
+socket.on('mouseup', function(data) {
+  var playerId = data.playerId,
+      sessionId = data.sessionId,
+      e = data.e;
+  var player = getPlayerSprite(playerId);
+  
+  player.trigger('fire', e);
 });

@@ -34,15 +34,64 @@ var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
 }
 
+
 var cloneObject = function (obj){
   var clone = {};
   for(var oKey in obj){
     var item = obj[oKey];
-    clone[oKey] = typeof item === 'object' ? cloneObject(item) : item; 
+    if(item instanceof Array){
+      clone[oKey] = cloneArray(item);
+    }else if(typeof item === 'object') {
+      clone[oKey] = cloneObject(item);
+    }else{
+      clone[oKey] = item;
+    }
   }
 
   return clone;
 };
+
+var cloneArray = function (arr){
+  var clone = [];
+  for(var i = 0; i<arr.length; i++){
+    var item = arr[i];
+    if(item instanceof Array){
+      clone.push(cloneArray(item));
+    }else if(typeof item === 'object') {
+      clone.push(cloneObject(item));
+    }else{
+      clone.push(item);
+    }
+  }
+  return clone;
+};
+
+var clone = function(item){
+  if(item instanceof Array){
+    return cloneArray(item);
+  }else if(typeof item === 'object') {
+    return cloneObject(item);
+  }else{
+    return item;
+  }
+};
+
+var updateSprite = function(entityType, id, properties){
+  console.log("Updating "+entityType+" id " + id);
+
+  if(!getSprite(entityType, id)){
+    console.log("Updating non existent sprite");
+    return false;
+  }
+
+  if(!properties){
+    console.log("Updating sprite with empty properties");
+    return false;
+  }
+
+  allSprites[entityType][id].p = properties;
+  return true;
+}
 
 var getSprite = function(entityType, id) {
   console.log("Getting "+entityType+" id " + id);
@@ -94,35 +143,39 @@ var addSprite = function(entityType, id, properties) {
   if(!properties){
     properties = {};
   }
-  !properties.serverUpdateInterval || clearInterval(properties.serverUpdateInterval);
 
-  var sprite = creates[entityType](properties);
-  sprite.p.isServerSide = false;
-
+  properties.isServerSide = false;  
   switch(entityType){
     case 'PLAYER':{
-      sprite.p.playerId = id;
+      if(id != selfId){
+        entityType = 'ACTOR';
+      }
+    }
+    // fall through
+    case 'ACTOR':{
+      properties.playerId = id;
       break;
     }
     case 'ENEMY':{
-      sprite.p.enemyId = id;
+      properties.enemyId = id;
       break;
     }
     default:{
-      sprite.p.id = id;
+      properties.id = id;
       break;
     }
   }
 
+  var sprite = creates[entityType](properties);
+  console.log("selfId "+selfId+" adding sprite "+entityType+" id "+id +" props "+getJSON(sprite.p));
 
   // store sprite reference
   allSprites[entityType][id] = sprite;
-  
-  // store sprite properties into game state
-  gameState.sprites[entityType][id] = {p: sprite.p};
-  console.log(getJSON(properties));
-console.log(getJSON(sprite.p));
+
   insertIntoStage(sprite);
+  // store sprite properties into game state
+  gameState.sprites[entityType][id] = {p: sprite.p}; 
+
   return true;
 };
 
@@ -180,8 +233,8 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
-  gameState = gameState ? gameState : cloneObject(DEFAULT_GAMESTATE);
-  allSprites = cloneObject(DEFAULT_SPRITES);
+  gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
+  allSprites = clone(DEFAULT_SPRITES);
 
   // Load the level
   Q.stageScene(gameState.level);
@@ -229,7 +282,7 @@ socket.on('connected', function(data) {
 socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
   sessionId = data.sessionId;
-  gameState = cloneObject(data.gameState);
+  gameState = data.gameState;
 
   loadGameSession();
 });
@@ -242,11 +295,19 @@ socket.on('joinFailed', function(data){
 // add sprite
 socket.on('addSprite', function(data){
   if(getSprite(data.p.entityType, data.p.id)){
+    console.log("Sprite does not exists with receiving update"+getJSON(data));
+    return;
+  }
+});
+
+// update sprite
+socket.on('updateSprite', function(data){
+  if(getSprite(data.p.entityType, data.p.id)){
     console.log("Sprite already exists "+getJSON(data));
     return;
   }
 
-  addSprite(data.p.entityType, data.p.id, data.p);
+  updateSprite(data.p.entityType, data.p.id, data.p);
 });
 
 // remove sprite

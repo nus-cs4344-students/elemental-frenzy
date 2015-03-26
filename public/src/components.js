@@ -229,11 +229,13 @@ Q.component("serverSide", {
       if (entity.p.entityType == 'PLAYER') {
         entity.p.id = playerIdToUse = entity.p.playerId;
       } else if (typeof entity.p.id == 'undefined'){
-        console.log("getting new id for " + entity.p.id + " in session " + entity.p.sessionId);
-        entity.p.id = getNextId(entity.p.sessionId, entity.p.entityType);
+        // console.log("getting new id for " + entity.p.id + " in session " + entity.p.sessionId);
+        // entity.p.id = getNextId(entity.p.sessionId, entity.p.entityType);
       }
-      console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client from session " + entity.p.sessionId + " with playerId " + playerIdToUse);
-      socket.emit('update', {
+      
+      // console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " sending update from server to client from session " + entity.p.sessionId + " with playerId " + playerIdToUse);
+      
+      sendToApp('updateSprite', {
         entityType: entity.p.entityType,
         sessionId: entity.p.sessionId,
         id: entity.p.id,
@@ -246,7 +248,7 @@ Q.component("serverSide", {
   },
   
   destroy: function() {
-    console.log("Destroying server side updating interval");
+    // console.log("Destroying server side updating interval");
     clearInterval(this.serverUpdateInterval);
   }
 });

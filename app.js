@@ -277,7 +277,8 @@ io.on('connection', function (socket) {
         break;
       }
       default:{
-        sendToSession(data.sessionId, data.eventName, data.eventData);
+        console.log("sending data "+getJSON(data));
+        sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
         break;
       }
     }    
