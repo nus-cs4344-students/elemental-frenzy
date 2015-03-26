@@ -64,13 +64,29 @@ var findAvailableSession = function() {
   return -1;
 };
 
-var addPlayerSession = function(sessionId, playerId){
+var updateSession = function(sessionId, session){
+  sessions[sessionId] = session;
+};
+
+var updatePlayerSession = function(sessionId){
+  // get previous player list map by sessionId
+  var pList = getPlayerIdsOfSessionId(sessionId);
+
+  for(var p in pList){    
+    delete playerIdToSessionIdMap[playerId];
+  }
+
+  // get current player list in session
+  var cpList = sessions[sessionId].players;
+  for(var p in cpList){    
+    playerIdToSessionIdMap[playerId] = sessionId;
+  }
+
+  // create new session
   if(!sessionIdToPlayerIdMap[sessionId]){
     sessionIdToPlayerIdMap[sessionId] = {};
   }
-
-  sessionIdToPlayerIdMap[sessionId][playerId] = playerId;
-  playerIdToSessionIdMap[playerId] = sessionId;
+  sessionIdToPlayerIdMap[sessionId] = pList;
 };
 
 var addPlayerSocket = function(socket, playerId){
@@ -116,7 +132,7 @@ var removePlayerFromSession = function(playerId){
   var pList = getPlayerIdsOfSessionId(sId);
 
   !sId || delete playerIdToSessionIdMap[playerId];
-  !sId || delete pList[playerId];
+  !sId || !pList || delete pList[playerId];
 };
 
 // remove player from socket map
@@ -147,7 +163,7 @@ var sendToPlayer = function(playerId, eventName, eventData) {
     return false;
   }
   
-  console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
+  // console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
   getSocketOfPlayerId(playerId).emit(eventName, eventData);
   return true;
 };
@@ -249,7 +265,7 @@ io.on('connection', function (socket) {
 
       var pSessionId = getSessionIdOfPlayerId(pId);
       // inform respective session about the player disconnection
-      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {playerId: pId});
+      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {id: pId});
 
       totalPlayerCount--;
       removePlayer(pId);
@@ -268,16 +284,15 @@ io.on('connection', function (socket) {
 
         if(sId != -1){
           sendToSession(sId, 'join', data.eventData);
-          console.log("Found session "+sId+" for player "+ data.eventData.playerId);
+          console.log("Found session "+sId+" for player "+ data.eventData.id);
         }else{
           // bounce back join operation failed to the player
-          sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', data.eventData);
-          console.log("Failed to find a session for player "+ data.eventData.playerId);
+          sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', {sessionId: sId});
+          console.log("Failed to find a session for player "+ data.eventData.id);
         }
         break;
       }
       default:{
-        console.log("sending data "+getJSON(data));
         sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
         break;
       }
@@ -291,30 +306,20 @@ io.on('connection', function (socket) {
     var sId = getSessionIdOfSocketId(socket.conn.id);
 
     switch (data.eventName){
-      case 'joinSuccessful':
-      case 'joinFailed':{
-        sendToPlayer(data.eventData.playerId, data.eventName, data.eventData);
-        break;
-      }
       case 'updateSession':{
         // update for the session
         if(sId){
-          sessions[sId] = data.eventData;
-
-          // update player id to session id map
-          var pList = data.eventData.playerIds;
-          for(var p in pList){
-            if(pList){
-              addPlayerSession(sId, p);
-            }
-          }
+          updateSession(sId, data.eventData);
+          updatePlayerSession(sId);
           console.log("Update session : " + getJSON(data.eventData));
         }else{
           console.log("Failed to update session");
         }
         break;
       }
-      case 'addSprite':console.log("Sending to multiple players from session "+sId+" -> "+getJSON(data));
+      case 'joinSuccessful':
+      case 'joinFailed':
+      case 'addSprite':
       case 'updateSprite':
       case 'removeSprite':{
         sendToPlayers(data.eventData.players, data.eventName, data.eventData);
@@ -326,7 +331,7 @@ io.on('connection', function (socket) {
         break;
       }
       default:{
-        console.log("Unknown session event " + data.eventName);
+        console.log("Unknown session event [" + data.eventName +"]");
         break;
       }
     }

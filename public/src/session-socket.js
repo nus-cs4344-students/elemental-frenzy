@@ -22,8 +22,8 @@ var DEFAULT_GAMESTATE = {
 
 var DEFAULT_SESSION = {
   playerCount: 0,
-  playerMaxCount: 5,
-  playerIds: {},
+  playerMaxCount: 4,
+  players: {},
   sessionId: 0
 };
 
@@ -85,7 +85,7 @@ var clone = function(item){
 };
 
 var getSprite = function(entityType, id) {
-  console.log("Getting properties of "+entityType+" id " + id);
+  // console.log("Getting sprite of "+entityType+" id " + id);
   return allSprites[entityType][id];
 };
 
@@ -98,60 +98,101 @@ var getEnemySprite  = function(enemyId) {
 };
 
 var getSpriteProperties = function(entityType, id) {
-  console.log("Getting "+entityType+" id " + id);
-  var s = gameState.sprites[entityType][id];
+  // console.log("Getting sprite properties of "+entityType+" id " + id);
+  var s = getSprite(entityType,id);
+
+  if(s){
+    // console.log("Sprite properties: "+getJSON(s.p));
+  }
+
   return s ? s.p : undefined;
 };
 
 var getPlayerProperties = function(playerId) {
-  return getSpriteProperties('PLAYER' , playerId);
+  return getSpriteProperties('PLAYER', playerId);
 };
 
 var getEnemyProperties  = function(enemyId) {
   return getSpriteProperties('ENEMY' , enemyId);
 };
 
+var isSpriteExists = function(entityType, id){
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to check existence of sprite without entityType");
+    return;
+  }
+
+  switch(eType){
+    case 'ACTOR':{
+      eType = 'PLAYER';
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+
+  var spriteId = id;
+  if(!spriteId){
+    console.log("Trying to check existence of sprite "+eType+"without id");
+    return;
+  }
+
+  return Boolean(getSprite(eType, spriteId));
+}
 
 /*
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties) {
 
-  if(!properties){
-    properties = {};
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to add sprite without entityType");
+    return;
   }
 
-  properties.isServerSide = true;  
-  properties.sessionId = session.sessionId;
-
   var spriteNeedUpdateInterval = false;
-  switch(entityType){
-    case 'PLAYER':
+  switch(eType){
     case 'ACTOR':{
-      properties.playerId = id;
-      spriteNeedUpdateInterval = true;
-      break;
-    }
+      eType = 'PLAYER';
+    } // fall through
+    case 'PLAYER':
     case 'ENEMY':{
-      properties.enemyId = id;
       spriteNeedUpdateInterval = true;
       break;
     }
     default:{
-      properties.id = id;
       spriteNeedUpdateInterval = false;
       break;
     }
   }
 
-  if(allSprites[entityType][id]){
+  var spriteId = id;
+  if(!spriteId){
+    console.log("Trying to add sprite "+eType+"without id");
+    return;
+  }
+
+
+  if(!properties){
+    properties = {};
+    console.log("Trying to add sprite with default properties");
+  }
+
+  if(getSprite(eType,spriteId)){
     // sprite already exists
-    console.log("Sprite " + entityType + " id " + id + "already exists");
+    console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return false;
   }
-  
-  console.log("Adding sprite " + entityType + " id " + id);
-  var sprite = creates[entityType](properties);
+
+  properties.id = spriteId;
+  properties.isServerSide = true;  
+  properties.sessionId = session.sessionId;
+
+  console.log("Added sprite " + eType + " id " + spriteId);
+  var sprite = creates[eType](properties);
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
@@ -160,17 +201,16 @@ var addSprite = function(entityType, id, properties) {
   }
 
   if(spriteNeedUpdateInterval){
-    sprite.add('serverSide'); 
+    sprite.add('serverSprite'); 
   }
 
   // store sprite reference
-  allSprites[entityType][id] = sprite;
+  allSprites[eType][spriteId] = sprite;
 
   insertIntoStage(sprite);
-  
   // store sprite properties into game state
-  gameState.sprites[entityType][id] = {p: sprite.p};
- 
+  gameState.sprites[eType][spriteId] = {p: sprite.p}; 
+
   return true;
 };
 
@@ -187,21 +227,31 @@ var addEnemy = function(enemyId, properties){
  Delete and remove sprite from game state and remove it from active stage
  */
 var removeSprite = function(entityType, id){
-  console.log("Removing sprite " + entityType + " id " + id);
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to remove sprite without entityType");
+    return;
+  }
 
-  if(!allSprites[entityType][id]){
+  var spriteId = id;
+  if(!spriteId){
+    console.log("Trying to remove sprite "+eType+"without id");
+    return;
+  }
+
+  if(!getSprite(eType, spriteId)){
     // sprite does not exists
-    console.log("Sprite " + entityType + " id " + id + "does not exists");
+    console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
   }
 
-  var sDel = allSprites[entityType][id];
-  !sDel.p.serverUpdateInterval || clearInterval(sDel.p.serverUpdateInterval);
-  sDel.destroy();
-  delete allSprites[entityType][id];
+  console.log("Removed sprite " + eType + " id " + spriteId);
 
-  // remove sprite properties from game state
-  delete gameState.sprites[entityType][id];
+  var sDel = allSprites[eType][spriteId];
+  sDel.destroy();
+
+  delete allSprites[eType][spriteId];
+  delete gameState.sprites[eType][spriteId];
 
   return true;
 };
@@ -222,6 +272,11 @@ var insertIntoStage = function(sprite) {
 
 // ## Helper Functions
 var loadGameSession = function(sessionId) {
+  if(!sessionId){
+    console.log("Trying to load game session without seesion id");
+    return;
+  }
+
   console.log("Loading game state...");
 
   // initialize game state and sesion
@@ -238,10 +293,10 @@ var loadGameSession = function(sessionId) {
   var spritesToAdd = [];
   for (var entityType in gameState.sprites) {
     for (var eId in gameState.sprites[entityType]) {
-      if (!gameState.sprites[entityType][eId]){
+      if (!gameState.sprites[entityType][eId]) {
         // Invalid sprite entry
         continue;
-      } else if(allSprites[entityType][eId]) {
+      } else if(isSpriteExists(entityType,eId)) {
         // Already has a sprite created!
         console.log("Sprites "+entityType+" "+eId+" already exists");
         continue;
@@ -260,14 +315,59 @@ var loadGameSession = function(sessionId) {
               spritesToAdd[i].props);
   }
 
+
+  Q.input.on('broadcastAll', function(data) {
+
+    if(!session.players){
+      console.log("Session has no players");
+      return;
+    }
+
+    data.eventData['players'] = session.players;
+    sendToApp(data.eventName, data.eventData);
+  });
+
+   Q.input.on('broadcastOthers', function(data) {
+    
+    var sId = data.senderId;
+    if(!sId){
+      console.log("BroadcastOthers without senderId");
+      return;
+    }
+
+    data.eventData['players'] = getOtherPlayers(sId);
+    sendToApp(data.eventName, data.eventData);
+  });
+
+  Q.input.on('singleCast', function(data) {
+    
+    var pId = data.receiverId;
+    if(!pId){
+      console.log("SingleCast without receiverId");
+      return;
+    }
+
+    data.eventData['players'] = {};
+    data.eventData.players[pId] = pId;
+    sendToApp(data.eventName, data.eventData);
+  });
+
+  Q.input.on('appCast', function(data) {
+    sendToApp(data.eventName, data.eventData);
+  });
+
   // Viewport
   Q.stage().add("viewport");
-  Q.input.on('keydown', function(keyCode) {
+
+  Q.el.addEventListener('keydown', function(e) {
+
+    var keyCode = e.keyCode;
+
     if (Q.input.keys[keyCode]) {
       var actionName = Q.input.keys[keyCode];
       var x = Q.stage().viewport.x;
       var y = Q.stage().viewport.y;
-      var speed = 20;
+      var speed = 10;
       if (actionName == 'server_up') {
         Q.stage().viewport.moveTo(x, y-speed);
       } else if (actionName == 'server_down') {
@@ -282,6 +382,17 @@ var loadGameSession = function(sessionId) {
 };
 
 var pressKey = function(player, keyCode) {
+  if(!player){
+    console.log("Player without sprite released the key");
+    return;
+  }
+
+  if(!keyCode){
+    console.log("Player released unknown key");
+    return;
+  }
+
+  
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
     console.log("Pressing key " + keyCode + " with action name " + actionName);
@@ -293,6 +404,17 @@ var pressKey = function(player, keyCode) {
 };
 
 var releaseKey = function(player, keyCode) {
+  if(!player){
+    console.log("Player without sprite released the key");
+    return;
+  }
+
+  if(!keyCode){
+    console.log("Player released unknown key");
+    return;
+  }
+
+
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
     player.inputs[actionName] = false;
@@ -302,7 +424,11 @@ var releaseKey = function(player, keyCode) {
 };
 
 var joinSession = function(playerId) {
- 
+  if(!playerId){
+    console.log("Trying to let a player to join a session without player id");
+    return;
+  }
+
   // session full
   if(session.playerCount >= session.playerMaxCount){
     console.log("Session "+sesion.sessionId +" is full");
@@ -310,11 +436,11 @@ var joinSession = function(playerId) {
   }
 
   // make sure the player is not in the session already
-  if(session.playerIds){
-    for(var p in session.playerIds){
+  if(session.players){
+    for(var p in session.players){
       
       // player already joins the session
-      if(session.playerIds[p] == playerId){
+      if(session.players[p] == playerId){
         console.log("Player "+playerId+" is already in session "+session.sessionId);
         return false;
       }
@@ -322,42 +448,61 @@ var joinSession = function(playerId) {
   }
 
   // player can join the session
-  session.playerIds[playerId] = playerId;
+  session.players[playerId] = playerId;
   session.playerCount++;
 
   return true;
 };
 
 var leaveSession = function(playerId) {
- 
+  if(!playerId){
+    console.log("Trying to make a player leave it session without player id");
+    return;
+  }
+
   // session empty
   if(session.playerCount <= 0){
     return false;
   }
 
-  if(!session.playerIds[playerId]){
+  if(!session.players[playerId]){
     console.log("Unable to remove player from session");
     return;
   }
 
   // player removed from session
-  delete session.playerIds[playerId];
+  delete session.players[playerId];
   session.playerCount--;
 
   return true;
 };
 
 var getOtherPlayers = function(playerId){
+  if(!playerId){
+    console.log("Trying to get other players without current player id");
+    return;
+  }
+
   var others = {};
-  for(var p in session.playerIds){
+  for(var p in session.players){
     if(p != playerId){
-      others[p] = session.playerIds[p];
+      others[p] = session.players[p];
     }
   }
   return others;
 };
 
 var sendToApp = function(eventName, eventData){
+  if(!eventName){
+    console.log("Session trying to send to App without event name");
+    return;
+  }
+
+  if(!eventData){
+    console.log("Session trying to send to App without event data");
+    return;
+  }
+
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };
 
@@ -365,92 +510,174 @@ var sendToApp = function(eventName, eventData){
 
 // when session is connected to app.js
 socket.on('connected', function(data) {
-  console.log("Connected as SESSION");
+  
+  var sId = data.id;
+  if(!sId){
+    console.log("Connected as SESSION without id");
+    return;
+  }
+
+  console.log("Connected as SESSION "+sId);
   
   // Load the initial game state
-  loadGameSession(data.id);
+  loadGameSession(sId);
 
   // update app.js regarding session info
-  sendToApp('updateSession', session);
+  Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
 });
 
 
 // when a player request to join
-socket.on('join', function(data) {  
-  console.log("Player " + data.playerId + " requests to join");
+socket.on('join', function(data) {
+  
+  var pId = data.id;
+  if(!pId){
+    console.log("Player without id requests to join");
+    return;
+  }
+
+  console.log("Player " + pId + " requests to join");
 
   // try to put the player into  the session
-  var isJoined = joinSession(data.playerId);
+  var isJoined = joinSession(pId);
   
   if(isJoined){
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
-    addPlayer(data.playerId);
+    addPlayer(pId);
     
     // update app.js regarding session info
-    sendToApp('updateSession', session);
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+    
     // update the new player
-
-    sendToApp('joinSuccessful', {playerId: data.playerId, gameState: gameState, sessionId: session.sessionId});
+    var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
+    Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
+    
     // update other players
-    var pList = getOtherPlayers(data.playerId);
-    console.log("other players: "+getJSON(pList));
-    sendToApp('addSprite', {players: pList, p: getPlayerProperties(data.playerId)});
+    var otherPlayersData = {p: getPlayerProperties(pId)};
+    Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'addSprite', eventData: otherPlayersData});
+
   }else{
     // update app.js regarding joinSession failed
-    sendToApp('joinFailed', {playerId: data.playerId, senderId: session.sessionId});
+    var newPlayerData = {sessionId: session.sessionId};
+    Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinFailed', eventData: newPlayerData});
   }
 });
 
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
-  console.log("Player " + data.playerId + " from session " + session.sessionId + " disconnected!");
+  
+  var pId = data.id
+  if(!pId){
+    console.log("Player without id is disconnected from session " + session.sessionId);
+  }
+
+  console.log("Player " + pId + " is disconnected from session " + session.sessionId);
   
   // remove player from the session
-  leaveSession(data.playerId);
-  // Destroy player and remove him from game state
-  removePlayer(data.playerId);
+  leaveSession(pId);
+  
   // update app.js regarding session info
-  sendToApp('updateSession', session);
+  Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+
   // inform every other player about the player disconnection
-  var pList = getOtherPlayers(data.playerId);
-  sendToApp('removeSprite', {players: pList, p: getPlayerProperties(data.playerId)});
+  var otherPlayersData = {p: getPlayerProperties(pId)};
+  Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
+
+  // Destroy player and remove him from game state
+  removePlayer(pId);
 });
 
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  Q.stage().pause();
+  Q.pause();
 });
 
 
 socket.on('keydown', function(data) {
-  var playerId = data.playerId,
-      sessionId = data.sessionId,
-      e = data.e;
-  var player = getPlayerSprite(playerId);
+  var pId = data.id;
+  if(!pId){
+    console.log("Player without id sent keyDown");
+    return;
+  }
+
+  var sessionId = data.sessionId;
+  if(!sessionId){
+    console.log("Player "+pId+" from unknown session sent keyDown");
+    return;
+  }
+
+  var e = data.e;
+  if(!e){
+    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without event data");
+    return;
+  }
+
+  var kCode = e.keyCode;
+  if(!kCode){
+    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without keyCode in event data");
+    return;
+  }
+
+  var player = getPlayerSprite(pId);
   
   // Simulate player pressing the key
-  pressKey(player, e.keyCode);
+  pressKey(player, kCode);
 });
 
 socket.on('keyup', function(data) {
-  var playerId = data.playerId,
-      sessionId = data.sessionId,
-      e = data.e;
-  var player = getPlayerSprite(playerId);
+  var pId = data.id;
+  if(!pId){
+    console.log("Player without id sent keyUp");
+    return;
+  }
+
+  var sessionId = data.sessionId;
+  if(!sessionId){
+    console.log("Player "+pId+" from unknown session sent keyUp");
+    return;
+  }
+
+  var e = data.e;
+  if(!e){
+    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without event data");
+    return;
+  }
+
+  var kCode = e.keyCode;
+  if(!kCode){
+    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without keyCode in event data");
+    return;
+  }
   
+  var player = getPlayerSprite(pId);
+
   // Simulate player releasing the key
   releaseKey(player, e.keyCode);
 });
 
 socket.on('mouseup', function(data) {
-  var playerId = data.playerId,
-      sessionId = data.sessionId,
-      e = data.e;
-  var player = getPlayerSprite(playerId);
+  var pId = data.id;
+  if(!pId){
+    console.log("Player without id sent moseUp");
+    return;
+  }
+
+  var sessionId = data.sessionId;
+  if(!sessionId){
+    console.log("Player "+pId+" from unknown session sent moseUp");
+    return;
+  }
+
+  var e = data.e;
+  if(!e){
+    console.log("Player "+pId+" from session "+sessionId+" sent moseUp without event data");
+    return;
+  }
   
+  var player = getPlayerSprite(pId);
   player.trigger('fire', e);
 });

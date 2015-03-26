@@ -54,7 +54,7 @@ var loadGameState = function() {
       if ( !gameState.sprites[attrName][i] || !gameState.sprites[attrName][i].p) {
         // Been deleted, or already has a sprite created!
         continue;
-      } else if (attrName == 'PLAYER' && gameState.sprites[attrName][i].p.playerId != selfId) {
+      } else if (attrName == 'PLAYER' && gameState.sprites[attrName][i].p.id != selfId) {
         // Not a true PLAYER, don't create sprite (this is handled during the update step)
         continue;
       } else {  
@@ -68,10 +68,9 @@ var loadGameState = function() {
             sprite: sprite
           };
           
-          if (attrName == 'PLAYER' && sprite.p.playerId == selfId) {
+          if (attrName == 'PLAYER' && sprite.p.id == selfId) {
             console.log("Player FOUND");
             player = sprite;
-            player.p.playerId = selfId;
             player.p.id = selfId;
             console.log(player.p.sheet);
           } else {
@@ -97,7 +96,7 @@ var checkSpriteExists = function(entityType, id) {
 }
 
 socket.on('connected', function(data1) {
-  selfId = data1.playerId;
+  selfId = data1.id;
   sessionId = data1.sessionId;
   gameState = {
     level: data1.gameState.level,
@@ -107,16 +106,16 @@ socket.on('connected', function(data1) {
   console.log("Connected to server as player " + selfId + " in session " + sessionId);
   
   // Tell server that you have joined
-  socket.emit('joined', { playerId: selfId });
+  socket.emit('joined', { id: selfId });
   //Q.stageScene('level3');
   
   // ## Event listeners for data received from server
   socket.on('playerJoined', function(data) {
-    console.log("Player " + data.playerId + " joined");
+    console.log("Player " + data.id + " joined");
     
-    if (data.playerId == selfId) {
+    if (data.id == selfId) {
       // It is the player himself, so it is time to load the game for the player to play!
-      gameState.sprites['PLAYER'][data.playerId] = {
+      gameState.sprites['PLAYER'][data.id] = {
         p: data.p
       };
       
@@ -126,13 +125,13 @@ socket.on('connected', function(data1) {
   });
   
   socket.on('playerDisconnected', function(data) {
-    console.log("Player " + data.playerId + " disconnected");
+    console.log("Player " + data.id + " disconnected");
     
-    if (gameState.sprites['ACTOR'][data.playerId]) {
-      var sprite = getSprite('ACTOR', data.playerId);
+    if (gameState.sprites['ACTOR'][data.id]) {
+      var sprite = getSprite('ACTOR', data.id);
       if (sprite) {
         sprite.destroy();
-        gameState.sprites['ACTOR'].splice(data.playerId, 1);
+        gameState.sprites['ACTOR'].splice(data.id, 1);
       }
     }
   });
@@ -157,7 +156,7 @@ socket.on('connected', function(data1) {
     if (data.entityType == 'PLAYER') {
       // Check if the data.entityType is player and if the playerId is myself or not
       // If it is not then it is an ACTOR!
-      if (!selfId || data.playerId != selfId) {
+      if (!selfId || data.id != selfId) {
         data.entityType = 'ACTOR';
       }
     }
@@ -188,9 +187,9 @@ socket.on('connected', function(data1) {
   });
   
   socket.on('playerTookDmg', function(data) {
-    console.log(data.playerId + ": playerTookDmg " + data.dmg);
+    console.log(data.id + ": playerTookDmg " + data.dmg);
     var actor = actors.filter(function(obj) {
-      return obj.playerId == data.playerId;
+      return obj.id == data.id;
     })[0];
     if (actor) {
       actor.player.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
@@ -198,12 +197,12 @@ socket.on('connected', function(data1) {
   });
   
   socket.on('playerDied', function(data) {
-    console.log(data.playerId + ": playerDied");
-    var deadPlayerId = data.playerId;
-    console.log("deadPlayerId: " + deadPlayerId);
+    console.log(data.id + ": playerDied");
+    var deadPlayerId = data.id;
+    console.log("deadid: " + deadPlayerId);
     for (var attrName in actors) {
       console.log("looking at actorId: " + actorId);
-      var actorId = actors[attrName].playerId;
+      var actorId = actors[attrName].id;
       if (actorId == deadPlayerId) {
         console.log("Destroying player " + actorId);
         actors[attrName].player.destroy();

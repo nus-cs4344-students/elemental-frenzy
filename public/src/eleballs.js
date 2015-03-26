@@ -99,7 +99,7 @@ Q.Eleball.extend("PlayerEleball", {
   // Player eleballs only damage enemies
   onHit: function(collision) {
     if (collision.obj.isA("Enemy") ||
-      (collision.obj.isA("Player") && collision.obj.p.playerId != this.p.shooterId) ||
+      (collision.obj.isA("Player") && collision.obj.p.id != this.p.shooterId) ||
       collision.obj.isA("Actor")) {
       collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
     }
@@ -113,7 +113,7 @@ Q.Eleball.extend("PlayerEleball", {
         this.p.id = getNextId(this.p.sessionId, this.p.entityType);
       }
       console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
-      socket.emit('destroyed', {
+      sendToApp('destroyed', {
         entityType: 'PLAYERELEBALL',
         sessionId: this.p.sessionId,
         id: this.p.id,
@@ -154,7 +154,7 @@ Q.Eleball.extend("EnemyEleball", {
         this.p.id = getNextId(this.p.sessionId, this.p.entityType);
       }
       console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
-      socket.emit('destroyed', {
+      sendToApp('destroyed', {
         entityType: 'ENEMYELEBALL',
         sessionId: this.p.sessionId,
         id: this.p.id,

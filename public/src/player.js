@@ -32,7 +32,7 @@ Q.Sprite.extend("Player",{
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
-      playerId: -1,
+      id: -1,
       entityType: 'PLAYER',
       sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
       sprite: PLAYER_ANIMATION,
@@ -54,7 +54,6 @@ Q.Sprite.extend("Player",{
       onLadder: false,
       ladderX: 0,
       takeDamageCooldown: 0,
-      takeDamageIntervalId: -1,
       update: true//,
       //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
     });
@@ -69,6 +68,8 @@ Q.Sprite.extend("Player",{
     this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
   
     this.addEventListeners();
+
+    this.takeDamageIntervalId = -1;
 
     // Add to the game state!
     // Kills = Deaths = 0
@@ -90,48 +91,7 @@ Q.Sprite.extend("Player",{
       }
     });
   
-    // ## Send key presses to the server
-    if (!that.p.isServerSide) {
-      Q.el.addEventListener('keydown', function(e) {
-          var createdEvt = {
-            keyCode: e.keyCode
-          };
-
-          sendToApp('keydown', {
-            sessionId: that.p.sessionId,
-            playerId: that.p.playerId,
-            e: createdEvt
-          });
-      });
-
-      Q.el.addEventListener('keyup', function(e) {
-          var createdEvt = {
-            keyCode: e.keyCode
-          };
-
-          sendToApp('keyup', {
-            sessionId: that.p.sessionId,
-            playerId: that.p.playerId,
-            e: createdEvt
-          });
-      });  
-      // Event listener for firing
-      Q.el.addEventListener('mouseup', function(e){
-        // Client side player fires the event!
-          var createdEvt = {
-            changedTouches: e.changedTouches,
-            x: e.x,
-            y: e.y
-          };
-
-          sendToApp('mouseup', {
-            sessionId: that.p.sessionId,
-            playerId: that.p.playerId,
-            e: createdEvt
-          });
-          that.trigger('fire', e);
-      });
-    } else{
+    if (this.p.isServerSide) {
       // Event listener for toggling elements
       Q.input.on("toggleNextElement", function() {
         that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
@@ -141,7 +101,7 @@ Q.Sprite.extend("Player",{
     this.on('takeDamage');       
     this.on('fire');
     this.on('fired');
-    this.on("onLadder", this, 'climbLadder');  
+    this.on("onLadder", this, 'climbLadder');
   },
 
   fire: function(e){
@@ -213,7 +173,7 @@ Q.Sprite.extend("Player",{
       element : this.p.element,
       sheet : ELEBALL_ELEMENTNAMES[this.p.element],
       shooter : this.p.name,
-      shooterId : this.p.playerId,
+      shooterId : this.p.id,
       frame : ELEBALL_FRAME,
       angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
       vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
@@ -254,7 +214,6 @@ Q.Sprite.extend("Player",{
       }
       console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
       sendToApp('update', {
-        playerId: this.p.playerId,
         sessionId: this.p.sessionId,
         entityType: 'PLAYERELEBALL',
         id: eleball.p.id,
@@ -267,8 +226,8 @@ Q.Sprite.extend("Player",{
 
   takeDamage: function(dmgAndShooter) {
     if(this.p.takeDamageCooldown > 0){
-    return;
-  }
+      return;
+    }
   
     var dmg = dmgAndShooter.dmg,
     shooter = dmgAndShooter.shooter;
@@ -276,17 +235,17 @@ Q.Sprite.extend("Player",{
     console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
     
     sendToApp('playerTookDmg', {
-      playerId: this.p.playerId,
+      id: this.p.id,
       dmg: dmg,
       shooter: shooter
     });
 
     var that = this;
-    if(this.p.takeDamageIntervalId == -1){
+    if(this.takeDamageIntervalId == -1){
         var playTakeDamage = function (){
           that.play("take_damage", 3);
         }
-        this.p.takeDamageIntervalId = setInterval(playTakeDamage, 200);
+        this.takeDamageIntervalId = setInterval(playTakeDamage, 200);
     }
     this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 
@@ -304,7 +263,7 @@ Q.Sprite.extend("Player",{
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
   
     sendToApp('playerDied', {
-      playerId: this.p.playerId
+      id: this.p.id
     });
     this.destroy();  
   },
@@ -318,9 +277,9 @@ Q.Sprite.extend("Player",{
 
   step: function(dt) {
     // stop interval when player can take damage
-    if(this.p.takeDamageCooldown <= 0 && this.p.takeDamageIntervalId != -1){
-      clearInterval(this.p.takeDamageIntervalId);
-      this.p.takeDamageIntervalId = -1;
+    if(this.p.takeDamageCooldown <= 0 && this.takeDamageIntervalId != -1){
+      clearInterval(this.takeDamageIntervalId);
+      this.takeDamageIntervalId = -1;
     }
   
   // Update countdown

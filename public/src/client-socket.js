@@ -77,24 +77,55 @@ var clone = function(item){
 };
 
 var updateSprite = function(entityType, id, properties){
-  console.log("Updating "+entityType+" id " + id);
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to update sprite without entityType");
+    return;
+  }
 
-  if(!getSprite(entityType, id)){
-    console.log("Updating non existent sprite");
-    return false;
+  var spriteId = id;
+  switch(eType){
+    case 'PLAYER':{
+      if(spriteId && spriteId != selfId){
+        eType = 'ACTOR';
+      }
+      break;
+    }
+    case 'ACTOR':{
+      if(spriteId && spriteId == selfId){
+        eType = 'PLAYER';
+      }
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+
+  if(!spriteId){
+    console.log("Trying to update sprite "+eType+"without id");
+    return;
   }
 
   if(!properties){
-    console.log("Updating sprite with empty properties");
+    console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
+    return;
+  }
+
+  if(!isSpriteExists(eType, spriteId)){
+    console.log("Trying to update non existing sprite "+eType+" "+spriteId);
     return false;
   }
 
-  allSprites[entityType][id].p = properties;
+  console.log("Updated "+eType+" id " + spriteId);
+  allSprites[eType][spriteId].p = properties;
+  gameState.sprites[eType][spriteId] = {p: properties}; 
+
   return true;
 }
 
 var getSprite = function(entityType, id) {
-  console.log("Getting "+entityType+" id " + id);
+  // console.log("Getting "+entityType+" id " + id);
   return allSprites[entityType][id];
 };
 
@@ -111,8 +142,13 @@ var getActor = function(actorId) {
 };
 
 var getSpriteProperties = function(entityType, id) {
-  console.log("Getting properties of "+entityType+" id " + id);
-  var s = gameState[entityType][id];
+  // console.log("Getting sprite properties of "+entityType+" id " + id);
+  var s = getSprite(entityType,id);
+
+  if(s){
+    // console.log("Sprite properties: "+getJSON(s.p));
+  }
+
   return s ? s.p : undefined;
 };
 
@@ -128,52 +164,94 @@ var getActorProperties  = function(actorId) {
   return getSpriteProperties('ACTOR' , actorId);
 };
 
+var isSpriteExists = function(entityType, id){
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to check existence of sprite without entityType");
+    return;
+  }
+
+  var spriteId = id;
+  switch(eType){
+    case 'PLAYER':{
+      if(spriteId && spriteId != selfId){
+        eType = 'ACTOR';
+      }
+      break;
+    }
+    case 'ACTOR':{
+      if(spriteId && spriteId == selfId){
+        eType = 'PLAYER';
+      }
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+
+  if(!spriteId){
+    console.log("Trying to check existence of sprite "+eType+"without id");
+    return;
+  }
+
+  return Boolean(getSprite(eType, spriteId));
+}
 /*
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties) {
-
-  if(!properties){
-    properties = {};
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to add sprite without entityType");
+    return;
   }
 
-  properties.isServerSide = false;  
-  switch(entityType){
+  var spriteId = id;
+  switch(eType){
     case 'PLAYER':{
-      if(id != selfId){
-        entityType = 'ACTOR';
+      if(spriteId && spriteId != selfId){
+        eType = 'ACTOR';
       }
-    }
-    // fall through
-    case 'ACTOR':{
-      properties.playerId = id;
       break;
     }
-    case 'ENEMY':{
-      properties.enemyId = id;
+    case 'ACTOR':{
+      if(spriteId && spriteId == selfId){
+        eType = 'PLAYER';
+      }
       break;
     }
     default:{
-      properties.id = id;
       break;
     }
   }
+  if(!spriteId){
+    console.log("Trying to add sprite "+eType+"without id");
+    return;
+  }
 
-  if(getSprite(entityType,id)){
+  if(!properties){
+    properties = {};
+    console.log("Trying to add sprite with default properties");
+  }
+
+  properties.isServerSide = false; 
+
+  if(isSpriteExists(eType,spriteId)){
     // sprite already exists
-    console.log("Sprite " + entityType + " id " + id + "already exists");
+    console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return false;
   }
 
-  console.log("Adding sprite " + entityType + " id " + id);
-  var sprite = creates[entityType](properties);
+  console.log("Added sprite " + eType + " id " + spriteId);
+  var sprite = creates[eType](properties);
 
   // store sprite reference
-  allSprites[entityType][id] = sprite;
+  allSprites[eType][spriteId] = sprite;
 
   insertIntoStage(sprite);
   // store sprite properties into game state
-  gameState.sprites[entityType][id] = {p: sprite.p}; 
+  gameState.sprites[eType][spriteId] = {p: sprite.p};
 
   return true;
 };
@@ -194,18 +272,48 @@ var addEnemy = function(enemyId, properties){
  Delete and remove sprite from game state and remove it from active stage
  */
 var removeSprite = function(entityType, id){
-  console.log("Removing sprite " + entityType + " id " + id);
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to remove sprite without entityType");
+    return;
+  }
 
-  if(!allSprites[entityType][id]){
+  var spriteId = id;
+  switch(eType){
+    case 'PLAYER':{
+      if(spriteId && spriteId != selfId){
+        eType = 'ACTOR';
+      }
+      break;
+    }
+    case 'ACTOR':{
+      if(spriteId && spriteId == selfId){
+        eType = 'PLAYER';
+      }
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+  if(!spriteId){
+    console.log("Trying to remove sprite "+eType+"without id");
+    return;
+  }
+
+  if(!getSprite(eType, spriteId)){
     // sprite does not exists
-    console.log("Sprite " + entityType + " id " + id + "does not exists");
+    console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
   }
 
-  var sDel = allSprites[entityType][id];
-  !sDel.p.serverUpdateInterval || clearInterval(sDel.p.serverUpdateInterval);
+  console.log("Removed sprite " + eType + " id " + spriteId);
+
+  var sDel = allSprites[eType][spriteId];
   sDel.destroy();
-  delete allSprites[entityType][id];
+
+  delete allSprites[eType][spriteId];
+  delete gameState.sprites[eType][spriteId];
 
   return true;
 };
@@ -238,7 +346,6 @@ var loadGameSession = function() {
   // Load the level
   Q.stageScene(gameState.level);
   
-
   // Create and load all sprites
   var spritesToAdd = [];
   for (var entityType in gameState.sprites) {
@@ -246,7 +353,7 @@ var loadGameSession = function() {
       if (!gameState.sprites[entityType][eId]){
         // Invalid sprite entry
         continue;
-      } else if(allSprites[entityType][eId]) {
+      } else if(getSprite(entityType,eId)) {
         // Already has a sprite created!
         console.log("Sprites "+entityType+" "+eId+" already exists");
         continue;
@@ -264,6 +371,41 @@ var loadGameSession = function() {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+
+  Q.el.addEventListener('keydown', function(e) {
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    sendToApp('keydown', {sessionId: sessionId,
+                          id: selfId,
+                          e: createdEvt
+    });
+  });
+
+  Q.el.addEventListener('keyup', function(e) {
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    sendToApp('keyup', {sessionId: sessionId,
+                          id: selfId,
+                          e: createdEvt
+    });
+  });  
+
+  // Event listener for firing
+  // Q.el.addEventListener('mouseup', function(e){
+  //   // Client side player fires the event!
+  //     var createdEvt = {
+  //       changedTouches: e.changedTouches,
+  //       x: e.x,
+  //       y: e.y
+  //     };
+
+  //     that.trigger('fire', e);
+  // });
+
+  // Viewport
+  Q.stage().add("viewport").follow(getPlayerSprite(selfId));
 }
 
 var sendToApp = function(eventName, eventData){
@@ -273,14 +415,13 @@ var sendToApp = function(eventName, eventData){
 
 // when client is connected to app.js
 socket.on('connected', function(data) {
-  console.log("Connected as PLAYER");
-
   selfId = data.id;
+    console.log("Connected as PLAYER "+selfId);
 
   // TODO: Player character name/outfit selection
 
   // update app.js regarding session info
-  sendToApp('join', {playerId: selfId});
+  sendToApp('join', {id: selfId});
 });
 
 // player successfully joined a session and receive game state + session info 
@@ -294,58 +435,113 @@ socket.on('joinSuccessful', function(data){
 
 // Failed to join a session
 socket.on('joinFailed', function(data){
-  console.log("Player "+data.playerId+" failed to join sesssion "+data.sessionId);
+  console.log("Player "+selfId+" failed to join sesssion "+data.sessionId);
 });
 
 // add sprite
 socket.on('addSprite', function(data){
-  if(getSprite(data.p.entityType, data.p.id)){
-    console.log("Sprite already exists "+getJSON(data));
+  var props = data.p;
+  if(!props){
+    console.log("addSprite without properties");
     return;
   }
-  console.log("data received: ");
-  addSprite(data.p.entityType, data.p.id, data.p);
-  console.log("game State "+getJSON(gameState));
+
+  var eType = props.entityType;
+  if(!eType){
+    console.log("addSprite without entityType in properties");
+    return;
+  }
+
+  var spriteId = props.id;
+  if(!spriteId){
+    console.log("addSprite without id in properties");
+    return;
+  }
+
+  if(isSpriteExists(eType, spriteId)){
+    console.log("addSprite "+eType+" id "+spriteId+" which already exists");
+    return;
+  }
+
+  addSprite(eType, spriteId, props);
 });
 
 // update sprite
 socket.on('updateSprite', function(data){
-  if(!getSprite(data.p.entityType, data.p.id)){
-    
-    console.log("Sprite does not exists with receiving update"+getJSON(data));
+
+  var props = data.p;
+  if(!props){
+    console.log("updateSprite without properties");
     return;
   }
 
-  updateSprite(data.p.entityType, data.p.id, data.p);
+  var eType = props.entityType;
+  if(!eType){
+    console.log("updateSprite without entityType in properties");
+    return;
+  }
+
+  var spriteId = props.id;
+  if(!spriteId){
+    console.log("updateSprite without id in properties");
+    return;
+  }
+
+  if(!isSpriteExists(eType, spriteId)){
+    console.log("updateSprite "+eType+" id "+spriteId+" which does not exists");
+    addSprite(eType, spriteId, props);
+    return;
+  }
+
+  updateSprite(eType, spriteId, props);
 });
 
 // remove sprite
 socket.on('removeSprite', function(data){
-  if(!getSprite(data.p.entityType, data.p.id)){
-    console.log("Sprite does not exists "+getJSON(data));
+  var props = data.p;
+  if(!props){
+    console.log("removeSprite without properties");
     return;
   }
 
-  removeSprite(data.p.entityType, data.p.id);
+  var eType = props.entityType;
+  if(!eType){
+    console.log("removeSprite without entityType in properties");
+    return;
+  }
+
+  var spriteId = props.id;
+  if(!spriteId){
+    console.log("removeSprite without id in properties");
+    return;
+  }
+
+  if(!isSpriteExists(eType, spriteId)){
+    console.log("removeSprite "+eType+" id "+spriteId+" which does not exists");
+    return;
+  }
+
+  removeSprite(eType, spriteId, props);
 });
 
 
 // when session is disconnected
 socket.on('Sessiondisconnected', function(){
   console.log("Session disconnected");
+
 });
 
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
-  console.log("Player " + data.playerId + " from session " + sessionId + " disconnected!");
+  console.log("Player " + data.id + " from session " + sessionId + " disconnected!");
   
   // Destroy player and remove him from game state
-  removePlayer(data.playerId);
+  removePlayer(data.id);
 });
 
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
 
-  Q.stage().pause();
+  Q.pause();
 });

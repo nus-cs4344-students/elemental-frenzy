@@ -43,8 +43,8 @@ Q.Sprite.extend("Enemy",{
     // end the game unless the enemy is hit on top
     this.on("bump.left,bump.right,bump.bottom",function(collision) {
       if(collision.obj.isA("Player")) { 
-      console.log(this.p.name + " triggering takeDamage")
-      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.name});
+        console.log(this.p.name + " triggering takeDamage")
+        collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.name});
       }
     });
 
@@ -76,18 +76,18 @@ Q.Sprite.extend("Enemy",{
 
     // Server side simulation. Server Player sends updates back to the client
     // Remember to clearInterval this when destroying the object!!
-    if (this.p.isServerSide) {
-      var enemyProps = cloneObject(this.p);
-      enemyProps.isServerSide = false;
-      this.p.serverUpdateInterval = setInterval(function() {
-        sendToApp('updateEnemy', {
-            type: 'ENEMY',
-            id: enemyProps.enemyId,
-            p: enemyProps
-          });
-        // console.log("Enemy " + enemyProps.enemyId + " sending update message from SERVER TO APP");
-      }, 100);
-    }
+    // if (this.p.isServerSide) {
+    //   var enemyProps = cloneObject(this.p);
+    //   enemyProps.isServerSide = false;
+    //   this.p.serverUpdateInterval = setInterval(function() {
+    //     sendToApp('updateEnemy', {
+    //         type: 'ENEMY',
+    //         id: enemyProps.enemyId,
+    //         p: enemyProps
+    //       });
+    //     // console.log("Enemy " + enemyProps.enemyId + " sending update message from SERVER TO APP");
+    //   }, 100);
+    // }
 
     },
   
@@ -208,7 +208,7 @@ Q.Sprite.extend("Enemy",{
       
       if (this.p.cooldown <= 0) {
         //ready to shoot
-        this.trigger('fire', Math.random() * 360);
+        // this.trigger('fire', Math.random() * 360);
 
         // randomly set a cooldown between 2.0 and 5.0
         this.p.cooldown = Math.random() * 3 + ENEMY_DEFAULT_COOLDOWN; 

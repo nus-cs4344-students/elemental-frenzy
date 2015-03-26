@@ -51,37 +51,37 @@ socket.on('connected', function(data) {
   console.log("Connected as SERVER");
   console.log("Gamestate: " + data.gameState);
   
-  serverId = data.playerId;
+  serverId = data.id;
   
   // Connected. Initializing game state to the one app.js sent
   gameStates[data.sessionId] = DEFAULT_GAMESTATE;
   //gameStates[data.sessionId].sprites['PLAYER'] = gameStates[data.sessionId].players = {}; // should not have any players
   
   // Tell app.js that we have joined!
-  socket.emit('serverJoined', {playerId: data.playerId});
+  socket.emit('serverJoined', {id: data.id});
   
   // Load the game state
   loadGameState(gameStates[data.sessionId], data.sessionId);
 });
 
 socket.on('playerDisconnected', function(data) {  
-  console.log("Player " + data.playerId + " from session " + data.sessionId + " disconnected!");
+  console.log("Player " + data.id + " from session " + data.sessionId + " disconnected!");
   
   // Destroy player and remove him from game state
-  destroyPlayer(data.sessionId, data.playerId);
+  destroyPlayer(data.sessionId, data.id);
 });
 
 socket.on('playerJoined', function(data) {  
-  console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
-  console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
-  console.log("Player " + data.p.playerId + " joined session " + data.sessionId);
+  console.log("Player " + data.p.id + " joined session " + data.sessionId);
+  console.log("Player " + data.p.id + " joined session " + data.sessionId);
+  console.log("Player " + data.p.id + " joined session " + data.sessionId);
   data.p.sessionId = data.sessionId;
   addPlayer(data.sessionId, new Q.Player(data.p));
   console.log("Number of players: " + sizeOfObject(gameStates[data.sessionId].sprites['PLAYER']));
 });
 
 socket.on('keydown', function(data) {
-  var playerId = data.playerId,
+  var playerId = data.id,
     sessionId = data.sessionId,
     e = data.e;
   var player = getPlayer(sessionId, playerId);
@@ -93,7 +93,7 @@ socket.on('keydown', function(data) {
   console.log("Player " + playerId + " of session " + sessionId + " NEW position " + player.p.x + "," + player.p.y);
 });
 socket.on('keyup', function(data) {
-  var playerId = data.playerId,
+  var playerId = data.id,
     sessionId = data.sessionId,
     e = data.e;
   var player = getPlayer(sessionId, playerId);
@@ -102,7 +102,7 @@ socket.on('keyup', function(data) {
   releaseKey(player, e.keyCode);
 });
 socket.on('mouseup', function(data) {
-  var playerId = data.playerId,
+  var playerId = data.id,
     sessionId = data.sessionId,
     e = data.e;
   var player = getPlayer(sessionId, playerId);
@@ -138,7 +138,7 @@ var loadGameState = function(gameState, sessionId) {
         console.log(gameState.sprites['ENEMY'][i].p.id);
         var sprite = creates['ENEMY'](gameState.sprites['ENEMY'][i].p);
         console.log(sprite.p.id);
-        sprite.add("serverSide");
+        sprite.add("serverSprite");
         gameState.sprites['ENEMY'][i] = {
           sprite: sprite
         };
@@ -184,9 +184,9 @@ var addSprite = function(sessionId, entityType, id, sprite) {
 var addPlayer = function(sessionId, player) {
   player.del('platformerControls');
   player.add("serverPlatformerControls");
-  player.add("serverSide");
+  player.add("serverSprite");
   
-  addSprite(sessionId, 'PLAYER', player.p.playerId, player);
+  addSprite(sessionId, 'PLAYER', player.p.id, player);
   insertIntoStage(sessionId, player);
 }
 

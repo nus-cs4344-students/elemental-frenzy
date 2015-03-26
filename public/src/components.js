@@ -154,7 +154,7 @@ Q.component('2dEleball', {
   //  - Case 3: Both elements pass through each other if |i-j| == 2
   collision: function(col,last) {
     // Don't collide with the shooter of the eleball
-    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.playerId == this.entity.p.shooterId) {
+    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.id == this.entity.p.shooterId) {
       console.log("Eleball passing object!!!");
       return;
     }
@@ -217,34 +217,20 @@ Q.component('2dEleball', {
 });
 
 // ## Attach to server side entities for them to send updates at a regular interval
-Q.component("serverSide", {
+Q.component("serverSprite", {
   added: function() {
-    var entity = this.entity;
+    var that = this.entity;
     
-    entity.p.isServerSide = true;
+    that.p.isServerSide = true;
     
     // Server side sprites will send updates periodically
-    this.serverUpdateInterval = setInterval(function() {
-      var playerIdToUse;
-      if (entity.p.entityType == 'PLAYER') {
-        entity.p.id = playerIdToUse = entity.p.playerId;
-      } else if (typeof entity.p.id == 'undefined'){
-        // console.log("getting new id for " + entity.p.id + " in session " + entity.p.sessionId);
-        // entity.p.id = getNextId(entity.p.sessionId, entity.p.entityType);
-      }
-      
+    this.serverUpdateInterval = setInterval(function() {    
       // console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " in session "+entity.p.sessionId+" sending update from server");
       
-      sendToApp('updateSprite', {
-        entityType: entity.p.entityType,
-        sessionId: entity.p.sessionId,
-        id: entity.p.id,
-        playerId: playerIdToUse,
-        p: entity.p
-      });
-    }, 100);
+      Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p}});
+    }, 500);
     
-    entity.on('destroyed', this, 'destroy');
+    that.on('destroyed', this, 'destroy');
   },
   
   destroy: function() {
