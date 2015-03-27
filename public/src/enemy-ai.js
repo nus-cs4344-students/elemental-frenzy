@@ -8,6 +8,7 @@ var ENEMY_ELEBALL_DEFAULT_DMG = 5;
 var ENEMY_DEFAULT_ELEMENT = 0; // fire
 var ENEMY_CHARACTERS = ["character_orc", "character_skeleton"];
 var ENEMY_ANIMATION = "enemy";
+var ENEMY_NO_FIRE_ANIMATION = "no_fire";
 
 // ## Enemy Sprite
 // Create the Enemy class to add in some baddies
@@ -69,7 +70,8 @@ Q.Sprite.extend("Enemy",{
     this.p.currentHealth -= dmg;
     if (this.p.currentHealth <= 0) {
       Q.state.trigger("enemyDied", shooter);
-      this.destroy();
+      removeEnemySprite(this.p.spriteId);
+      // Q.input.trigger("removeSprite", {entityType: this.p.entityType, spriteId: this.p.spriteId});
     }
   },
     
@@ -77,6 +79,7 @@ Q.Sprite.extend("Enemy",{
     if (this.p.cooldown > 0) {
       return;
     }
+
     var angleDeg = Math.min(360, Math.max(180, angle));
     var angleRad = angleDeg * Math.PI / 180;
 
@@ -106,61 +109,57 @@ Q.Sprite.extend("Enemy",{
   },
 
   fired: function(){
+    // reset fire animation
+    this.p.fireAnimation = ENEMY_NO_FIRE_ANIMATION;
 
-    var eleball = new Q.EnemyEleball({
-      isServerSide : this.p.isServerSide,
-      sessionId : this.p.sessionId,
-      element : this.p.element,
-      sheet : ELEBALL_ELEMENTNAMES[this.p.element],
-      shooter : this.p.name,
-      soundIsAnnoying: true,
-      frame : ELEBALL_FRAME,
-      angle : this.p.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
-      vx : ELEBALL_DEFAULT_VX * Math.cos(this.p.fireAngleRad),
-      vy : ELEBALL_DEFAULT_VY * Math.sin(this.p.fireAngleRad)
-    });
-
-    // fire ball location offset from player
-    var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
-    if(this.p.fireAngleDeg <= 360 && this.p.fireAngleDeg > 180){
-      // deduct ball width due to the direction of the ball is set to be default at right direction
-      eleball.p.y = this.p.y - ballToPlayerY;
-    } else {
-      eleball.p.y = this.p.y + ballToPlayerY;
-    }
-
-    var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(this.p.fireAngleRad)) * ELEBALL_PLAYER_SF;
-    if(this.p.fireAngleDeg <= 270 && this.p.fireAngleDeg > 90){
-      eleball.p.x = this.p.x - ballToPlayerX;
-    } else {
-      eleball.p.x = this.p.x + ballToPlayerX;
-    }
-    
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
-    if (this.p.isServerSide) {
-      console.log("creating enemy eleball on server side");
-      Q.stage().insert(eleball);
+    if (!this.p.isServerSide){
+      return;
+    }
+
+    // Clone to avoid bad stuff from happening due to references
+    var clonedProps = this.p;
+    
+    var eleballProperties = { isServerSide: clonedProps.isServerSide,
+                              sessionId: clonedProps.sessionId,
+                              element : clonedProps.element,
+                              sheet : ELEBALL_ELEMENTNAMES[clonedProps.element],
+                              shooter : clonedProps.name,
+                              shooterId : clonedProps.spriteId,
+                              frame : ELEBALL_FRAME,
+                              angle : clonedProps.fireAngleDeg, // angle 0 starts from 3 o'clock then clockwise
+                              vx : ELEBALL_DEFAULT_VX * Math.cos(clonedProps.fireAngleRad),
+                              vy : ELEBALL_DEFAULT_VY * Math.sin(clonedProps.fireAngleRad)
+    };
+
+    var eleball = addEnemyEleballSprite(getNextSpriteId(), eleballProperties);
+
+    // fire ball location offset from player
+    var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(clonedProps.fireAngleRad)) * ELEBALL_PLAYER_SF;
+    if(clonedProps.fireAngleDeg <= 360 && clonedProps.fireAngleDeg > 180){
+      // deduct ball width due to the direction of the ball is set to be default at right direction
+      eleball.p.y = clonedProps.y - ballToPlayerY;
     } else {
-      eleball.destroy();
+      eleball.p.y = clonedProps.y + ballToPlayerY;
+    }
+
+    var ballToPlayerX = Math.abs((clonedProps.w/2 + eleball.p.w/2) * Math.cos(clonedProps.fireAngleRad)) * ELEBALL_PLAYER_SF;
+    if(clonedProps.fireAngleDeg <= 270 && clonedProps.fireAngleDeg > 90){
+      eleball.p.x = clonedProps.x - ballToPlayerX;
+    } else {
+      eleball.p.x = clonedProps.x + ballToPlayerX;
     }
     
-    // On the server side, we need to send this new eleball information to all other players
-    if (this.p.isServerSide) {
+    // server side broadcast to every player
+    var eleballData = { entityType: 'ENEMYELEBALL',
+                        spriteId: eleball.p.spriteId,
+                        p: eleball.p
+                      };
 
-      if (typeof eleball.p.spriteId == 'undefined'){
-        console.log("getting new id for " + eleball.p.spriteId);
-        eleball.p.spriteId = getNextId(this.p.sessionId, eleball.p.entityType);
-      }
-      console.log("New ENEMYELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
-      
-      sendToApp('updateEnemy', {
-            entityType: 'ENEMYELEBALL',
-            sessionId: this.p.sessionId,
-            spriteId: eleball.p.spriteId,
-            p: eleball.p
-      });
-    }
+    Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
+
+    this.p.cooldown = ENEMY_DEFAULT_COOLDOWN;
   },
   
   step: function(dt) {
@@ -180,7 +179,7 @@ Q.Sprite.extend("Enemy",{
       
       if (this.p.cooldown <= 0) {
         //ready to shoot
-        // this.trigger('fire', Math.random() * 360);
+        this.trigger('fire', Math.random() * 360);
 
         // randomly set a cooldown between 2.0 and 5.0
         this.p.cooldown = Math.random() * 3 + ENEMY_DEFAULT_COOLDOWN; 

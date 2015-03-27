@@ -47,7 +47,7 @@ Q.Sprite.extend("Player",{
       fireTargetX: 0, // position x of target in game world
       fireTargetY: 0,  // possition y of target in game world
       isFiring: false,
-      isServerSide: false, // a flag so that the server-simulated players will not send messages out
+      isServerSide: false, // a flag so that the server-simulated players will send update messages out
       onLadder: false,
       ladderX: 0,
       takeDamageCooldown: 0,
@@ -175,16 +175,16 @@ Q.Sprite.extend("Player",{
     }
 
     // Clone to avoid bad stuff from happening due to references
-    var clonedPlayerProps = this.p;
+    var clonedProps = this.p;
     
     //this.p should not be circular
     //console.log("About to create PLAYERELEBALL with properties: " + getJSON(this.p));
-    var eleballProperties = { isServerSide: clonedPlayerProps.isServerSide,
-                              sessionId: clonedPlayerProps.sessionId,
-                              element : clonedPlayerProps.element,
-                              sheet : ELEBALL_ELEMENTNAMES[clonedPlayerProps.element],
-                              shooter : clonedPlayerProps.name,
-                              shooterId : clonedPlayerProps.spriteId,
+    var eleballProperties = { isServerSide: clonedProps.isServerSide,
+                              sessionId: clonedProps.sessionId,
+                              element : clonedProps.element,
+                              sheet : ELEBALL_ELEMENTNAMES[clonedProps.element],
+                              shooter : clonedProps.name,
+                              shooterId : clonedProps.spriteId,
                               frame : ELEBALL_FRAME,
                               angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
                               vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
@@ -194,19 +194,19 @@ Q.Sprite.extend("Player",{
     var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties);
 
     // fire ball location offset from player
-    var ballToPlayerY = Math.abs((clonedPlayerProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
+    var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
     if(angleDeg <= 360 && angleDeg > 180){
       // deduct ball width due to the direction of the ball is set to be default at right direction
-      eleball.p.y = clonedPlayerProps.y - ballToPlayerY;
+      eleball.p.y = clonedProps.y - ballToPlayerY;
     } else {
-      eleball.p.y = clonedPlayerProps.y + ballToPlayerY;
+      eleball.p.y = clonedProps.y + ballToPlayerY;
     }
 
-    var ballToPlayerX = Math.abs((clonedPlayerProps.w/2 + eleball.p.w/2) * Math.cos(angleRad)) * ELEBALL_PLAYER_SF;
+    var ballToPlayerX = Math.abs((clonedProps.w/2 + eleball.p.w/2) * Math.cos(angleRad)) * ELEBALL_PLAYER_SF;
     if(angleDeg <= 270 && angleDeg > 90){
-      eleball.p.x = clonedPlayerProps.x - ballToPlayerX;
+      eleball.p.x = clonedProps.x - ballToPlayerX;
     } else {
-      eleball.p.x = clonedPlayerProps.x + ballToPlayerX;
+      eleball.p.x = clonedProps.x + ballToPlayerX;
     }
 
     // console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
@@ -219,7 +219,7 @@ Q.Sprite.extend("Player",{
                       };
 
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
-       
+
     this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
   },
 
@@ -255,16 +255,16 @@ Q.Sprite.extend("Player",{
   
   die: function(killer) {
     this.p.canFire = false;
-    Q.stageScene("endGame",1, { label: "You Died" });
+    
+    if(!this.p.isServerSide){
+      Q.stageScene("endGame",1, { label: "You Died" });
+    }
 
     console.log(this.p.name + " died to " + killer);
   
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
-  
-    sendToApp('playerDied', {
-      spriteId: this.p.spriteId
-    });
-    this.destroy();  
+
+    removePlayerSprite(this.p.spriteId);
   },
   
   climbLadder: function(col){

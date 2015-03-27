@@ -87,7 +87,7 @@ Q.scene('endGame',function(stage) {
   // and restart the game.
   button.on("click",function() {
     Q.clearStages();
-    Q.stageScene('level3');
+    Q.stageScene(gameState.level);
   });
 
   // Expand the container to visibily fit it's contents

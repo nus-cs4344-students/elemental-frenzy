@@ -17,7 +17,8 @@ var DEFAULT_GAMESTATE = {
             ACTOR: {},
             PLAYERELEBALL: {},
             ENEMYELEBALL: {},
-            ENEMY: {}}
+            ENEMY: {}
+           } 
 };
 
 var DEFAULT_SESSION = {
@@ -341,7 +342,7 @@ var insertIntoStage = function(sprite) {
 };
 
 var initialization = function(){
-    
+
   Q.input.on('broadcastAll', function(data) {
 
     if(!session.players){

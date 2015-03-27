@@ -155,7 +155,7 @@ Q.component('2dEleball', {
   collision: function(col,last) {
     // Don't collide with the shooter of the eleball
     if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId) {
-      console.log("Eleball passing object!!!");
+      // console.log("Eleball passing object!!!");
       return;
     }
     
@@ -171,7 +171,12 @@ Q.component('2dEleball', {
         // Case 1, destroy each other
         console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
-        entity.destroy();
+
+        if(entity.selfDestruct){
+          clearTimeout(entity.selfDestruct);
+        }
+        removeSprite(entity.p.entityType, entity.p.spriteId);
+
         // Play sound
         if ( !entity.p.soundIsAnnoying) {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[i]);
@@ -180,7 +185,12 @@ Q.component('2dEleball', {
         // Case 2, this eleball destroys the other and passes through
         console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys " + ELEBALL_ELEMENTNAMES[j]);
-        other.destroy();
+        
+        if(other.selfDestruct){
+          clearTimeout(other.selfDestruct);
+        }
+        removeSprite(other.p.entityType, other.p.spriteId);
+
         // Play sound
         if ( !other.p.soundIsAnnoying) {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
@@ -192,7 +202,11 @@ Q.component('2dEleball', {
       entity.trigger("onHit", col);
     } else {
       entity.trigger("onHit", col);
-      entity.destroy();
+
+      if(entity.selfDestruct){
+        clearTimeout(entity.selfDestruct);
+      }
+      removeSprite(entity.p.entityType, entity.p.spriteId);
     }
   },
 
@@ -241,102 +255,98 @@ Q.component("serverSprite", {
 
 // ## Attached to players on the server side for simulation
 Q.component("serverPlatformerControls", {
-    defaults: {
-      speed: 200,
-      jumpSpeed: -300,
-      collisions: []
-    },
+  defaults: {
+    speed: 200,
+    jumpSpeed: -300,
+    collisions: []
+  },
 
-    added: function() {
-      var p = this.entity.p;
-    
-    this.entity.inputs = [];
+  added: function() {
+    var p = this.entity.p;
+  
+  this.entity.inputs = [];
 
-      Q._defaults(p,this.defaults);
+    Q._defaults(p,this.defaults);
 
-      this.entity.on("step",this,"step");
-      this.entity.on("bump.bottom",this,"landed");
+    this.entity.on("step",this,"step");
+    this.entity.on("bump.bottom",this,"landed");
 
-      p.landed = 0;
-      p.direction ='right';
-    },
+    p.landed = 0;
+    p.direction ='right';
+  },
 
-    landed: function(col) {
-      var p = this.entity.p;
-      p.landed = 1/5;
-    },
+  landed: function(col) {
+    var p = this.entity.p;
+    p.landed = 1/5;
+  },
 
-    step: function(dt) {
-      var p = this.entity.p;
-    
-    if (this.entity.inputs['right']) {
-      console.log("Should be moving right");
-    }
+  step: function(dt) {
+    var p = this.entity.p;
+  
+    if(p.ignoreControls === undefined || !p.ignoreControls) {
+      var collision = null;
 
-      if(p.ignoreControls === undefined || !p.ignoreControls) {
-        var collision = null;
+      // Follow along the current slope, if possible.
+      if(p.collisions !== undefined && p.collisions.length > 0 && (this.entity.inputs['left'] || this.entity.inputs['right'] || p.landed > 0)) {
+        if(p.collisions.length === 1) {
+          collision = p.collisions[0];
+        } else {
+          // If there's more than one possible slope, follow slope with negative Y normal
+          collision = null;
 
-        // Follow along the current slope, if possible.
-        if(p.collisions !== undefined && p.collisions.length > 0 && (this.entity.inputs['left'] || this.entity.inputs['right'] || p.landed > 0)) {
-          if(p.collisions.length === 1) {
-            collision = p.collisions[0];
-          } else {
-            // If there's more than one possible slope, follow slope with negative Y normal
-            collision = null;
-
-            for(var i = 0; i < p.collisions.length; i++) {
-              if(p.collisions[i].normalY < 0) {
-                collision = p.collisions[i];
-              }
+          for(var i = 0; i < p.collisions.length; i++) {
+            if(p.collisions[i].normalY < 0) {
+              collision = p.collisions[i];
             }
           }
-
-          // Don't climb up walls.
-          if(collision !== null && collision.normalY > -0.3 && collision.normalY < 0.3) {
-            collision = null;
-          }
         }
 
-        if(this.entity.inputs['left']) {
-          p.direction = 'left';
-          if(collision && p.landed > 0) {
-            p.vx = p.speed * collision.normalY;
-            p.vy = -p.speed * collision.normalX;
-          } else {
-            p.vx = -p.speed;
-          }
-        } else if(this.entity.inputs['right']) {
-          p.direction = 'right';
-          if(collision && p.landed > 0) {
-            p.vx = -p.speed * collision.normalY;
-            p.vy = p.speed * collision.normalX;
-          } else {
-            p.vx = p.speed;
-          }
-        } else {
-          p.vx = 0;
-          if(collision && p.landed > 0) {
-            p.vy = 0;
-          }
-        }
-
-        if(p.landed > 0 && (this.entity.inputs['up'] || this.entity.inputs['action']) && !p.jumping) {
-          p.vy = p.jumpSpeed;
-          p.landed = -dt;
-          p.jumping = true;
-        } else if(this.entity.inputs['up'] || this.entity.inputs['action']) {
-          this.entity.trigger('jump', this.entity);
-          p.jumping = true;
-        }
-
-        if(p.jumping && !(this.entity.inputs['up'] || this.entity.inputs['action'])) {
-          p.jumping = false;
-          this.entity.trigger('jumped', this.entity);
-          if(p.vy < p.jumpSpeed / 3) {
-            p.vy = p.jumpSpeed / 3;
-          }
+        // Don't climb up walls.
+        if(collision !== null && collision.normalY > -0.3 && collision.normalY < 0.3) {
+          collision = null;
         }
       }
-      p.landed -= dt;
+
+      if(this.entity.inputs['left']) {
+        p.direction = 'left';
+        if(collision && p.landed > 0) {
+          p.vx = p.speed * collision.normalY;
+          p.vy = -p.speed * collision.normalX;
+        } else {
+          p.vx = -p.speed;
+        }
+      } else if(this.entity.inputs['right']) {
+        p.direction = 'right';
+        if(collision && p.landed > 0) {
+          p.vx = -p.speed * collision.normalY;
+          p.vy = p.speed * collision.normalX;
+        } else {
+          p.vx = p.speed;
+        }
+      } else {
+        p.vx = 0;
+        if(collision && p.landed > 0) {
+          p.vy = 0;
+        }
+      }
+
+      if(p.landed > 0 && (this.entity.inputs['up'] || this.entity.inputs['action']) && !p.jumping) {
+        p.vy = p.jumpSpeed;
+        p.landed = -dt;
+        p.jumping = true;
+      } else if(this.entity.inputs['up'] || this.entity.inputs['action']) {
+        this.entity.trigger('jump', this.entity);
+        p.jumping = true;
+      }
+
+      if(p.jumping && !(this.entity.inputs['up'] || this.entity.inputs['action'])) {
+        p.jumping = false;
+        this.entity.trigger('jumped', this.entity);
+        if(p.vy < p.jumpSpeed / 3) {
+          p.vy = p.jumpSpeed / 3;
+        }
+      }
     }
-  });
+    p.landed -= dt;
+  }
+});

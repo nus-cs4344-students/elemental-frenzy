@@ -61,12 +61,12 @@ Q.Sprite.extend("Eleball", {
 
     this.add("2dEleball, animation");
     
-    this.on("onHit", this, "onHit");
+    this.on("onHit");
     
     // Destroy itself after 10 seconds
     var that = this;
-    setTimeout(function() {
-      that.destroy();
+    this.selfDestruct = setTimeout(function() {
+      removeSprite(that.p.entityType, that.p.spriteId);
     }, 10000);
     
     // Play fire sound when eleball is launched
@@ -76,7 +76,6 @@ Q.Sprite.extend("Eleball", {
   },
 
   onHit: function(collision) {
-    console.log("onHit");
   },
   
   step: function(dt) {
@@ -112,19 +111,7 @@ Q.Eleball.extend("PlayerEleball", {
   },
   
   destroyed: function() {
-    if (this.p.isServerSide) {
-      if (typeof this.p.spriteId == 'undefined'){
-        console.log("getting new id for " + this.p.spriteId);
-        this.p.spriteId = getNextId(this.p.sessionId, this.p.entityType);
-      }
-      console.log(this.p.entityType + " id " + this.p.spriteId + " sending destroyed message with sessionId " + this.p.sessionId);
-      sendToApp('destroyed', {
-        entityType: 'PLAYERELEBALL',
-        sessionId: this.p.sessionId,
-        spriteId: this.p.spriteId,
-        p: this.p
-      });
-    }
+    // no need to send destoryed message to everyone as it will self destruct after 10 seconds
   }
 });
 
@@ -153,19 +140,7 @@ Q.Eleball.extend("EnemyEleball", {
   },
   
   destroyed: function() {
-    if (this.p.isServerSide) {
-      if (typeof this.p.spriteId == 'undefined'){
-        console.log("getting new id for " + this.p.spriteId);
-        this.p.spriteId = getNextId(this.p.sessionId, this.p.entityType);
-      }
-      console.log(this.p.entityType + " id " + this.p.spriteId + " sending destroyed message with sessionId " + this.p.sessionId);
-      sendToApp('destroyed', {
-        entityType: 'ENEMYELEBALL',
-        sessionId: this.p.sessionId,
-        spriteId: this.p.spriteId,
-        p: this.p
-      });
-    }
+    // no need to send destoryed message to everyone as it will self destruct after 10 seconds
   }
 });
 

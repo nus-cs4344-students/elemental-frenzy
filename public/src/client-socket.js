@@ -390,6 +390,23 @@ var insertIntoStage = function(sprite) {
 };
 
 var initialization = function(){
+
+    Q.input.on('removeSprite', function(data){
+
+    var eType = data.entityType;
+    if(!eType){
+      console.log("Tring to destroy sprite without entityType");
+      return;
+    }    
+
+    var spriteId = data.spriteId;
+    if(!spriteId){
+      console.log("Tring to destroy sprite without sprite id");
+    }
+
+    removeSprite(eType, spriteId);
+  });
+    
   Q.input.on('sessionCast', function(data) {
 
     var sId = sessionId;
