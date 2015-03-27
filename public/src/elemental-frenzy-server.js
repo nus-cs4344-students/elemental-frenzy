@@ -2,7 +2,7 @@
 
 // ## Connect to the server
 var HOSTNAME = "localhost";
-var PORT = 4344;
+var PORT = 4343;
 var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
@@ -11,6 +11,7 @@ var STAGE_GAME = 0;
 //change this maybe? currently they use 1 for the game over button
 var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
+
 
 // # Quintus platformer example
 //
@@ -26,20 +27,18 @@ window.addEventListener("load",function() {
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
 // includes the `TileLayer` class as well as the `2d` componet.
-var Q = window.Q 
-      = Quintus({ 
-          audioSupported: [ 'ogg','mp3', 'wav' ],
-          imagePath: "/images/",
-          audioPath: "/audio/",
-          dataPath: "/data/"
-        })
+var Q = window.Q = Quintus({ 
+    audioSupported: [ 'ogg','mp3', 'wav' ],
+    imagePath: "/images/",
+    audioPath: "/audio/",
+    dataPath: "/data/"
+  })
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .controls()
-        .touch()
-        .enableSound();
+        .controls().touch()
+    .enableSound();
     
 // ## Set keyboard controls
 require(['src/keyboard-controls'], function() {
@@ -55,6 +54,8 @@ require(['src/components']);
 require(['src/eleballs']);
 // ## Player sprite
 require(['src/player']);
+// ## Ladder sprite
+require(['src/ladder']);
 // ## Actor sprite (other players)
 require(['src/actor']);
 // ## Enemy sprite
@@ -63,8 +64,6 @@ require(['src/enemy-ai']);
 require(['src/tower']);
 // ## Scenes for the game
 require(['src/scenes']);
-// 
-require(['src/ladder']);
 
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
@@ -80,7 +79,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     character_fire.png, character_fire.json, \
     map_tiles.png, ladder.png, ladder.json", function() {
 
-  // Sprites sheets can be created manually
+   // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   Q.sheet("map_tiles", "map_tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
@@ -99,7 +98,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 });
 
 // ## Set socket event listeners
-require(['src/client-socket']);
+require(['./src/server-socket-event-listeners']);
 
 // ## Possible Experimentations:
 // 

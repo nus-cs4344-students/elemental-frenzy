@@ -7,93 +7,60 @@ var player;
 // Create a new scene called level 1
 Q.scene("level1",function(stage) {
 
-	// Add in a repeater for a little parallax action
-	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-		// Add in a tile layer, and make it the collision layer
-		stage.collisionLayer(new Q.TileLayer({
-              							dataAsset: 'level1.json',
-		                        sheet:     'tiles' }));
+    // Add in a tile layer, and make it the collision layer
+    stage.collisionLayer(new Q.TileLayer({
+                        dataAsset: 'level1.json',
+                            sheet:     'tiles' }));
 
+  // Add in a couple of enemies
+  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
-		player = Q.stage().insert(new Q.Player({
-			playerId: selfId
-	}));
-		
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-
-	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-	// Finally add in the tower goal
-	stage.insert(new Q.Tower({ x: 180, y: 50 }));
-  
-	// Insert all actors
-	require(['src/helper-functions'], insertAllActors(stage));
+  // Finally add in the tower goal
+  stage.insert(new Q.Tower({ x: 180, y: 50 }));
 });
 
 // ## Level2 scene
 // Create a new scene called level 2
 Q.scene("level2",function(stage) {
 
-	// Add in a repeater for a little parallax action
-	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-		// Add in a tile layer, and make it the collision layer
-		stage.collisionLayer(new Q.TileLayer({
-		                     dataAsset: 'level2.json',
-		                     sheet:     'tiles' }));
+    // Add in a tile layer, and make it the collision layer
+    stage.collisionLayer(new Q.TileLayer({
+                         dataAsset: 'level2.json',
+                         sheet:     'tiles' }));
 
+  // Add in a couple of enemies
+  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
-		player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-
-	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-	// Finally add in the tower goal
-	stage.insert(new Q.Tower({ x: 180, y: 50 }));
-
-	// Insert all actors
-	require(['src/helper-functions'], insertAllActors(stage));
+  // Finally add in the tower goal
+  stage.insert(new Q.Tower({ x: 180, y: 50 }));
 });
 
 // ## Level3 scene
 // Create a new scene called level 3
 Q.scene("level3",function(stage) {
 
-	// Add in a repeater for a little parallax action
-	stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
 
-		// Add in a tile layer, and make it the collision layer
-		stage.collisionLayer(new Q.TileLayer({
-		                     dataAsset: 'level3.json',
-		                     sheet:     'map_tiles' }));
+    // Add in a tile layer, and make it the collision layer
+    stage.collisionLayer(new Q.TileLayer({
+                         dataAsset: 'level3.json',
+                         sheet:     'map_tiles' }));
+               
+  // Add in a couple of enemies
+  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
+  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
 
-
-		player = Q.stage().insert(new Q.Player({
-		playerId: selfId
-	}));
-
-	// Give the stage a moveable viewport and tell it
-	// to follow the player.
-	Q.stage().add("viewport").follow(player);
-
-	// Add in a couple of enemies
-	stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-	stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-	// Finally add in the tower goal
-	stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  // Finally add in the tower goal
+  stage.insert(new Q.Tower({ x: 180, y: 50 }));
 
     stage.insert(new Q.TileLayer({ dataAsset: 'level3.json',
                                     sheet: 'map_tiles'}));
@@ -102,9 +69,6 @@ Q.scene("level3",function(stage) {
 //  stage.insert(new Q.Ladder({ x: 100, y: 259 }));
 //  stage.insert(new Q.Ladder({ x: 100, y: 322 }));
 //  stage.insert(new Q.Ladder({ x: 100, y: 385 }));
-
-	// Insert all actors
-	insertAllActors(stage);
 });
 
 // To display a game over / game won popup box, 
