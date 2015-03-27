@@ -97,9 +97,41 @@ var getEnemySprite  = function(enemyId) {
   return getSprite('ENEMY' , enemyId);
 };
 
+var getPlayerEleballSprite = function(ballId) {
+  return getSprite('PLAYERELEBALL' , ballId);
+};
+
+var getEnemyEleballSprite  = function(ballId) {
+  return getSprite('ENEMYELEBALL' , ballId);
+};
+
+
 var getSpriteProperties = function(entityType, id) {
   // console.log("Getting sprite properties of "+entityType+" id " + id);
-  var s = getSprite(entityType,id);
+
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to get sprite properties without entityType");
+    return;
+  }
+
+  switch(eType){
+    case 'ACTOR':{
+      eType = 'PLAYER';
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+
+  var spriteId = id;
+  if(!spriteId){
+    console.log("Trying to get sprite properties of "+eType+"without id");
+    return;
+  }
+
+  var s = getSprite(eType,spriteId);
 
   if(s){
     // console.log("Sprite properties: "+getJSON(s.p));
@@ -114,6 +146,14 @@ var getPlayerProperties = function(playerId) {
 
 var getEnemyProperties  = function(enemyId) {
   return getSpriteProperties('ENEMY' , enemyId);
+};
+
+var getEnemyEleballProperties  = function(ballId) {
+  return getSpriteProperties('ENEMYELEBALL' , enemyId);
+};
+
+var getPlayerEleballProperties  = function(ballId) {
+  return getSpriteProperties('PLAYERELEBALL' , ballId);
 };
 
 var isSpriteExists = function(entityType, id){
@@ -145,11 +185,7 @@ var isSpriteExists = function(entityType, id){
 /*
  Create and add sprite into game state and insert it into active stage
  */
-var addSprite = function(entityType, id, properties) {
-
-  console.log("Cloning properties for sprite " + eType + " id " + spriteId + " before creating it: " + getJSON(properties));
-  var clonedProps = clone(properties);
-  
+var addSprite = function(entityType, id, properties) {  
   var eType = entityType;
   if(!eType){
     console.log("Trying to add sprite without entityType");
@@ -178,7 +214,8 @@ var addSprite = function(entityType, id, properties) {
     return;
   }
 
-
+  // console.log("Cloning properties for sprite " + eType + " id " + spriteId + " before creating it: " + getJSON(properties));
+  var clonedProps = clone(properties);
   if(!clonedProps){
     clonedProps = {};
     console.log("Trying to add sprite with default properties");
@@ -195,7 +232,7 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
+  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
@@ -217,14 +254,24 @@ var addSprite = function(entityType, id, properties) {
   return true;
 };
 
-var addPlayer = function(playerId, properties){
+var addPlayerSprite = function(playerId, properties){
   return addSprite('PLAYER', playerId, properties);
 };
 
 
-var addEnemy = function(enemyId, properties){
+var addEnemySprite = function(enemyId, properties){
   return addSprite('ENEMY', enemyId, properties);
 };
+
+
+var addEnemyEleballSprite = function(ballId, properties){
+  return addSprite('ENEMYELEBALL', ballId, properties);
+};
+
+var addPlayerEleballSprite = function(ballId, properties){
+  return addSprite('PLAYERELEBALL', ballId, properties);
+};
+
 
 /*
  Delete and remove sprite from game state and remove it from active stage
@@ -234,6 +281,16 @@ var removeSprite = function(entityType, id){
   if(!eType){
     console.log("Trying to remove sprite without entityType");
     return;
+  }
+
+  switch(eType){
+    case 'ACTOR':{
+      eType = 'PLAYER';
+      break;
+    }
+    default:{
+      break;
+    }
   }
 
   var spriteId = id;
@@ -248,7 +305,7 @@ var removeSprite = function(entityType, id){
     return false;
   }
 
-  console.log("Removed sprite " + eType + " id " + spriteId);
+  // console.log("Removed sprite " + eType + " id " + spriteId);
 
   var sDel = allSprites[eType][spriteId];
   sDel.destroy();
@@ -259,13 +316,21 @@ var removeSprite = function(entityType, id){
   return true;
 };
 
-var removePlayer = function(playerId) {
+var removePlayerSprite = function(playerId) {
   return removeSprite('PLAYER', playerId);
 };
 
-
-var removeEnemy = function(enemyId) {
+var removeEnemySprite = function(enemyId) {
   return removeSprite('ENEMY', enemyId);
+};
+
+
+var removeEnemyEleballSprite = function(ballId) {
+  return removeSprite('ENEMYELEBALL', ballId);
+};
+
+var removePlayerEleballSprite = function(ballId) {
+  return removeSprite('PLAYERELEBALL', ballId);
 };
 
 var insertIntoStage = function(sprite) {
@@ -548,7 +613,7 @@ socket.on('join', function(data) {
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
-    addPlayer(pId);
+    addPlayerSprite(pId);
     
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});

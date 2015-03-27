@@ -33,10 +33,10 @@ Q.Sprite.extend("Eleball", {
     // merge p and defaultP, where attributes in p will override those in defaultP
     p = mergeObjects(p, defaultP);
     
-    console.log("Inside ELEBALL init: properties p passed in:");
-    console.log(getJSON(p));
-    console.log("defaultP:");
-    console.log(getJSON(defaultP));
+    // console.log("Inside ELEBALL init: properties p passed in:");
+    // console.log(getJSON(p));
+    // console.log("defaultP:");
+    // console.log(getJSON(defaultP));
     
     this._super(p, {
       entityType: 'ELEBALL',

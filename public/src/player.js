@@ -105,7 +105,7 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(e){
-    console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
+    // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
     if (this.p.cooldown > 0 || !this.p.canFire) {
       return;
     }
@@ -151,7 +151,7 @@ Q.Sprite.extend("Player",{
       this.trigger('fired');
     }
     
-    console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
+    // console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
 
     // Magic code
     //e.preventDefault();
@@ -216,10 +216,10 @@ Q.Sprite.extend("Player",{
         console.log("getting new id for " + eleball.p.spriteId);
         eleball.p.spriteId = getNextId(this.p.sessionId, eleball.p.entityType);
       }
-      console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
+      // console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
       
       Q.stage().insert(eleball);
-      console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
+      // console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
       
       sendToApp('update', {
         sessionId: this.p.sessionId,

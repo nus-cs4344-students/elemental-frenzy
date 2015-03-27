@@ -21,6 +21,7 @@ var selfId;
 var sessionId;
 var allSprites;
 var gameState;
+var isSessionConnected = false;
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -390,8 +391,8 @@ var loadGameSession = function() {
       keyCode: e.keyCode
     };
     sendToApp('keyup', {sessionId: sessionId,
-                          spriteId: selfId,
-                          e: createdEvt
+                        spriteId: selfId,
+                        e: createdEvt
     });
   });  
 
@@ -404,14 +405,14 @@ var loadGameSession = function() {
         y: e.y
       };
       sendToApp('mouseup', {sessionId: sessionId,
-                              spriteId: selfId,
-                              e: createdEvt
+                            spriteId: selfId,
+                            e: createdEvt
       });
  
       // Trigger the fire animation of the player
-      getSprite('PLAYER', selfId).trigger('fire', e);
+      getPlayerSprite(selfId).trigger('fire', e);
       
-      console.log("Player props: " + getJSON(getSprite('PLAYER', selfId).p));
+      // console.log("Player props: " + getJSON(getPlayerSprite(selfId).p));
   });
 
   // Viewport
@@ -426,7 +427,7 @@ var sendToApp = function(eventName, eventData){
 // when client is connected to app.js
 socket.on('connected', function(data) {
   selfId = data.spriteId;
-    console.log("Connected as PLAYER "+selfId);
+  console.log("Connected as PLAYER "+selfId);
 
   // TODO: Player character name/outfit selection
 

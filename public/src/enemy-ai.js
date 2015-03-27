@@ -60,35 +60,7 @@ Q.Sprite.extend("Enemy",{
     this.on('takeDamage');
     
     this.on('fire');  
-    this.on('fired');  
-    
-    // If not updated for 3 seconds, remove it
-    // var temp = this;
-    // this.p.destroyWhenNoUpdateInterval = setInterval(function() {
-    //   if (temp.p.isServerSide) {
-    //     clearInterval(temp.p.destroyWhenNoUpdateInterval)
-    //   }
-    //   if (!temp.p.update) {
-    //     temp.destroy();
-    //   }
-    //   temp.p.update = false;
-    // }, 3000);    
-
-    // Server side simulation. Server Player sends updates back to the client
-    // Remember to clearInterval this when destroying the object!!
-    // if (this.p.isServerSide) {
-    //   var enemyProps = cloneObject(this.p);
-    //   enemyProps.isServerSide = false;
-    //   this.p.serverUpdateInterval = setInterval(function() {
-    //     sendToApp('updateEnemy', {
-    //         type: 'ENEMY',
-    //         spriteId: enemyProps.enemyId,
-    //         p: enemyProps
-    //       });
-    //     // console.log("Enemy " + enemyProps.enemyId + " sending update message from SERVER TO APP");
-    //   }, 100);
-    // }
-
+    this.on('fired'); 
     },
   
   takeDamage: function(dmgAndShooter) {
