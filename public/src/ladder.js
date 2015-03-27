@@ -5,7 +5,7 @@
 Q.Sprite.extend("Ladder", {
   init: function(p, defaultP) {
     this._super(p, { 
-      sheet: 'ladder_wood',
+      sheet: 'ladder_metal',
       type: Q.SPRITE_DEFAULT,
       collisonMask: Q.SPRITE_ACTIVE,
       sensor: true

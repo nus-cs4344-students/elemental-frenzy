@@ -61,11 +61,14 @@ Q.scene("level3",function(stage) {
 
   // Finally add in the tower goal
   stage.insert(new Q.Tower({ x: 180, y: 50 }));
-  stage.insert(new Q.Ladder({ x: 100, y: 100 }));
-  stage.insert(new Q.Ladder({ x: 100, y: 171 }));
-  stage.insert(new Q.Ladder({ x: 100, y: 242 }));
-  stage.insert(new Q.Ladder({ x: 100, y: 313 }));
-  stage.insert(new Q.Ladder({ x: 100, y: 384 }));
+
+    stage.insert(new Q.TileLayer({ dataAsset: 'level3.json',
+                                    sheet: 'map_tiles'}));
+//  stage.insert(new Q.Ladder({ x: 100, y: 133 }));
+//  stage.insert(new Q.Ladder({ x: 100, y: 196 }));
+//  stage.insert(new Q.Ladder({ x: 100, y: 259 }));
+//  stage.insert(new Q.Ladder({ x: 100, y: 322 }));
+//  stage.insert(new Q.Ladder({ x: 100, y: 385 }));
 });
 
 // To display a game over / game won popup box, 
