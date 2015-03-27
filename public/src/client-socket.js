@@ -380,7 +380,7 @@ var loadGameSession = function() {
       keyCode: e.keyCode
     };
     sendToApp('keydown', {sessionId: sessionId,
-                          id: selfId,
+                          spriteId: selfId,
                           e: createdEvt
     });
   });
@@ -390,7 +390,7 @@ var loadGameSession = function() {
       keyCode: e.keyCode
     };
     sendToApp('keyup', {sessionId: sessionId,
-                          id: selfId,
+                          spriteId: selfId,
                           e: createdEvt
     });
   });  
@@ -404,7 +404,7 @@ var loadGameSession = function() {
         y: e.y
       };
       sendToApp('mouseup', {sessionId: sessionId,
-                              id: selfId,
+                              spriteId: selfId,
                               e: createdEvt
       });
  
@@ -425,13 +425,13 @@ var sendToApp = function(eventName, eventData){
 
 // when client is connected to app.js
 socket.on('connected', function(data) {
-  selfId = data.id;
+  selfId = data.spriteId;
     console.log("Connected as PLAYER "+selfId);
 
   // TODO: Player character name/outfit selection
 
   // update app.js regarding session info
-  sendToApp('join', {id: selfId});
+  sendToApp('join', {spriteId: selfId});
 });
 
 // player successfully joined a session and receive game state + session info 
@@ -439,6 +439,7 @@ socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
   sessionId = data.sessionId;
   gameState = data.gameState;
+  isSessionConnected = true;
 
   loadGameSession();
 });
@@ -462,7 +463,7 @@ socket.on('addSprite', function(data){
     return;
   }
 
-  var spriteId = props.id;
+  var spriteId = props.spriteId;
   if(!spriteId){
     console.log("addSprite without id in properties");
     return;
@@ -491,7 +492,7 @@ socket.on('updateSprite', function(data){
     return;
   }
 
-  var spriteId = props.id;
+  var spriteId = props.spriteId;
   if(!spriteId){
     console.log("updateSprite without id in properties");
     return;
@@ -520,7 +521,7 @@ socket.on('removeSprite', function(data){
     return;
   }
 
-  var spriteId = props.id;
+  var spriteId = props.spriteId;
   if(!spriteId){
     console.log("removeSprite without id in properties");
     return;
@@ -539,14 +540,15 @@ socket.on('removeSprite', function(data){
 socket.on('Sessiondisconnected', function(){
   console.log("Session disconnected");
 
+  isSessionConnected = false;
 });
 
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
-  console.log("Player " + data.id + " from session " + sessionId + " disconnected!");
+  console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
   
   // Destroy player and remove him from game state
-  removePlayer(data.id);
+  removePlayer(data.spriteId);
 });
 
 // when app.js is disconnected

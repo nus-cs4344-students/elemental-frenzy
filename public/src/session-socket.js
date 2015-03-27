@@ -190,7 +190,7 @@ var addSprite = function(entityType, id, properties) {
     return false;
   }
 
-  clonedProps.id = spriteId;
+  clonedProps.spriteId = spriteId;
   clonedProps.isServerSide = true;  
   clonedProps.sessionId = session.sessionId;
 
@@ -514,7 +514,7 @@ var sendToApp = function(eventName, eventData){
 // when session is connected to app.js
 socket.on('connected', function(data) {
   
-  var sId = data.id;
+  var sId = data.sessionId;
   if(!sId){
     console.log("Connected as SESSION without id");
     return;
@@ -533,7 +533,7 @@ socket.on('connected', function(data) {
 // when a player request to join
 socket.on('join', function(data) {
   
-  var pId = data.id;
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id requests to join");
     return;
@@ -571,7 +571,7 @@ socket.on('join', function(data) {
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
   
-  var pId = data.id
+  var pId = data.spriteId
   if(!pId){
     console.log("Player without id is disconnected from session " + session.sessionId);
   }
@@ -601,7 +601,7 @@ socket.on('disconnect', function(){
 
 
 socket.on('keydown', function(data) {
-  var pId = data.id;
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id sent keyDown");
     return;
@@ -632,7 +632,7 @@ socket.on('keydown', function(data) {
 });
 
 socket.on('keyup', function(data) {
-  var pId = data.id;
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id sent keyUp");
     return;
@@ -663,7 +663,7 @@ socket.on('keyup', function(data) {
 });
 
 socket.on('mouseup', function(data) {
-  var pId = data.id;
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id sent moseUp");
     return;

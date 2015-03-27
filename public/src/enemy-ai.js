@@ -82,7 +82,7 @@ Q.Sprite.extend("Enemy",{
     //   this.p.serverUpdateInterval = setInterval(function() {
     //     sendToApp('updateEnemy', {
     //         type: 'ENEMY',
-    //         id: enemyProps.enemyId,
+    //         spriteId: enemyProps.enemyId,
     //         p: enemyProps
     //       });
     //     // console.log("Enemy " + enemyProps.enemyId + " sending update message from SERVER TO APP");
@@ -176,16 +176,16 @@ Q.Sprite.extend("Enemy",{
     // On the server side, we need to send this new eleball information to all other players
     if (this.p.isServerSide) {
 
-      if (typeof eleball.p.id == 'undefined'){
-        console.log("getting new id for " + eleball.p.id);
-        eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
+      if (typeof eleball.p.spriteId == 'undefined'){
+        console.log("getting new id for " + eleball.p.spriteId);
+        eleball.p.spriteId = getNextId(this.p.sessionId, eleball.p.entityType);
       }
-      console.log("New ENEMYELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
+      console.log("New ENEMYELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
       
       sendToApp('updateEnemy', {
             entityType: 'ENEMYELEBALL',
             sessionId: this.p.sessionId,
-            id: eleball.p.id,
+            spriteId: eleball.p.spriteId,
             p: eleball.p
       });
     }
