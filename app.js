@@ -64,29 +64,26 @@ var findAvailableSession = function() {
   return -1;
 };
 
-var updateSession = function(sessionId, session){
-  sessions[sessionId] = session;
-};
-
-var updatePlayerSession = function(sessionId){
+var updatePlayerSession = function(sessionId, session){
   // get previous player list map by sessionId
   var pList = getPlayerIdsOfSessionId(sessionId);
 
   for(var p in pList){    
     delete playerIdToSessionIdMap[playerId];
   }
-
-  // get current player list in session
-  var cpList = sessions[sessionId].players;
+  
+  // get current player list in updated session
+  var cpList = session.players;
   for(var p in cpList){    
     playerIdToSessionIdMap[playerId] = sessionId;
   }
+  sessions[sessionId] = session;
 
   // create new session
   if(!sessionIdToPlayerIdMap[sessionId]){
     sessionIdToPlayerIdMap[sessionId] = {};
   }
-  sessionIdToPlayerIdMap[sessionId] = pList;
+  sessionIdToPlayerIdMap[sessionId] = cpList;
 };
 
 var addPlayerSocket = function(socket, playerId){
@@ -258,6 +255,7 @@ io.on('connection', function (socket) {
       for(var p in pList){
         sendToPlayer(p, 'sessionDisconnected');
       }
+
       removeSession(sId);
 
     }else if(!sId && pId){
@@ -269,6 +267,7 @@ io.on('connection', function (socket) {
 
       totalPlayerCount--;
       removePlayer(pId);
+
     }else if(sId && pId){
       console.log("Conflicted socket disconnected");
     } else{
@@ -309,8 +308,7 @@ io.on('connection', function (socket) {
       case 'updateSession':{
         // update for the session
         if(sId){
-          updateSession(sId, data.eventData);
-          updatePlayerSession(sId);
+          updatePlayerSession(sId,  data.eventData);
           console.log("Update session : " + getJSON(data.eventData));
         }else{
           console.log("Failed to update session");
