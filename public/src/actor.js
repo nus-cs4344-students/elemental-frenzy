@@ -16,7 +16,11 @@ var ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 Q.Sprite.extend("Actor", {
   
   init: function(p, defaultP) {
-    p = mergeObjects(p, defaultP);
+    
+    require(['src/helper-functions'], function() {
+      p = mergeObjects(p, defaultP);
+    });
+    
     this._super(p, {
       sheet: ACTOR_CHARACTERS[ACTOR_DEFAULT_ELEMENT],
       sprite: ACTOR_ANIMATION,

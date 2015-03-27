@@ -77,6 +77,8 @@ var clone = function(item){
 };
 
 var updateSprite = function(entityType, id, properties){
+  // Clone to avoid bad stuff happening due to references
+  var clonedProps = clone(properties);
   var eType = entityType;
   if(!eType){
     console.log("Trying to update sprite without entityType");
@@ -107,7 +109,7 @@ var updateSprite = function(entityType, id, properties){
     return;
   }
 
-  if(!properties){
+  if(!clonedProps){
     console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
     return;
   }
@@ -118,8 +120,9 @@ var updateSprite = function(entityType, id, properties){
   }
 
   console.log("Updated "+eType+" id " + spriteId);
-  allSprites[eType][spriteId].p = properties;
-  gameState.sprites[eType][spriteId] = {p: properties}; 
+  clonedProps.isServerSide = false;
+  allSprites[eType][spriteId].p = clonedProps;
+  gameState.sprites[eType][spriteId] = {p: clonedProps}; 
 
   return true;
 }
@@ -393,16 +396,23 @@ var loadGameSession = function() {
   });  
 
   // Event listener for firing
-  // Q.el.addEventListener('mouseup', function(e){
-  //   // Client side player fires the event!
-  //     var createdEvt = {
-  //       changedTouches: e.changedTouches,
-  //       x: e.x,
-  //       y: e.y
-  //     };
-
-  //     that.trigger('fire', e);
-  // });
+  Q.el.addEventListener('mouseup', function(e){
+    // Client side player fires the event!
+      var createdEvt = {
+        changedTouches: e.changedTouches,
+        x: e.x,
+        y: e.y
+      };
+      sendToApp('mouseup', {sessionId: sessionId,
+                              id: selfId,
+                              e: createdEvt
+      });
+ 
+      // Trigger the fire animation of the player
+      getSprite('PLAYER', selfId).trigger('fire', e);
+      
+      console.log("Player props: " + getJSON(getSprite('PLAYER', selfId).p));
+  });
 
   // Viewport
   Q.stage().add("viewport").follow(getPlayerSprite(selfId));

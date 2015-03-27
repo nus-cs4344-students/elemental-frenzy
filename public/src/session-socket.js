@@ -147,6 +147,9 @@ var isSpriteExists = function(entityType, id){
  */
 var addSprite = function(entityType, id, properties) {
 
+  console.log("Cloning properties for sprite " + eType + " id " + spriteId + " before creating it: " + getJSON(properties));
+  var clonedProps = clone(properties);
+  
   var eType = entityType;
   if(!eType){
     console.log("Trying to add sprite without entityType");
@@ -176,8 +179,8 @@ var addSprite = function(entityType, id, properties) {
   }
 
 
-  if(!properties){
-    properties = {};
+  if(!clonedProps){
+    clonedProps = {};
     console.log("Trying to add sprite with default properties");
   }
 
@@ -187,12 +190,12 @@ var addSprite = function(entityType, id, properties) {
     return false;
   }
 
-  properties.id = spriteId;
-  properties.isServerSide = true;  
-  properties.sessionId = session.sessionId;
+  clonedProps.id = spriteId;
+  clonedProps.isServerSide = true;  
+  clonedProps.sessionId = session.sessionId;
 
-  console.log("Added sprite " + eType + " id " + spriteId);
-  var sprite = creates[eType](properties);
+  var sprite = creates[eType](clonedProps);
+  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
@@ -680,4 +683,6 @@ socket.on('mouseup', function(data) {
   
   var player = getPlayerSprite(pId);
   player.trigger('fire', e);
+  
+  console.log("Player firing, properties are: " + getJSON(player.p));
 });

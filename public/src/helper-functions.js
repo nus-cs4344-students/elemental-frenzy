@@ -54,7 +54,10 @@ var makeScaledPoints = function (w, h, sf) {
 // E.g. var obj1 = {food : 'pizza', drink : 'cola'}, obj2 = {food : 'lasagna', dessert : 'icecream'}
 //    returned object = {food : 'pizza', drink : 'cola', dessert : 'icecream'}
 var mergeObjects = function(obj1, obj2) {
-  var ret = clone(obj2) || {};
+  var ret = clone(obj2);
+  if (typeof ret === 'undefined') {
+    ret = {};
+  }
   for (var attrName in obj1) {
     ret[attrName] = clone(obj1[attrName]);
   }

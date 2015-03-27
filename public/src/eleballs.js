@@ -33,6 +33,11 @@ Q.Sprite.extend("Eleball", {
     // merge p and defaultP, where attributes in p will override those in defaultP
     p = mergeObjects(p, defaultP);
     
+    console.log("Inside ELEBALL init: properties p passed in:");
+    console.log(getJSON(p));
+    console.log("defaultP:");
+    console.log(getJSON(defaultP));
+    
     this._super(p, {
       entityType: 'ELEBALL',
       element : ELEBALL_DEFAULT_ELEMENT,
@@ -62,7 +67,7 @@ Q.Sprite.extend("Eleball", {
     var that = this;
     setTimeout(function() {
       that.destroy();
-    }, 10000)
+    }, 10000);
     
     // Play fire sound when eleball is launched
     if ( !this.p.soundIsAnnoying) {

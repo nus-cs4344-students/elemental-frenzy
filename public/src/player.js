@@ -105,6 +105,7 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(e){
+    console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
     if (this.p.cooldown > 0 || !this.p.canFire) {
       return;
     }
@@ -141,6 +142,7 @@ Q.Sprite.extend("Player",{
       animationName = "fire_up";
     }
 
+    // cloning just in case of bad stuff happening due to references
     this.p.fireAnimation = animationName;
 
     if(this.has('animation')){
@@ -148,6 +150,8 @@ Q.Sprite.extend("Player",{
     }else{
       this.trigger('fired');
     }
+    
+    console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
 
     // Magic code
     //e.preventDefault();
@@ -156,6 +160,8 @@ Q.Sprite.extend("Player",{
   fired: function(){
     // reset fire animation
     this.p.fireAnimation = PLAYER_NO_FIRE_ANIMATION;
+    //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
+    //console.log(getJSON(this.p));
 
     // re-compute firing angle with respect to current player position and target position
     var angleRad = Math.atan2(this.p.fireTargetY - this.p.y, this.p.fireTargetX - this.p.x) ;
@@ -167,13 +173,17 @@ Q.Sprite.extend("Player",{
       angleDeg = -angleDeg;
     }
 
+    // Clone to avoid bad stuff from happening due to references
+    var clonedPlayerProps = this.p;
+    // this.p should not be circular
+    //console.log("About to create PLAYERELEBALL with properties: " + getJSON(this.p));
     var eleball = new Q.PlayerEleball({
-      isServerSide: this.p.isServerSide,
-      sessionId: this.p.sessionId,
-      element : this.p.element,
-      sheet : ELEBALL_ELEMENTNAMES[this.p.element],
-      shooter : this.p.name,
-      shooterId : this.p.id,
+      isServerSide: clonedPlayerProps.isServerSide,
+      sessionId: clonedPlayerProps.sessionId,
+      element : clonedPlayerProps.element,
+      sheet : ELEBALL_ELEMENTNAMES[clonedPlayerProps.element],
+      shooter : clonedPlayerProps.name,
+      shooterId : clonedPlayerProps.id,
       frame : ELEBALL_FRAME,
       angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
       vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
@@ -201,24 +211,24 @@ Q.Sprite.extend("Player",{
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
     if (this.p.isServerSide) {
-      Q.stage().insert(eleball);
-    } else {
-      eleball.destroy();
-    }
-    
-    // On the server side, we need to send this new eleball information to all other players
-    if (this.p.isServerSide) {
       if (typeof eleball.p.id == 'undefined'){
+        // On the server side, we need to send this new eleball information to all other players
         console.log("getting new id for " + eleball.p.id);
         eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
       }
       console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
+      
+      Q.stage().insert(eleball);
+      console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
+      
       sendToApp('update', {
         sessionId: this.p.sessionId,
         entityType: 'PLAYERELEBALL',
         id: eleball.p.id,
         p: eleball.p
-      })
+      });
+    } else {
+      eleball.destroy();
     }
     
     this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
