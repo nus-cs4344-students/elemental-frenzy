@@ -30,6 +30,7 @@ var DEFAULT_SESSION = {
 var gameState;
 var session;
 var allSprites;
+var spriteId=0;
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -84,6 +85,10 @@ var clone = function(item){
   }
 };
 
+var getNextSpriteId = function(){
+  return ++spriteId;
+}
+
 var getSprite = function(entityType, id) {
   // console.log("Getting sprite of "+entityType+" id " + id);
   return allSprites[entityType][id];
@@ -127,7 +132,7 @@ var getSpriteProperties = function(entityType, id) {
 
   var spriteId = id;
   if(!spriteId){
-    console.log("Trying to get sprite properties of "+eType+"without id");
+    console.log("Trying to get sprite properties of "+eType+" without id");
     return;
   }
 
@@ -175,7 +180,7 @@ var isSpriteExists = function(entityType, id){
 
   var spriteId = id;
   if(!spriteId){
-    console.log("Trying to check existence of sprite "+eType+"without id");
+    console.log("Trying to check existence of sprite "+eType+" without id");
     return;
   }
 
@@ -210,7 +215,7 @@ var addSprite = function(entityType, id, properties) {
 
   var spriteId = id;
   if(!spriteId){
-    console.log("Trying to add sprite "+eType+"without id");
+    console.log("Trying to add sprite "+eType+" without id");
     return;
   }
 
@@ -251,13 +256,12 @@ var addSprite = function(entityType, id, properties) {
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p}; 
 
-  return true;
+  return sprite;
 };
 
 var addPlayerSprite = function(playerId, properties){
   return addSprite('PLAYER', playerId, properties);
 };
-
 
 var addEnemySprite = function(enemyId, properties){
   return addSprite('ENEMY', enemyId, properties);
@@ -295,7 +299,7 @@ var removeSprite = function(entityType, id){
 
   var spriteId = id;
   if(!spriteId){
-    console.log("Trying to remove sprite "+eType+"without id");
+    console.log("Trying to remove sprite "+eType+" without id");
     return;
   }
 
@@ -324,7 +328,6 @@ var removeEnemySprite = function(enemyId) {
   return removeSprite('ENEMY', enemyId);
 };
 
-
 var removeEnemyEleballSprite = function(ballId) {
   return removeSprite('ENEMYELEBALL', ballId);
 };
@@ -337,53 +340,8 @@ var insertIntoStage = function(sprite) {
   return Q.stage().insert(sprite);
 };
 
-
-// ## Helper Functions
-var loadGameSession = function(sessionId) {
-  if(!sessionId){
-    console.log("Trying to load game session without seesion id");
-    return;
-  }
-
-  console.log("Loading game state...");
-
-  // initialize game state and sesion
-  gameState = clone(DEFAULT_GAMESTATE);
-  session = clone(DEFAULT_SESSION);
-  session.sessionId = sessionId;
-  allSprites = clone(DEFAULT_SPRITES);
-
-  // Load gameState default level
-  Q.stageScene(gameState.level);
-
-
-  // Create and load all sprites
-  var spritesToAdd = [];
-  for (var entityType in gameState.sprites) {
-    for (var eId in gameState.sprites[entityType]) {
-      if (!gameState.sprites[entityType][eId]) {
-        // Invalid sprite entry
-        continue;
-      } else if(isSpriteExists(entityType,eId)) {
-        // Already has a sprite created!
-        console.log("Sprites "+entityType+" "+eId+" already exists");
-        continue;
-      } else if(gameState.sprites[entityType][eId].p) {
-        // if there are valid properties
-        spritesToAdd.push({entityType: entityType, eId: eId, props: gameState.sprites[entityType][eId].p});
-      } else{
-        console.log("Unknown sprites properties");
-      }
-    }
-  }
-
-  for(var i =0; i< spritesToAdd.length; i++){
-    addSprite(spritesToAdd[i].entityType, 
-              spritesToAdd[i].eId, 
-              spritesToAdd[i].props);
-  }
-
-
+var initialization = function(){
+    
   Q.input.on('broadcastAll', function(data) {
 
     if(!session.players){
@@ -424,14 +382,11 @@ var loadGameSession = function(sessionId) {
     sendToApp(data.eventName, data.eventData);
   });
 
-  // Viewport
-  Q.stage().add("viewport");
-
   Q.el.addEventListener('keydown', function(e) {
 
     var keyCode = e.keyCode;
 
-    if (Q.input.keys[keyCode]) {
+    if (Q.input.keys[keyCode] && Q.stage().has('viewport')) {
       var actionName = Q.input.keys[keyCode];
       var x = Q.stage().viewport.x;
       var y = Q.stage().viewport.y;
@@ -449,6 +404,53 @@ var loadGameSession = function(sessionId) {
   });
 };
 
+var loadGameSession = function(sessionId) {
+  if(!sessionId){
+    console.log("Trying to load game session without seesion id");
+    return;
+  }
+
+  console.log("Loading game state...");
+
+  // initialize game state and sesion
+  gameState = clone(DEFAULT_GAMESTATE);
+  session = clone(DEFAULT_SESSION);
+  session.sessionId = sessionId;
+  allSprites = clone(DEFAULT_SPRITES);
+
+  // Load gameState default level
+  Q.stageScene(gameState.level);
+
+  // Viewport
+  Q.stage().add("viewport");
+
+  // Create and load all sprites
+  var spritesToAdd = [];
+  for (var entityType in gameState.sprites) {
+    for (var eId in gameState.sprites[entityType]) {
+      if (!gameState.sprites[entityType][eId]) {
+        // Invalid sprite entry
+        continue;
+      } else if(isSpriteExists(entityType,eId)) {
+        // Already has a sprite created!
+        console.log("Sprites "+entityType+" "+eId+" already exists");
+        continue;
+      } else if(gameState.sprites[entityType][eId].p) {
+        // if there are valid properties
+        spritesToAdd.push({entityType: entityType, eId: eId, props: gameState.sprites[entityType][eId].p});
+      } else{
+        console.log("Unknown sprites properties");
+      }
+    }
+  }
+
+  for(var i =0; i< spritesToAdd.length; i++){
+    addSprite(spritesToAdd[i].entityType, 
+              spritesToAdd[i].eId, 
+              spritesToAdd[i].props);
+  }
+};
+
 var pressKey = function(player, keyCode) {
   if(!player){
     console.log("Player without sprite released the key");
@@ -463,9 +465,7 @@ var pressKey = function(player, keyCode) {
   
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
-    console.log("Pressing key " + keyCode + " with action name " + actionName);
     player.inputs[actionName] = true;
-    console.log("Inputs[" + actionName + "] is " + player.inputs[actionName]);
     Q.input.trigger(actionName);
     Q.input.trigger('keydown',keyCode);
   }
@@ -587,6 +587,9 @@ socket.on('connected', function(data) {
 
   console.log("Connected as SESSION "+sId);
   
+  // setup Quintus event listeners
+  initialization();
+
   // Load the initial game state
   loadGameSession(sId);
 
@@ -654,7 +657,7 @@ socket.on('playerDisconnected', function(data) {
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
 
   // Destroy player and remove him from game state
-  removePlayer(pId);
+  removePlayerSprite(pId);
 });
 
 // when app.js is disconnected
@@ -749,5 +752,5 @@ socket.on('mouseup', function(data) {
   var player = getPlayerSprite(pId);
   player.trigger('fire', e);
   
-  console.log("Player firing, properties are: " + getJSON(player.p));
+  // console.log("Player firing, properties are: " + getJSON(player.p));
 });
