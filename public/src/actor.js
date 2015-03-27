@@ -36,7 +36,7 @@ Q.Sprite.extend("Actor", {
 
     var temp = this;
     var selfDestruction = setInterval(function() {
-      console.log("ACTOR id " + temp.p.id + " update " + temp.p.update);
+      console.log("ACTOR id " + temp.p.spriteId + " update " + temp.p.update);
       if (!temp.p.update) {
         clearInterval(selfDestruction);
         temp.destroy();

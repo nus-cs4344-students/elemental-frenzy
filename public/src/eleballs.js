@@ -104,7 +104,7 @@ Q.Eleball.extend("PlayerEleball", {
   // Player eleballs only damage enemies
   onHit: function(collision) {
     if (collision.obj.isA("Enemy") ||
-      (collision.obj.isA("Player") && collision.obj.p.id != this.p.shooterId) ||
+      (collision.obj.isA("Player") && collision.obj.p.spriteId != this.p.shooterId) ||
       collision.obj.isA("Actor")) {
       collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
     }
@@ -113,15 +113,15 @@ Q.Eleball.extend("PlayerEleball", {
   
   destroyed: function() {
     if (this.p.isServerSide) {
-      if (typeof this.p.id == 'undefined'){
-        console.log("getting new id for " + this.p.id);
-        this.p.id = getNextId(this.p.sessionId, this.p.entityType);
+      if (typeof this.p.spriteId == 'undefined'){
+        console.log("getting new id for " + this.p.spriteId);
+        this.p.spriteId = getNextId(this.p.sessionId, this.p.entityType);
       }
-      console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
+      console.log(this.p.entityType + " id " + this.p.spriteId + " sending destroyed message with sessionId " + this.p.sessionId);
       sendToApp('destroyed', {
         entityType: 'PLAYERELEBALL',
         sessionId: this.p.sessionId,
-        id: this.p.id,
+        spriteId: this.p.spriteId,
         p: this.p
       });
     }
@@ -154,15 +154,15 @@ Q.Eleball.extend("EnemyEleball", {
   
   destroyed: function() {
     if (this.p.isServerSide) {
-      if (typeof this.p.id == 'undefined'){
-        console.log("getting new id for " + this.p.id);
-        this.p.id = getNextId(this.p.sessionId, this.p.entityType);
+      if (typeof this.p.spriteId == 'undefined'){
+        console.log("getting new id for " + this.p.spriteId);
+        this.p.spriteId = getNextId(this.p.sessionId, this.p.entityType);
       }
-      console.log(this.p.entityType + " id " + this.p.id + " sending destroyed message with sessionId " + this.p.sessionId);
+      console.log(this.p.entityType + " id " + this.p.spriteId + " sending destroyed message with sessionId " + this.p.sessionId);
       sendToApp('destroyed', {
         entityType: 'ENEMYELEBALL',
         sessionId: this.p.sessionId,
-        id: this.p.id,
+        spriteId: this.p.spriteId,
         p: this.p
       });
     }

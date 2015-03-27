@@ -154,7 +154,7 @@ Q.component('2dEleball', {
   //  - Case 3: Both elements pass through each other if |i-j| == 2
   collision: function(col,last) {
     // Don't collide with the shooter of the eleball
-    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.id == this.entity.p.shooterId) {
+    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId) {
       console.log("Eleball passing object!!!");
       return;
     }
@@ -225,7 +225,7 @@ Q.component("serverSprite", {
     
     // Server side sprites will send updates periodically
     this.serverUpdateInterval = setInterval(function() {    
-      // console.log("EntityType " + entity.p.entityType + " id " + entity.p.id + " in session "+entity.p.sessionId+" sending update from server");
+      // console.log("EntityType " + entity.p.entityType + " id " + entity.p.spriteId + " in session "+entity.p.sessionId+" sending update from server");
       
       Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p}});
     }, 500);

@@ -224,7 +224,7 @@ io.on('connection', function (socket) {
     addPlayerSocket(socket, playerId);
 
     setTimeout(function () {
-      sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'connected', {id: getPlayerIdOfSocketId(socket.conn.id)});
+      sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'connected', {spriteId: getPlayerIdOfSocketId(socket.conn.id)});
     }, 500);
 
   }else if(isSession && !getSessionIdOfSocketId(socket.conn.id)){
@@ -234,7 +234,7 @@ io.on('connection', function (socket) {
     addSessionSocket(socket, sessionId);
 
     setTimeout(function () {
-      sendToSession(getSessionIdOfSocketId(socket.conn.id), 'connected', {id: getSessionIdOfSocketId(socket.conn.id)});
+      sendToSession(getSessionIdOfSocketId(socket.conn.id), 'connected', {sessionId: getSessionIdOfSocketId(socket.conn.id)});
     }, 500);    
   } else{
 
@@ -263,7 +263,7 @@ io.on('connection', function (socket) {
 
       var pSessionId = getSessionIdOfPlayerId(pId);
       // inform respective session about the player disconnection
-      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {id: pId});
+      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
 
       totalPlayerCount--;
       removePlayer(pId);
@@ -283,11 +283,11 @@ io.on('connection', function (socket) {
 
         if(sId != -1){
           sendToSession(sId, 'join', data.eventData);
-          console.log("Found session "+sId+" for player "+ data.eventData.id);
+          console.log("Found session "+sId+" for player "+ data.eventData.spriteId);
         }else{
           // bounce back join operation failed to the player
           sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', {sessionId: sId});
-          console.log("Failed to find a session for player "+ data.eventData.id);
+          console.log("Failed to find a session for player "+ data.eventData.spriteId);
         }
         break;
       }

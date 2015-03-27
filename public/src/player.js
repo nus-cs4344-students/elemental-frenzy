@@ -32,7 +32,7 @@ Q.Sprite.extend("Player",{
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
-      id: -1,
+      spriteId: -1,
       entityType: 'PLAYER',
       sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
       sprite: PLAYER_ANIMATION,
@@ -183,7 +183,7 @@ Q.Sprite.extend("Player",{
       element : clonedPlayerProps.element,
       sheet : ELEBALL_ELEMENTNAMES[clonedPlayerProps.element],
       shooter : clonedPlayerProps.name,
-      shooterId : clonedPlayerProps.id,
+      shooterId : clonedPlayerProps.spriteId,
       frame : ELEBALL_FRAME,
       angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
       vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
@@ -211,12 +211,12 @@ Q.Sprite.extend("Player",{
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
     if (this.p.isServerSide) {
-      if (typeof eleball.p.id == 'undefined'){
+      if (typeof eleball.p.spriteId == 'undefined'){
         // On the server side, we need to send this new eleball information to all other players
-        console.log("getting new id for " + eleball.p.id);
-        eleball.p.id = getNextId(this.p.sessionId, eleball.p.entityType);
+        console.log("getting new id for " + eleball.p.spriteId);
+        eleball.p.spriteId = getNextId(this.p.sessionId, eleball.p.entityType);
       }
-      console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.id);
+      console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
       
       Q.stage().insert(eleball);
       console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
@@ -224,7 +224,7 @@ Q.Sprite.extend("Player",{
       sendToApp('update', {
         sessionId: this.p.sessionId,
         entityType: 'PLAYERELEBALL',
-        id: eleball.p.id,
+        spriteId: eleball.p.spriteId,
         p: eleball.p
       });
     } else {
@@ -245,7 +245,7 @@ Q.Sprite.extend("Player",{
     console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
     
     sendToApp('playerTookDmg', {
-      id: this.p.id,
+      spriteId: this.p.spriteId,
       dmg: dmg,
       shooter: shooter
     });
@@ -273,7 +273,7 @@ Q.Sprite.extend("Player",{
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
   
     sendToApp('playerDied', {
-      id: this.p.id
+      spriteId: this.p.spriteId
     });
     this.destroy();  
   },
