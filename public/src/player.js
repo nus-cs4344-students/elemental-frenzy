@@ -25,10 +25,7 @@ Q.Sprite.extend("Player",{
   init: function(p, defaultP) {
     
     var that = this;
-
-    require(['src/helper-functions'], function() {
-      p = mergeObjects(p, defaultP);
-    });
+    p = mergeObjects(p, defaultP);
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
@@ -36,8 +33,8 @@ Q.Sprite.extend("Player",{
       entityType: 'PLAYER',
       sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
       sprite: PLAYER_ANIMATION,
-        x: 410,           // You can also set additional properties that can
-        y: 90,             // be overridden on object creation
+      x: 410,          
+      y: 90,            
       cooldown: 0,    // can fire immediately
       canFire: true,
       maxHealth: PLAYER_DEFAULT_MAXHEALTH,
@@ -50,7 +47,7 @@ Q.Sprite.extend("Player",{
       fireTargetX: 0, // position x of target in game world
       fireTargetY: 0,  // possition y of target in game world
       isFiring: false,
-      isServerSide: false, // a flag so that the server-simulated players will not send messages out
+      isServerSide: false, // a flag so that the server-simulated players will send update messages out
       onLadder: false,
       ladderX: 0,
       takeDamageCooldown: 0,
@@ -86,8 +83,8 @@ Q.Sprite.extend("Player",{
     this.on("hit.sprite",function(collision) {
       // Check the collision, if it's the Tower, you win!
       if(collision.obj.isA("Tower")) {
-        Q.stageScene("endGame",1, { label: "You Won!" }); 
-        this.destroy();
+        // Q.stageScene("endGame",1, { label: "You Won!" }); 
+        // this.destroy();
       }
     });
   
@@ -105,15 +102,16 @@ Q.Sprite.extend("Player",{
   },
 
   fire: function(e){
-    console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
+    // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
+   
     if (this.p.cooldown > 0 || !this.p.canFire) {
       return;
     }
-    
-    var stage = Q.stage(0); 
-    var touch = e.changedTouches ?  e.changedTouches[0] : e;
-    var mouseX = Q.canvasToStageX(touch.x, stage);
-    var mouseY = Q.canvasToStageY(touch.y, stage);
+
+    // when fire event is trigger, x & y in the event data are translate into game world coordinates
+    // during event handling in client socket
+    var mouseX = e.x;
+    var mouseY = e.y;
     this.p.fireTargetX = mouseX;
     this.p.fireTargetY = mouseY;
 
@@ -151,10 +149,7 @@ Q.Sprite.extend("Player",{
       this.trigger('fired');
     }
     
-    console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
-
-    // Magic code
-    //e.preventDefault();
+    // console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
   },
 
   fired: function(){
@@ -162,6 +157,12 @@ Q.Sprite.extend("Player",{
     this.p.fireAnimation = PLAYER_NO_FIRE_ANIMATION;
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
+
+    // Only on the server side do we insert this immediately.
+    // On the client side we have to wait for the update message
+    if (!this.p.isServerSide){
+      return;
+    }
 
     // re-compute firing angle with respect to current player position and target position
     var angleRad = Math.atan2(this.p.fireTargetY - this.p.y, this.p.fireTargetX - this.p.x) ;
@@ -174,63 +175,51 @@ Q.Sprite.extend("Player",{
     }
 
     // Clone to avoid bad stuff from happening due to references
-    var clonedPlayerProps = this.p;
-    // this.p should not be circular
-    //console.log("About to create PLAYERELEBALL with properties: " + getJSON(this.p));
-    var eleball = new Q.PlayerEleball({
-      isServerSide: clonedPlayerProps.isServerSide,
-      sessionId: clonedPlayerProps.sessionId,
-      element : clonedPlayerProps.element,
-      sheet : ELEBALL_ELEMENTNAMES[clonedPlayerProps.element],
-      shooter : clonedPlayerProps.name,
-      shooterId : clonedPlayerProps.spriteId,
-      frame : ELEBALL_FRAME,
-      angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
-      vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
-      vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
-    });
+    var clonedProps = this.p;
     
-    // console.log("Eleball is server side? " + eleball.p.isServerSide);
+    //this.p should not be circular
+    //console.log("About to create PLAYERELEBALL with properties: " + getJSON(this.p));
+    var eleballProperties = { isServerSide: clonedProps.isServerSide,
+                              sessionId: clonedProps.sessionId,
+                              element : clonedProps.element,
+                              sheet : ELEBALL_ELEMENTNAMES[clonedProps.element],
+                              shooter : clonedProps.name,
+                              shooterId : clonedProps.spriteId,
+                              frame : ELEBALL_FRAME,
+                              angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
+                              vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
+                              vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
+    };
+
+    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties);
 
     // fire ball location offset from player
-    var ballToPlayerY = Math.abs((this.p.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
+    var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
     if(angleDeg <= 360 && angleDeg > 180){
       // deduct ball width due to the direction of the ball is set to be default at right direction
-      eleball.p.y = this.p.y - ballToPlayerY;
+      eleball.p.y = clonedProps.y - ballToPlayerY;
     } else {
-      eleball.p.y = this.p.y + ballToPlayerY;
+      eleball.p.y = clonedProps.y + ballToPlayerY;
     }
 
-    var ballToPlayerX = Math.abs((this.p.w/2 + eleball.p.w/2) * Math.cos(angleRad)) * ELEBALL_PLAYER_SF;
+    var ballToPlayerX = Math.abs((clonedProps.w/2 + eleball.p.w/2) * Math.cos(angleRad)) * ELEBALL_PLAYER_SF;
     if(angleDeg <= 270 && angleDeg > 90){
-      eleball.p.x = this.p.x - ballToPlayerX;
+      eleball.p.x = clonedProps.x - ballToPlayerX;
     } else {
-      eleball.p.x = this.p.x + ballToPlayerX;
+      eleball.p.x = clonedProps.x + ballToPlayerX;
     }
+
+    // console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
+    // console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
     
-    // Only on the server side do we insert this immediately.
-    // On the client side we have to wait for the update message
-    if (this.p.isServerSide) {
-      if (typeof eleball.p.spriteId == 'undefined'){
-        // On the server side, we need to send this new eleball information to all other players
-        console.log("getting new id for " + eleball.p.spriteId);
-        eleball.p.spriteId = getNextId(this.p.sessionId, eleball.p.entityType);
-      }
-      console.log("New PLAYERELEBALL created with sessionId " + this.p.sessionId + " id " + eleball.p.spriteId);
-      
-      Q.stage().insert(eleball);
-      console.log("Eleball added to stage, properties: " + getJSON(eleball.p));
-      
-      sendToApp('update', {
-        sessionId: this.p.sessionId,
-        entityType: 'PLAYERELEBALL',
-        spriteId: eleball.p.spriteId,
-        p: eleball.p
-      });
-    } else {
-      eleball.destroy();
-    }
-    
+    // server side broadcast to every player
+    var eleballData = { entityType: 'PLAYERELEBALL',
+                        spriteId: eleball.p.spriteId,
+                        p: eleball.p
+                      };
+
+    Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
+
     this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
   },
 
@@ -266,16 +255,16 @@ Q.Sprite.extend("Player",{
   
   die: function(killer) {
     this.p.canFire = false;
-    Q.stageScene("endGame",1, { label: "You Died" });
+    
+    if(!this.p.isServerSide){
+      Q.stageScene("endGame",1, { label: "You Died" });
+    }
 
     console.log(this.p.name + " died to " + killer);
   
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
-  
-    sendToApp('playerDied', {
-      spriteId: this.p.spriteId
-    });
-    this.destroy();  
+
+    removePlayerSprite(this.p.spriteId);
   },
   
   climbLadder: function(col){

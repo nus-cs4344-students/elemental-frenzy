@@ -8,19 +8,15 @@ var player;
 Q.scene("level1",function(stage) {
 
   // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                speedX: 0.5, 
+                                speedY: 0.5 })
+  );
 
-    // Add in a tile layer, and make it the collision layer
-    stage.collisionLayer(new Q.TileLayer({
-                        dataAsset: 'level1.json',
-                            sheet:     'tiles' }));
-
-  // Add in a couple of enemies
-  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-  // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  // Add in a tile layer, and make it the collision layer
+  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level1.json',
+                                            sheet: 'tiles' })
+  );
 });
 
 // ## Level2 scene
@@ -28,19 +24,15 @@ Q.scene("level1",function(stage) {
 Q.scene("level2",function(stage) {
 
   // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                speedX: 0.5, 
+                                speedY: 0.5 })
+  );
 
-    // Add in a tile layer, and make it the collision layer
-    stage.collisionLayer(new Q.TileLayer({
-                         dataAsset: 'level2.json',
-                         sheet:     'tiles' }));
-
-  // Add in a couple of enemies
-  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-  // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
+  // Add in a tile layer, and make it the collision layer
+  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
+                                            sheet: 'tiles' })
+  );
 });
 
 // ## Level3 scene
@@ -48,27 +40,15 @@ Q.scene("level2",function(stage) {
 Q.scene("level3",function(stage) {
 
   // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", speedX: 0.5, speedY: 0.5 }));
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                speedX: 0.5, 
+                                speedY: 0.5 })
+  );
 
-    // Add in a tile layer, and make it the collision layer
-    stage.collisionLayer(new Q.TileLayer({
-                         dataAsset: 'level3.json',
-                         sheet:     'map_tiles' }));
-               
-  // Add in a couple of enemies
-  //stage.insert(new Q.Enemy({ x: 700, y: 0 }));
-  //stage.insert(new Q.Enemy({ x: 800, y: 0 }));
-
-  // Finally add in the tower goal
-  stage.insert(new Q.Tower({ x: 180, y: 50 }));
-
-    stage.insert(new Q.TileLayer({ dataAsset: 'level3.json',
-                                    sheet: 'map_tiles'}));
-//  stage.insert(new Q.Ladder({ x: 100, y: 133 }));
-//  stage.insert(new Q.Ladder({ x: 100, y: 196 }));
-//  stage.insert(new Q.Ladder({ x: 100, y: 259 }));
-//  stage.insert(new Q.Ladder({ x: 100, y: 322 }));
-//  stage.insert(new Q.Ladder({ x: 100, y: 385 }));
+  // Add in a tile layer, and make it the collision layer
+  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
+                                            sheet: 'tiles' })
+  );
 });
 
 // To display a game over / game won popup box, 
@@ -87,7 +67,7 @@ Q.scene('endGame',function(stage) {
   // and restart the game.
   button.on("click",function() {
     Q.clearStages();
-    Q.stageScene('level3');
+    Q.stageScene(gameState.level);
   });
 
   // Expand the container to visibily fit it's contents

@@ -34,14 +34,15 @@ Q.Sprite.extend("Actor", {
     
     this.on("takeDamage");
 
-    var temp = this;
-    var selfDestruction = setInterval(function() {
-      console.log("ACTOR id " + temp.p.spriteId + " update " + temp.p.update);
-      if (!temp.p.update) {
-        clearInterval(selfDestruction);
-        temp.destroy();
+    var that = this;
+    var selfDestruct = setInterval(function() {
+      //console.log("ACTOR id " + that.p.spriteId + " update " + that.p.update);
+      
+      if (!that.p.update) {
+        clearInterval(selfDestruct);
+        removeSprite(that.p.entityType, that.p.spriteId);
       }
-      temp.p.update = false;
+      that.p.update = false;
     }, 3000);
   },
   
@@ -62,8 +63,9 @@ Q.Sprite.extend("Actor", {
     this.p.takeDamageCooldown = ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN;
   },
   
-   die: function(killer) {
-    this.destroy();  
+  die: function(killer) {
+    removeActorSprite(this.p.spriteId);
+    // Q.input.trigger("removeSprite", {entityType: this.p.entityType, spriteId: this.p.spriteId});
   },
 
   step: function(dt) {
