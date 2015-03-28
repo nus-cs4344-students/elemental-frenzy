@@ -310,7 +310,7 @@ var removeSprite = function(entityType, id){
     return false;
   }
 
-  // console.log("Removed sprite " + eType + " id " + spriteId);
+  console.log("Removed sprite " + eType + " id " + spriteId);
 
   var sDel = allSprites[eType][spriteId];
   sDel.destroy();

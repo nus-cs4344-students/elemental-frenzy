@@ -140,7 +140,7 @@ Q.component('2dEleball', {
       collisionMask: Q.SPRITE_ALL // Eleballs collide with anything
     });
     entity.on('step',this,"step");
-    entity.on('hit',this,"collision");
+    entity.on('hit.collision',this,"collision");
   },
 
   // Eleballs get destroyed when touching things, and may play a sound if soundIsAnnoying is set to false
@@ -201,6 +201,7 @@ Q.component('2dEleball', {
       }
       entity.trigger("onHit", col);
     } else {
+      console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
       if(entity.selfDestruct){
@@ -224,7 +225,7 @@ Q.component('2dEleball', {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
 
-      this.entity.stage.collide(this.entity);
+      this.entity.stage.collide(this.entity, {maxCol: 1});
       dtStep -= dt;
     }
   }

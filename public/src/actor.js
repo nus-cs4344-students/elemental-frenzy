@@ -1,5 +1,4 @@
 "use strict";
-require(['src/helper-functions']);
 
 // ## Actor constants
 var ACTOR_FIRE = 0;

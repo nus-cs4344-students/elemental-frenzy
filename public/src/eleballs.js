@@ -1,10 +1,8 @@
 "use strict";
 
-require(['src/helper-functions']);
-
 // ## Eleball constants
-var ELEBALL_DEFAULT_VX = 150;
-var ELEBALL_DEFAULT_VY = 150;
+var ELEBALL_DEFAULT_VX = 300;
+var ELEBALL_DEFAULT_VY = 300;
 var ELEBALL_DEFAULT_DMG = 5;
 // Element indices (0: fire, 1: earth, 2: lightning, 3: water, 0 > 1 > 2 > 3 > 0)
 var ELEBALL_ELEMENT_FIRE = 0;
@@ -76,12 +74,10 @@ Q.Sprite.extend("Eleball", {
   },
 
   onHit: function(collision) {
+    //console.log("ELEBALL onHit method called");
   },
   
   step: function(dt) {
-    this.p.x += this.p.vx * dt;
-    this.p.y += this.p.vy * dt;
-
     this.play("fire");
   }
 });

@@ -1,7 +1,5 @@
 "use strict";
 
-require(['src/helper-functions']);
-
 // ## Player constants
 var PLAYER_FIRE = 0;
 var PLAYER_EARTH = 1;

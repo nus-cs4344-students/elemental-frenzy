@@ -39,6 +39,11 @@ var Q = window.Q = Quintus({audioSupported: [ 'ogg','mp3', 'wav' ],
                           .controls().touch()
                           .enableSound();
     
+
+// ## Set socket event listeners
+require(['./src/session-socket']);
+// ## Helper functions
+require(['src/helper-functions']);
 // ## Set keyboard controls
 require(['src/keyboard-controls'], function() {
   Q.input.keyboardControls(KEYBOARD_CONTROLS);
@@ -95,9 +100,6 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");
 });
-
-// ## Set socket event listeners
-require(['./src/session-socket']);
 
 // ## Possible Experimentations:
 // 
