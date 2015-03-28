@@ -591,11 +591,20 @@ socket.on('connected', function(data) {
   // setup Quintus event listeners
   initialization();
 
-  // Load the initial game state
-  loadGameSession(sId);
-
-  // update app.js regarding session info
-  Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+  var interval_loadGameSession = setInterval(function() {
+    if (_assetsLoaded) {
+      // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
+      
+      // Load the initial game state
+      loadGameSession(sId);
+      
+      // update app.js regarding session info
+      Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+      
+      // Don't load a second time
+      clearInterval(interval_loadGameSession);
+    }
+  }, 100);
 });
 
 

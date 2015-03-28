@@ -570,9 +570,20 @@ socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
   sessionId = data.sessionId;
   gameState = data.gameState;
-  isSessionConnected = true;
 
-  loadGameSession();
+  var interval_loadGameSession = setInterval(function() {
+    if (_assetsLoaded) {
+      // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
+      
+      isSessionConnected = true;
+  
+      // Load the initial game state
+      loadGameSession();
+      
+      // Don't load a second time
+      clearInterval(interval_loadGameSession);
+    }
+  }, 100);
 });
 
 // Failed to join a session
@@ -610,6 +621,9 @@ socket.on('addSprite', function(data){
 
 // update sprite
 socket.on('updateSprite', function(data){
+  if (!isSessionConnected) {
+    return;
+  }
 
   var props = data.p;
   if(!props){

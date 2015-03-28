@@ -12,6 +12,7 @@ var STAGE_GAME = 0;
 var STAGE_GAME_OVER_BUTTON = 1;
 var STAGE_UI = 2;
 
+var _assetsLoaded = false; // Global variable to be checked before trying to load game
 
 // # Quintus platformer example
 //
@@ -97,6 +98,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("ladder.png", "ladder.json");
   
+  _assetsLoaded = true;
   // Finally, call stageScene to run the game
   //Q.stageScene("level2");
 });
