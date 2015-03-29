@@ -5,6 +5,8 @@ var PLAYER_FIRE = 0;
 var PLAYER_EARTH = 1;
 var PLAYER_LIGHTNING = 2;
 var PLAYER_WATER = 3;
+var PLAYER_NAMES = ["Fire", "Earth" , "Lightning", "Water"];
+var PLAYER_NAME_COLORS = ["orange", "brown" , "yellow", "cyan"];
 var PLAYER_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
@@ -255,7 +257,7 @@ Q.Sprite.extend("Player",{
     this.p.canFire = false;
     
     if(!this.p.isServerSide){
-      Q.stageScene("endGame",1, { label: "You Died" });
+      Q.stageScene("endGame",1, { label: "You are killed by "+killer });
     }
 
     console.log(this.p.name + " died to " + killer);

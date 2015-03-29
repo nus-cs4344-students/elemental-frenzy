@@ -99,8 +99,6 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("ladder.png", "ladder.json");
   
   _assetsLoaded = true;
-  // Finally, call stageScene to run the game
-  //Q.stageScene("level2");
 });
 
 // ## Possible Experimentations:

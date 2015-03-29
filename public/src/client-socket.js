@@ -17,6 +17,13 @@ var DEFAULT_SPRITES = { PLAYER: {},
                         ENEMYELEBALL: {},
                         ENEMY: {}};
 
+var STAGE_BACKGROUND = 0;
+var SCENE_BACKGROUND = 'background';
+var STAGE_LEVEL = 1;
+var STAGE_WELCOME = 2;
+var SCENE_WELCOME = 'welcomeScreen';
+
+var sessions = {};
 var selfId;
 var sessionId;
 var allSprites;
@@ -386,12 +393,47 @@ var removeActorSprite = function(actorId) {
 };
 
 var insertIntoStage = function(sprite) {
-  return Q.stage().insert(sprite);
+  return Q.stage(STAGE_LEVEL).insert(sprite);
 };
+
+var updateSessions = function(sessionsInfo){
+  // console.log("updated sessions: "+getJSON(sessionsInfo));
+
+  sessions = sessionsInfo;
+
+  if(isSessionConnected){
+    console.log("Sessions updated but bypassing welcome screen session update event \
+                when player is connected to one of the sessions");
+    return;
+  }
+
+  // refresh welcome screen
+  Q.clearStage(STAGE_WELCOME);
+  Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+}
 
 var initialization = function(){
 
-    Q.input.on('removeSprite', function(data){
+  Q.input.on('join', function(data){
+    // console.log("join "+getJSON(data));
+
+    var sId = data.sessionId;
+    if(!sId){
+      console.log("Tring to join a session without session id");
+      return;
+    }
+
+    var cId = data.characterId;
+    if(!cId){
+      console.log("Tring to join session "+sId+" without character id");
+      return;
+    }
+
+    // send request to app.js of joining a session
+    Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
+  });
+
+  Q.input.on('removeSprite', function(data){
 
     var eType = data.entityType;
     if(!eType){
@@ -402,6 +444,7 @@ var initialization = function(){
     var spriteId = data.spriteId;
     if(!spriteId){
       console.log("Tring to destroy sprite without sprite id");
+      return;
     }
 
     removeSprite(eType, spriteId);
@@ -409,7 +452,7 @@ var initialization = function(){
     
   Q.input.on('sessionCast', function(data) {
 
-    var sId = sessionId;
+    var sId = sessionId ? sessionId : data.eventData.sessionId;
     if(!sId){
       console.log("SessionCast without sessionId");
       return;
@@ -422,11 +465,6 @@ var initialization = function(){
 
     if(!data.eventName){
       console.log("SessionCast without eventName");
-      return;
-    }
-
-    if(!isSessionConnected ){
-      console.log("SessionCast when session is not connected");
       return;
     }
 
@@ -456,6 +494,7 @@ var initialization = function(){
   });
 
   Q.el.addEventListener('keyup', function(e) {
+    
     if(!isSessionConnected){
       return;
     }
@@ -478,7 +517,7 @@ var initialization = function(){
       return;
     }
 
-    var stage = Q.stage();
+    var stage = Q.stage(STAGE_LEVEL);
     var touch = e.changedTouches ?  e.changedTouches[0] : e;
     var mouseX = Q.canvasToStageX(touch.x, stage);
     var mouseY = Q.canvasToStageY(touch.y, stage);
@@ -507,6 +546,16 @@ var initialization = function(){
   });
 };
 
+// ## Loads welcome screen
+var loadWelcomeScreen = function(){
+
+  // background
+  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+
+  // character selection
+  Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+};
+
 // ## Loads the game state.
 var loadGameSession = function() {
   console.log("Loading game state...");
@@ -515,8 +564,11 @@ var loadGameSession = function() {
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
   allSprites = clone(DEFAULT_SPRITES);
 
+  // clear welcome screen
+  Q.clearStage(STAGE_WELCOME);
+
   // Load the level
-  Q.stageScene(gameState.level);
+  Q.stageScene(gameState.level, STAGE_LEVEL);
   
   // Create and load all sprites
   var spritesToAdd = [];
@@ -545,7 +597,7 @@ var loadGameSession = function() {
   }
 
   // Viewport
-  Q.stage().add("viewport").follow(getPlayerSprite(selfId));
+  Q.stage(STAGE_LEVEL).add("viewport").follow(getPlayerSprite(selfId));
 }
 
 var sendToApp = function(eventName, eventData){
@@ -555,14 +607,49 @@ var sendToApp = function(eventName, eventData){
 
 // when client is connected to app.js
 socket.on('connected', function(data) {
-  selfId = data.spriteId;
+
+  var sId = data.spriteId;
+  if(!sId){
+    console.log("Connected as PLAYER without id");
+    return;
+  }
+
+  var s = data.sessions;
+  if(!s){
+    console.log("Connected as PLAYER "+selfId + " without session info");
+    return;
+  }
+
+  selfId = sId;
   console.log("Connected as PLAYER "+selfId);
+
+  updateSessions(s);
 
   // setup Quintus event listeners
   initialization();
 
-  // send request to app.js of joining a session
-  Q.input.trigger('appCast', {eventName:'join', eventData: {spriteId: selfId}});
+  var interval_loadWelcomeScreen = setInterval(function() {
+    if (_assetsLoaded) {
+      // Assets must be loaded before trying to load the welcome screen. This flag will will be set once assets have been loaded.
+      
+      // load welcome screen
+      loadWelcomeScreen();
+
+      // Don't load a second time
+      clearInterval(interval_loadWelcomeScreen);
+    }
+  }, 100);
+});
+
+socket.on('updateSessions', function(data){
+
+  var s = data.sessions;
+  if(!s){
+    console.log("updateSessions without session info");
+    return;
+  }
+
+  updateSessions(s);
 });
 
 // player successfully joined a session and receive game state + session info 
@@ -571,19 +658,11 @@ socket.on('joinSuccessful', function(data){
   sessionId = data.sessionId;
   gameState = data.gameState;
 
-  var interval_loadGameSession = setInterval(function() {
-    if (_assetsLoaded) {
-      // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
-      
-      isSessionConnected = true;
+  isSessionConnected = true;
   
-      // Load the initial game state
-      loadGameSession();
-      
-      // Don't load a second time
-      clearInterval(interval_loadGameSession);
-    }
-  }, 100);
+  // Asset for the game state should be loaded ahen welcome screen is loaded
+  // Load the initial game state
+  loadGameSession();
 });
 
 // Failed to join a session

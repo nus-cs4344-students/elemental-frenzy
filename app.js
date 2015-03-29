@@ -51,6 +51,17 @@ var getPlayerIdsOfSessionId = function(sessionId) {
   return sessionIdToPlayerIdMap[sessionId];
 };
 
+/**
+ * Finds the size of an object
+ */
+var sizeOfObject = function(obj) {
+  var size = 0;
+  for (var key in obj) {
+    size++;
+  }
+  return size;
+}
+ 
  /**
   * Finds the first session that does not have max players and returns its index.
   * If all ongoing sessions are full or there are no ongoing sessions, returns -1.
@@ -75,7 +86,7 @@ var updatePlayerSession = function(sessionId, session){
   // get current player list in updated session
   var cpList = session.players;
   for(var p in cpList){    
-    playerIdToSessionIdMap[playerId] = sessionId;
+    playerIdToSessionIdMap[p] = sessionId;
   }
   sessions[sessionId] = session;
 
@@ -171,6 +182,15 @@ var sendToPlayers = function(players, eventName, eventData) {
   }
 };
 
+var getAllPlayers = function(){
+  var pList = {};
+  for(var p in playerIdToSocketMap){
+    pList[p] = playerId[p];
+  }
+
+  return pList;
+}
+
 /**
   * Broadcasts to all sockets in the given session
   */
@@ -204,7 +224,7 @@ io.on('connection', function (socket) {
   var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
   var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;;
 
-  if(isSession && sessions.length >= SESSION_MAX_COUNT){
+  if(isSession && sizeOfObject(sessions) >= SESSION_MAX_COUNT){
 
     console.log("There is/are already " + sessions.length + " sessions(s) running");
     return;
@@ -223,8 +243,9 @@ io.on('connection', function (socket) {
     // Store the socket of each player
     addPlayerSocket(socket, playerId);
 
+    var newPlayerData = {spriteId: getPlayerIdOfSocketId(socket.conn.id), sessions: sessions};
     setTimeout(function () {
-      sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'connected', {spriteId: getPlayerIdOfSocketId(socket.conn.id)});
+      sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'connected', newPlayerData);
     }, 500);
 
   }else if(isSession && !getSessionIdOfSocketId(socket.conn.id)){
@@ -238,7 +259,7 @@ io.on('connection', function (socket) {
     }, 500);    
   } else{
 
-    console.log("Neither Client nor Session request");
+    console.log("Neither Client nor Session request or incorrect socket mapping");
     return;
 
   }
@@ -252,11 +273,14 @@ io.on('connection', function (socket) {
 
       // inform all players that the session is disconnected
       var pList = getPlayerIdsOfSessionId(sId);
+      
       for(var p in pList){
         sendToPlayer(p, 'sessionDisconnected');
       }
 
       removeSession(sId);
+
+      sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
 
     }else if(!sId && pId){
       console.log("Player " + pId + " disconnected!");
@@ -279,17 +303,17 @@ io.on('connection', function (socket) {
   socket.on('player', function(data){
     switch(data.eventName){
       case 'join':{
-        var sId = findAvailableSession();
+        // var sId = findAvailableSession();
 
-        if(sId != -1){
-          sendToSession(sId, 'join', data.eventData);
-          console.log("Found session "+sId+" for player "+ data.eventData.spriteId);
-        }else{
-          // bounce back join operation failed to the player
-          sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', {sessionId: sId});
-          console.log("Failed to find a session for player "+ data.eventData.spriteId);
-        }
-        break;
+        // if(sId != -1){
+        //   sendToSession(sId, 'join', data.eventData);
+        //   console.log("Found session "+sId+" for player "+ data.eventData.spriteId);
+        // }else{
+        //   // bounce back join operation failed to the player
+        //   sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', {sessionId: sId});
+        //   console.log("Failed to find a session for player "+ data.eventData.spriteId);
+        // }
+        // break;
       }
       default:{
         sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
@@ -309,6 +333,7 @@ io.on('connection', function (socket) {
         // update for the session
         if(sId){
           updatePlayerSession(sId,  data.eventData);
+          sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
           console.log("Update session : " + getJSON(data.eventData));
         }else{
           console.log("Failed to update session");
