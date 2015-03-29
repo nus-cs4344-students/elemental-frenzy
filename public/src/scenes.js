@@ -11,6 +11,11 @@ var darkGrey = "rgba(0,0,0,0.5)";
 // welcome screen to allow player to choose characterSprites
 Q.scene('welcomeScreen',function(stage) {
 
+  if(sessionSelected && !sessions[sessionSelected]){
+    sessionSelected = undefined;
+  }
+
+
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
                                             size: 50,

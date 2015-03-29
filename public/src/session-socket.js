@@ -28,10 +28,6 @@ var DEFAULT_SESSION = {
   sessionId: 0
 };
 
-var STAGE_BACKGROUND = 0;
-var SCENE_BACKGROUND = 'background';
-var STAGE_LEVEL = 1;
-
 var gameState;
 var session;
 var allSprites;
@@ -242,7 +238,7 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
+  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){

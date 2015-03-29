@@ -17,12 +17,6 @@ var DEFAULT_SPRITES = { PLAYER: {},
                         ENEMYELEBALL: {},
                         ENEMY: {}};
 
-var STAGE_BACKGROUND = 0;
-var SCENE_BACKGROUND = 'background';
-var STAGE_LEVEL = 1;
-var STAGE_WELCOME = 2;
-var SCENE_WELCOME = 'welcomeScreen';
-
 var sessions = {};
 var selfId;
 var sessionId;
@@ -415,7 +409,7 @@ var updateSessions = function(sessionsInfo){
 var initialization = function(){
 
   Q.input.on('join', function(data){
-    // console.log("join "+getJSON(data));
+    console.log("join "+getJSON(data));
 
     var sId = data.sessionId;
     if(!sId){
@@ -764,6 +758,7 @@ socket.on('removeSprite', function(data){
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
+  Q.clearStage(STAGE_LEVEL);
   isSessionConnected = false;
 });
 
