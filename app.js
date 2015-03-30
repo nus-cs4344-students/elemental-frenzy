@@ -177,9 +177,6 @@ var sendToPlayer = function(playerId, eventName, eventData) {
 };
 
 var sendToPlayers = function(players, eventName, eventData) {
-  if (typeof players === 'undefined') {
-    players = getAllPlayers();
-  }
   for(var p in players){
     sendToPlayer(p, eventName, eventData);
   }
