@@ -446,7 +446,8 @@ var initialization = function(){
     
   Q.input.on('sessionCast', function(data) {
 
-    var sId = sessionId ? sessionId : data.eventData.sessionId;
+    var sId = data.eventData.sessionId;
+    sId = sId ? sId : sessionId; 
     if(!sId){
       console.log("SessionCast without sessionId");
       return;
