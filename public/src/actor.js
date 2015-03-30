@@ -55,7 +55,8 @@ Q.Sprite.extend("Actor", {
     this.p.currentHealth -= dmg;
     console.log("Actor took damage "+ dmg +" from " + shooter + ". currentHealth = " + this.p.currentHealth);
     
-    if (this.p.currentHealth <= 0) {
+    if (this.p.isServerSide && // Player's death will be decided on the server
+        this.p.currentHealth <= 0) {
       this.die(shooter);
     }
 

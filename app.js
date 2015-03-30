@@ -350,7 +350,8 @@ io.on('connection', function (socket) {
         break;
       }
       case 'updateEnemy': 
-      case 'playerTookDmg':{
+      case 'spriteTookDmg':
+      case 'spriteDied':{
         broadcastFromSession(sId, data.eventName, data.eventData);
         // console.log("Broadcast from session "+sId+" -> "+getJSON(data));
         break;
