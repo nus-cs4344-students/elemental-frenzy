@@ -50,18 +50,14 @@ Q.Sprite.extend("Actor", {
       return;
     }
 
-    var dmg = dmgAndShooter.dmg,
-        shooterEntityType = dmgAndShooter.shooter.entityType,
-        shooterId = dmgAndShooter.shooter.spriteId;
-    this.p.currentHealth -= dmg;
-    console.log("Actor took damage "+ dmg +" from " + shooterEntityType + " " + shooterId + ". currentHealth = " + this.p.currentHealth);
-    
-    if (this.p.isServerSide && // Player's death will be decided on the server
-        this.p.currentHealth <= 0) {
-      this.die(shooterEntityType, shooterId);
+    var that = this;
+    if(this.takeDamageIntervalId == -1){
+        var playTakeDamage = function (){
+          that.play("take_damage", 3);
+        }
+        this.takeDamageIntervalId = setInterval(playTakeDamage, 150);
     }
-
-    this.p.takeDamageCooldown = ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN;
+    this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
   },
   
   die: function(killerEntityType, killerId) {
@@ -78,6 +74,13 @@ Q.Sprite.extend("Actor", {
   },
 
   step: function(dt) {
+     // stop interval when player can take damage
+    if(this.p.takeDamageCooldown <= 0 && this.takeDamageIntervalId != -1){
+      clearInterval(this.takeDamageIntervalId);
+      this.takeDamageIntervalId = -1;
+    }
+
+
     if(this.has('animation')){
 
       if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&

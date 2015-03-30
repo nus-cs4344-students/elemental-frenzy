@@ -145,8 +145,18 @@ var getNextSprite = function(entityType, theSpriteId) {
 }
 
 var getSprite = function(entityType, id) {
-  // console.log("Getting sprite of "+entityType+" id " + id);
-  return allSprites[entityType][id];
+    var eType = entityType;
+  if(!eType){
+    console.log("Trying to get sprite without entityType");
+    return;
+  }
+
+  var spriteId = id;
+  if(!spriteId){
+    console.log("Trying to get sprite "+eType+" without id");
+  }
+  
+  return allSprites[eType][spriteId];
 };
 
 var getPlayerSprite = function(playerId) {
