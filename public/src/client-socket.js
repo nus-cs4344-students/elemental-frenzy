@@ -131,8 +131,36 @@ var updateSprite = function(entityType, id, properties){
 }
 
 var getSprite = function(entityType, id) {
-  // console.log("Getting "+entityType+" id " + id);
-  return allSprites[entityType][id];
+  var eType = entityType;
+  if(!eType){
+    console.log("Trying to get sprite without entityType");
+    return;
+  }
+
+  var spriteId = id;
+  switch(eType){
+    case 'ACTOR':{
+      if(selfId == spriteId){
+        eType = 'PLAYER';
+      }
+      break;
+    }
+    case 'PLAYER':{
+      if(selfId != spriteId){
+        eType = 'ACTOR';
+      }
+      break;
+    }
+    default:{
+      break;
+    }
+  }
+
+  if(!spriteId){
+    console.log("Trying to get sprite "+eType+" without id");
+  }
+
+  return allSprites[eType][spriteId];
 };
 
 var getPlayerSprite = function(playerId) {
@@ -143,7 +171,7 @@ var getEnemySprite  = function(enemyId) {
   return getSprite('ENEMY' , enemyId);
 };
 
-var getActor = function(actorId) {
+var getActorSprite = function(actorId) {
   return getSprite('ACTOR' , actorId);
 };
 

@@ -14,7 +14,7 @@ var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
-var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
+var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 1;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -228,37 +228,44 @@ Q.Sprite.extend("Player",{
       return;
     }
   
-    var dmg = dmgAndShooter.dmg,
-        shooterEntityType = dmgAndShooter.shooter.entityType,
-        shooterId = dmgAndShooter.shooter.spriteId;
-    this.p.currentHealth -= dmg;
-    console.log(this.p.entityType + " " + this.p.spriteId + " took damage by " + shooterEntityType + " " + shooterId + ". currentHealth = " + this.p.currentHealth);
-    
-    if (this.p.isServerSide) {
-      sendToApp('spriteTookDmg', {
-        dmg: dmg,
-        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
-        shooter: {entityType: shooterEntityType, spriteId: shooterId}
-      });
-    }
-
     var that = this;
     if(this.takeDamageIntervalId == -1){
         var playTakeDamage = function (){
           that.play("take_damage", 3);
         }
-        this.takeDamageIntervalId = setInterval(playTakeDamage, 200);
+        this.takeDamageIntervalId = setInterval(playTakeDamage, 150);
     }
     this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 
-    if (this.p.isServerSide && // Only the server decides if the player dies or not
-        this.p.currentHealth <= 0) {
-      this.die(shooterEntityType, shooterId);
+    // server side damage calculation
+    if (this.p.isServerSide){
+      var dmg = dmgAndShooter.dmg,
+          shooterEntityType = dmgAndShooter.shooter.entityType,
+          shooterId = dmgAndShooter.shooter.spriteId;
+      
+      this.p.currentHealth -= dmg;
+      
+      console.log(this.p.entityType + " " + this.p.spriteId + " took damage by " + shooterEntityType + " \
+                  " + shooterId + ". currentHealth = " + this.p.currentHealth);
+
+  
+      sendToApp('spriteTookDmg', {
+        dmg: dmg,
+        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
+        shooter: {entityType: shooterEntityType, spriteId: shooterId}
+      });
+
+
+      // Only the server decides if the player dies or not
+      if(this.p.currentHealth <= 0) {
+        this.die(shooterEntityType, shooterId);
+      }
     }
   },
   
   die: function(killerEntityType, killerId) {
     this.p.canFire = false;
+
     var killerName = getSprite(killerEntityType, killerId).p.name;
     
     if(!this.p.isServerSide){
@@ -296,8 +303,8 @@ Q.Sprite.extend("Player",{
       this.takeDamageIntervalId = -1;
     }
   
-  // Update countdown
-  //this.p.updateCountdown -= dt;
+    // Update countdown
+    //this.p.updateCountdown -= dt;
 
     if(this.p.onLadder) {
       this.p.gravity = 0;
