@@ -66,8 +66,8 @@ Q.Sprite.extend("Enemy",{
   
   takeDamage: function(dmgAndShooter) {
     var dmg = dmgAndShooter.dmg,
-        shooterEntityType = dmgAndShooter.shooterEntityType,
-        shooterId = dmgAndShooter.shooterId;
+        shooterEntityType = dmgAndShooter.shooter.entityType,
+        shooterId = dmgAndShooter.shooter.spriteId;
     this.p.currentHealth -= dmg;
     if (this.p.currentHealth <= 0) {
       Q.state.trigger("enemyDied", {entityType: shooterEntityType, spriteId: shooterId});
