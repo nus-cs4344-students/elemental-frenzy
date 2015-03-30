@@ -756,41 +756,45 @@ socket.on('removeSprite', function(data){
 // sprite took damage
 socket.on('spriteTookDmg', function(data) {
   console.log("Event: spriteTookDmg: data: " + getJSON(data));
-  var entityType = data.entityType,
-      spriteId = data.spriteId;
+  var victimEntityType = data.victim.entityType,
+      victimId = data.victim.spriteId,
+      shooterEntityType = data.shooter.entityType,
+      shooterId = data.shooter.spriteId;
       
-  if (entityType == 'PLAYER' && spriteId != selfId) {
+  if (victimEntityType == 'PLAYER' && victimId != selfId) {
     // Not myself, so this is an ACTOR
-    entityType = 'ACTOR';
+    victimEntityType = 'ACTOR';
   }
       
-  var sprite = getSprite(entityType, spriteId);
+  var sprite = getSprite(victimEntityType, victimId);
   if (typeof sprite === 'undefined') {
-    console.log("Error in spriteTookDmg socket event: " + entityType + " " + spriteId + " does not exist");
+    console.log("Error in spriteTookDmg socket event: " + victimEntityType + " " + victimId + " does not exist");
     return;
   }
   
-  sprite.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
+  sprite.trigger('takeDamage', {dmg: data.dmg, shooter: {entityType: shooterEntityType, spriteId: shooterId} });
 });
 
 // sprite died
 socket.on('spriteDied', function(data) {
   console.log("Event: spriteDied: data: " + getJSON(data));
-  var entityType = data.entityType,
-      spriteId = data.spriteId;
+  var victimEntityType = data.victim.entityType,
+      victimId = data.victim.spriteId,
+      killerEntityType = data.killer.entityType,
+      killerId = data.killer.spriteId;
       
-  if (entityType == 'PLAYER' && spriteId != selfId) {
+  if (victimEntityType == 'PLAYER' && victimId != selfId) {
     // Not myself, so this is an ACTOR
-    entityType = 'ACTOR';
+    victimEntityType = 'ACTOR';
   }
   
-  var sprite = getSprite(entityType, spriteId);
+  var sprite = getSprite(victimEntityType, victimId);
   if (typeof sprite === 'undefined') {
-    console.log("Error in spriteDied socket event: " + entityType + " " + spriteId + " does not exist");
+    console.log("Error in spriteDied socket event: " + victimEntityType + " " + victimId + " does not exist");
     return;
   }
   
-  sprite.die(data.killer);
+  sprite.die(killerEntityType, killerId);
 });
 
 

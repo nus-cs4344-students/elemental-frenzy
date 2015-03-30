@@ -49,7 +49,6 @@ Q.Sprite.extend("Eleball", {
       x : 0,
       y : 0,
       dmg : ELEBALL_DEFAULT_DMG,
-      shooter : "..no_name..",
       type : Q.SPRITE_PARTICLE,
       collisionMask : Q.SPRITE_ALL
     });  
@@ -90,7 +89,9 @@ Q.Eleball.extend("PlayerEleball", {
     p = mergeObjects(p, defaultP);
     
     this._super(p, {
-      entityType: 'PLAYERELEBALL'
+      entityType: 'PLAYERELEBALL',
+      shooterEntityType: 'PLAYER',
+      shooterEntityId: -1
     });
     
     this.on('destroyed');
@@ -102,7 +103,7 @@ Q.Eleball.extend("PlayerEleball", {
       && (collision.obj.isA("Enemy") ||
       (collision.obj.isA("Player") && collision.obj.p.spriteId != this.p.shooterId) ||
       collision.obj.isA("Actor")) ) {
-      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
+      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
     }
     this._super(collision);
   },
@@ -121,6 +122,8 @@ Q.Eleball.extend("EnemyEleball", {
     
     this._super(p, {
       entityType: 'ENEMYELEBALL',
+      shooterEntityType: 'ENEMY',
+      shooterEntityId: -1,
       dmg : ENEMY_ELEBALL_DEFAULT_DMG,
       collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
     });  
@@ -131,7 +134,7 @@ Q.Eleball.extend("EnemyEleball", {
   // Enemy eleballs only damage players
   onHit: function(collision) {
     if (collision.obj.isA("Player") || collision.obj.isA("Actor")) {
-      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: this.p.shooter});
+      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
     }
     this._super(collision);
   },

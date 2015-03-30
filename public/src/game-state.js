@@ -2,25 +2,34 @@
 
 // ## Game State
 Q.state.reset({
-  kills : [],
-  deaths : []
+  kills : {},
+  deaths : {}
 });
 // # Set listeners for the game state
 // # When player dies, update the kills of the killer and the deaths of the victim
 Q.state.on("playerDied", function(data) {
-  var victim = data.victim,
-    killer = data.killer;
-  console.log("State log: victim " + victim + " killer " + killer);
-  if (typeof Q.state.p.kills[killer] === 'undefined') {
-    Q.state.p.kills[killer] = 0;
+  var victimEntityType = data.victim.entityType,
+      victimId = data.victim.spriteId,
+      killerEntityType = data.killer.entityType,
+      killerId = data.killer.spriteId;
+      
+  // Might be actors on the client side
+  victimEntityType = (victimEntityType == 'PLAYER' && typeof selfId != 'undefined' && victimId != selfId) ? 'ACTOR' : victimEntityType;
+  killerEntityType = (killerEntityType == 'PLAYER' && typeof selfId != 'undefined' && killerId != selfId) ? 'ACTOR' : killerEntityType;
+  
+  var victimName = getSprite(victimEntityType, victimId).p.name,
+      killerName = getSprite(killerEntityType, killerId).p.name;
+  console.log("State log: victim " + victimName + " killer " + killerName);
+  if (typeof Q.state.p.kills[killerName] === 'undefined') {
+    Q.state.p.kills[killerName] = 0;
   }
-  if (typeof Q.state.p.deaths[victim] === 'undefined') {
-    Q.state.p.deaths[victim] = 0;
+  if (typeof Q.state.p.deaths[victimName] === 'undefined') {
+    Q.state.p.deaths[victimName] = 0;
   }
-  Q.state.p.kills[killer]++;
-  Q.state.p.deaths[victim]++;
-  console.log("Kills for player " + killer + " is " + Q.state.p.kills[killer]);
-  console.log("Deaths for player " + victim + " is " + Q.state.p.deaths[victim]);
+  Q.state.p.kills[killerName]++;
+  Q.state.p.deaths[victimName]++;
+  console.log("Kills for player " + killerName + " is " + Q.state.p.kills[killerName]);
+  console.log("Deaths for player " + victimName + " is " + Q.state.p.deaths[victimName]);
 });
 // # When enemy dies, update the kills of the killer only
 Q.state.on("enemyDied", function(killer) {
@@ -28,9 +37,13 @@ Q.state.on("enemyDied", function(killer) {
     return;
   }
   
-  if (typeof Q.state.p.kills[killer] === 'undefined') {
-    Q.state.p.kills[killer] = 0;
+  var killerEntityType = data.killer.entityType,
+      killerId = data.killer.spriteId;
+  var killerName = getSprite(killerEntityType, killerId).p.name;
+  
+  if (typeof Q.state.p.kills[killerName] === 'undefined') {
+    Q.state.p.kills[killerName] = 0;
   }
-  Q.state.p.kills[killer]++;
-  console.log("Kills for player " + killer + " is " + Q.state.p.kills[killer]);
+  Q.state.p.kills[killerName]++;
+  console.log("Kills for player " + killerName + " is " + Q.state.p.kills[killerName]);
 });
