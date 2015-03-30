@@ -753,18 +753,44 @@ socket.on('removeSprite', function(data){
   removeSprite(eType, spriteId, props);
 });
 
-// player takes damage
-socket.on('playerTookDmg', function(data) {
-  console.log("Event: playerTookDmg: data: " + getJSON(data));
-  var spriteId = data.spriteId;
+// sprite took damage
+socket.on('spriteTookDmg', function(data) {
+  console.log("Event: spriteTookDmg: data: " + getJSON(data));
+  var entityType = data.entityType,
+      spriteId = data.spriteId;
       
-  var playerSprite = getPlayerSprite(spriteId);
-  if (typeof playerSprite === 'undefined') {
-    console.log("Error in playerTookDmg socket event: PLAYER " + spriteId + " does not exist");
+  if (entityType == 'PLAYER' && spriteId != selfId) {
+    // Not myself, so this is an ACTOR
+    entityType = 'ACTOR';
+  }
+      
+  var sprite = getSprite(entityType, spriteId);
+  if (typeof sprite === 'undefined') {
+    console.log("Error in spriteTookDmg socket event: " + entityType + " " + spriteId + " does not exist");
     return;
   }
   
-  playerSprite.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
+  sprite.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
+});
+
+// sprite died
+socket.on('spriteDied', function(data) {
+  console.log("Event: spriteDied: data: " + getJSON(data));
+  var entityType = data.entityType,
+      spriteId = data.spriteId;
+      
+  if (entityType == 'PLAYER' && spriteId != selfId) {
+    // Not myself, so this is an ACTOR
+    entityType = 'ACTOR';
+  }
+  
+  var sprite = getSprite(entityType, spriteId);
+  if (typeof sprite === 'undefined') {
+    console.log("Error in spriteDied socket event: " + entityType + " " + spriteId + " does not exist");
+    return;
+  }
+  
+  sprite.die(data.killer);
 });
 
 

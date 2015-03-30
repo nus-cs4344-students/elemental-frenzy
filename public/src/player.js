@@ -233,11 +233,14 @@ Q.Sprite.extend("Player",{
     this.p.currentHealth -= dmg;
     console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
     
-    sendToApp('playerTookDmg', {
-      spriteId: this.p.spriteId,
-      dmg: dmg,
-      shooter: shooter
-    });
+    if (this.p.isServerSide) {
+      sendToApp('spriteTookDmg', {
+        entityType: this.p.entityType,
+        spriteId: this.p.spriteId,
+        dmg: dmg,
+        shooter: shooter
+      });
+    }
 
     var that = this;
     if(this.takeDamageIntervalId == -1){
@@ -248,7 +251,8 @@ Q.Sprite.extend("Player",{
     }
     this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 
-    if (this.p.currentHealth <= 0) {
+    if (this.p.isServerSide && // Only the server decides if the player dies or not
+        this.p.currentHealth <= 0) {
       this.die(shooter);
     }
   },
@@ -263,6 +267,14 @@ Q.Sprite.extend("Player",{
     console.log(this.p.name + " died to " + killer);
   
     Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
+    
+    if (this.p.isServerSide) {
+      sendToApp('spriteDied', {
+        entityType: this.p.entityType,
+        spriteId: this.p.spriteId,
+        killer: killer
+      });
+    }
 
     removePlayerSprite(this.p.spriteId);
   },
