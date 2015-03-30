@@ -7,10 +7,15 @@ var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 // ## Stage constants (higher number will render OVER lower number)
-var STAGE_GAME = 0;
+var STAGE_BACKGROUND = 0;
+var SCENE_BACKGROUND = 'background';
+var STAGE_LEVEL = 1;
+var STAGE_WELCOME = 2;
+var SCENE_WELCOME = 'welcomeScreen';
+
 //change this maybe? currently they use 1 for the game over button
-var STAGE_GAME_OVER_BUTTON = 1;
-var STAGE_UI = 2;
+var STAGE_GAME_OVER_BUTTON = 4;
+var STAGE_UI = 5;
 
 var _assetsLoaded = false; // Global variable to be checked before trying to load game
 
@@ -99,8 +104,6 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("ladder.png", "ladder.json");
   
   _assetsLoaded = true;
-  // Finally, call stageScene to run the game
-  //Q.stageScene("level2");
 });
 
 // ## Possible Experimentations:

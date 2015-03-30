@@ -5,27 +5,18 @@ var UI_OVERLAY_ALPHA_VALUE = 0.3;
 var UI_TEXT_ALPHA_VALUE = 0.7;
 var UI_PADDING_VALUE = 20; //in pixels
 
-// # Quintus platformer example
-//
-// [Run the example](../quintus/examples/platformer/index.html)
-// WARNING: this game must be run from a non-file:// url
-// as it loads a level json file.
-//
-// This is the example from the website homepage, it consists
-// a simple, non-animated platformer with some enemies and a 
-// target for the player.
 Q.el.addEventListener('keyup',function(e) {
   //9 == TAB KEY
   if (e.keyCode == 9) {
-    Q.clearStage(STAGE_UI);
+    //Q.clearStage(STAGE_UI);
   }
 });
 
 Q.el.addEventListener('keydown',function(e) {
   //9 == TAB KEY
   if (e.keyCode == 9) {
-    Q.clearStage(STAGE_UI);
-    Q.stageScene("scoreScreen", STAGE_UI); 
+    //Q.clearStage(STAGE_UI);
+    //Q.stageScene("scoreScreen", STAGE_UI); 
   }
 });
 

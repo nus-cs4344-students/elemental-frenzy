@@ -140,7 +140,7 @@ Q.component('2dEleball', {
       collisionMask: Q.SPRITE_ALL // Eleballs collide with anything
     });
     entity.on('step',this,"step");
-    entity.on('hit.collision',this,"collision");
+    entity.on('hit',this,"collision");
   },
 
   // Eleballs get destroyed when touching things, and may play a sound if soundIsAnnoying is set to false

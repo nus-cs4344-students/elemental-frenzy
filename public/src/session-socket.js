@@ -238,7 +238,7 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
+  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
@@ -338,7 +338,7 @@ var removePlayerEleballSprite = function(ballId) {
 };
 
 var insertIntoStage = function(sprite) {
-  return Q.stage().insert(sprite);
+  return Q.stage(STAGE_LEVEL).insert(sprite);
 };
 
 var initialization = function(){
@@ -387,19 +387,19 @@ var initialization = function(){
 
     var keyCode = e.keyCode;
 
-    if (Q.input.keys[keyCode] && Q.stage().has('viewport')) {
+    if (Q.input.keys[keyCode] && Q.stage(STAGE_LEVEL).has('viewport')) {
       var actionName = Q.input.keys[keyCode];
-      var x = Q.stage().viewport.x;
-      var y = Q.stage().viewport.y;
+      var x = Q.stage(STAGE_LEVEL).viewport.x;
+      var y = Q.stage(STAGE_LEVEL).viewport.y;
       var speed = 10;
       if (actionName == 'server_up') {
-        Q.stage().viewport.moveTo(x, y-speed);
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x, y-speed);
       } else if (actionName == 'server_down') {
-        Q.stage().viewport.moveTo(x, y+speed);
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x, y+speed);
       } else if (actionName == 'server_left') {
-        Q.stage().viewport.moveTo(x-speed, y);
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x-speed, y);
       } else if (actionName == 'server_right') {
-        Q.stage().viewport.moveTo(x+speed, y);
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x+speed, y);
       }
     }
   });
@@ -419,11 +419,14 @@ var loadGameSession = function(sessionId) {
   session.sessionId = sessionId;
   allSprites = clone(DEFAULT_SPRITES);
 
+  // Load background
+  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+  
   // Load gameState default level
-  Q.stageScene(gameState.level);
+  Q.stageScene(gameState.level, STAGE_LEVEL);
 
   // Viewport
-  Q.stage().add("viewport");
+  Q.stage(STAGE_LEVEL).add("viewport");
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -492,9 +495,17 @@ var releaseKey = function(player, keyCode) {
   }
 };
 
-var joinSession = function(playerId) {
-  if(!playerId){
-    console.log("Trying to let a player to join a session without player id");
+var joinSession = function(playerId, characterId) {
+
+  var pId = playerId;
+  if(!pId){
+    console.log("Trying to let a player to join session without player id");
+    return;
+  }
+
+  var cId = characterId;
+  if(!cId){
+    console.log("Trying to let player "+pId+" to join session without character id");
     return;
   }
 
@@ -506,18 +517,22 @@ var joinSession = function(playerId) {
 
   // make sure the player is not in the session already
   if(session.players){
+    // player already joins the session
+    if(session.players[pId]){
+      console.log("Player "+pId+" is already in session "+session.sessionId);
+      return false;
+    }
+
     for(var p in session.players){
-      
-      // player already joins the session
-      if(session.players[p] == playerId){
-        console.log("Player "+playerId+" is already in session "+session.sessionId);
+      if(session.players[p] == cId){
+        console.log("Character "+cId+" is already used by Player "+p+" in session "+session.sessionId);
         return false;
       }
     }
   }
 
   // player can join the session
-  session.players[playerId] = playerId;
+  session.players[pId] = cId;
   session.playerCount++;
 
   return true;
@@ -613,20 +628,26 @@ socket.on('join', function(data) {
   
   var pId = data.spriteId;
   if(!pId){
-    console.log("Player without id requests to join");
+    console.log("Player without sprite id requests to join");
     return;
   }
 
-  console.log("Player " + pId + " requests to join");
+  var cId = data.characterId;
+  if(!cId){
+    console.log("Player without character id requests to join");
+    return;
+  }
+
+  console.log("Player " + pId + " requests to join as character "+cId);
 
   // try to put the player into  the session
-  var isJoined = joinSession(pId);
+  var isJoined = joinSession(pId, cId);
   
   if(isJoined){
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
-    addPlayerSprite(pId);
+    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId]});
     
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
