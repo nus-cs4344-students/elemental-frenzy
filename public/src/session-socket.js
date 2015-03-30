@@ -32,6 +32,7 @@ var gameState;
 var session;
 var allSprites;
 var spriteId=0;
+var _playerToFollowId; // To be used when toggling between players to follow, for the session
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -88,6 +89,56 @@ var clone = function(item){
 
 var getNextSpriteId = function(){
   return ++spriteId;
+}
+
+// Returns the player sprite reference of the sprite with spriteId immediately larger than the given currentPId
+// or that of the smallest spriteId if there is none bigger.
+// Returns undefined if there are no sprites.
+var getNextPlayerSprite = function(currentPId) {
+  var playerToFollow = getNextSprite('PLAYER', currentPId);
+  _playerToFollowId = playerToFollow.p.spriteId;
+  return playerToFollow;
+}
+
+// Returns the sprite reference of the sprite with spriteId immediately larger than the given theSpriteId
+// or that of the smallest spriteId if there is none bigger.
+// Returns undefined if there are no sprites.
+var getNextSprite = function(entityType, theSpriteId) { 
+  if (typeof entityType === 'undefined') {
+    console.log("Error in method getNextSprite: entityType given is undefined");
+    return;
+  }
+  if (typeof allSprites[entityType] === 'undefined') {
+    console.log("Error in method getNextSprite: " + entityType + " is not a valid entity type");
+    return;
+  }
+  
+  if (typeof theSpriteId === 'undefined') {
+    // Get the first sprite if theSpriteId is not specified
+    theSpriteId = -1;
+  }
+  
+  var smallestId,   // The smallest id encountered for the given entityType (to be used if upperBoundId is undefined after the search)
+      spriteCount,  // The number of sprites encountered for the given entityType (if 0 then return undefined)
+      upperBoundId; // The spriteId of the sprite that has spriteId immediately larger than the given spriteId
+  spriteCount = 0;
+  for (var spriteId in allSprites[entityType]) {
+    spriteCount++;
+    if (spriteId > theSpriteId && (typeof upperBoundId === 'undefined' || spriteId < upperBoundId)) {
+      upperBoundId = spriteId;
+    }
+    if (typeof smallestId === 'undefined' || spriteId < smallestId) {
+      smallestId = spriteId;
+    }
+  }
+  
+  if (spriteCount == 0) {
+    return;
+  } else if (upperBoundId) {
+    return getSprite(entityType, upperBoundId);
+  } else {
+    return getSprite(entityType, smallestId);
+  }
 }
 
 var getSprite = function(entityType, id) {
@@ -407,7 +458,7 @@ var initialization = function(){
 
 var loadGameSession = function(sessionId) {
   if(!sessionId){
-    console.log("Trying to load game session without seesion id");
+    console.log("Trying to load game session without session id");
     return;
   }
 
@@ -426,7 +477,28 @@ var loadGameSession = function(sessionId) {
   Q.stageScene(gameState.level, STAGE_LEVEL);
 
   // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  // Allow the session to follow different players
+  Q.input.on("toggleFollow", function() {
+    console.log("Toggle follow");
+    var playerToFollow = getNextPlayerSprite(_playerToFollowId);
+    if (typeof playerToFollow === 'undefined') {
+      console.log("Player to follow is undefined: no players?");
+    } else {
+      console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
+      if (Q.stage(STAGE_LEVEL).has("viewport")) {
+        // Remove the viewport first
+        Q.stage(STAGE_LEVEL).del("viewport");
+      }
+      Q.stage(STAGE_LEVEL).add("viewport").follow(playerToFollow);
+    }
+  });   
+  Q.input.on("stopFollow", function() {
+    console.log("Stop follow");
+    if (Q.stage(STAGE_LEVEL).has("viewport")) {
+      Q.stage(STAGE_LEVEL).del("viewport");
+    }
+    Q.stage(STAGE_LEVEL).add("viewport");
+  });
 
   // Create and load all sprites
   var spritesToAdd = [];

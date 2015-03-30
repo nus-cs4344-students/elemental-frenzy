@@ -52,7 +52,7 @@ require(['./src/session-socket']);
 require(['src/helper-functions']);
 // ## Set keyboard controls
 require(['src/keyboard-controls'], function() {
-  Q.input.keyboardControls(KEYBOARD_CONTROLS);
+  Q.input.keyboardControls(KEYBOARD_CONTROLS_SESSION);
 });
 // ## HUD
 require(['src/user-interface']);
