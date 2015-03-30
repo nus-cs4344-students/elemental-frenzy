@@ -96,9 +96,6 @@ var getNextSpriteId = function(){
 // Returns undefined if there are no sprites.
 var getNextPlayerSprite = function(currentPId) {
   var playerToFollow = getNextSprite('PLAYER', currentPId);
-  if (typeof playerToFollow === 'undefined') {
-    return;
-  }
   _playerToFollowId = playerToFollow.p.spriteId;
   return playerToFollow;
 }
@@ -436,47 +433,26 @@ var initialization = function(){
   Q.input.on('appCast', function(data) {
     sendToApp(data.eventName, data.eventData);
   });
-  
-  // To move viewports
-  var viewportSpeed = 50;
-  Q.input.on("server_up", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y-viewportSpeed);
-  });
-  Q.input.on("server_down", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y+viewportSpeed);
-  });
-  Q.input.on("server_left", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x-viewportSpeed, y);
-  });
-  Q.input.on("server_right", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x+viewportSpeed, y);
-  });
-  
-  // Allow the session to follow different players
-  Q.input.on("toggleFollow", function() {
-    console.log("Toggle follow");
-    var playerToFollow = getNextPlayerSprite(_playerToFollowId);
-    if (typeof playerToFollow === 'undefined') {
-      console.log("Player to follow is undefined: no players?");
-      return;
-    } 
-    
-    console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
-    Q.stage(STAGE_LEVEL).softFollow(playerToFollow);
-  });   
-  
-  // Allow the session to stop following players
-  Q.input.on("stopFollow", function() {
-    console.log("Stop follow");
-    Q.stage(STAGE_LEVEL).unfollow();
+
+  Q.el.addEventListener('keydown', function(e) {
+
+    var keyCode = e.keyCode;
+
+    if (Q.input.keys[keyCode] && Q.stage(STAGE_LEVEL).has('viewport')) {
+      var actionName = Q.input.keys[keyCode];
+      var x = Q.stage(STAGE_LEVEL).viewport.x;
+      var y = Q.stage(STAGE_LEVEL).viewport.y;
+      var speed = 10;
+      if (actionName == 'server_up') {
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x, y-speed);
+      } else if (actionName == 'server_down') {
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x, y+speed);
+      } else if (actionName == 'server_left') {
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x-speed, y);
+      } else if (actionName == 'server_right') {
+        Q.stage(STAGE_LEVEL).viewport.moveTo(x+speed, y);
+      }
+    }
   });
 };
 
@@ -501,7 +477,28 @@ var loadGameSession = function(sessionId) {
   Q.stageScene(gameState.level, STAGE_LEVEL);
 
   // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  // Allow the session to follow different players
+  Q.input.on("toggleFollow", function() {
+    console.log("Toggle follow");
+    var playerToFollow = getNextPlayerSprite(_playerToFollowId);
+    if (typeof playerToFollow === 'undefined') {
+      console.log("Player to follow is undefined: no players?");
+    } else {
+      console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
+      if (Q.stage(STAGE_LEVEL).has("viewport")) {
+        // Remove the viewport first
+        Q.stage(STAGE_LEVEL).del("viewport");
+      }
+      Q.stage(STAGE_LEVEL).add("viewport").follow(playerToFollow);
+    }
+  });   
+  Q.input.on("stopFollow", function() {
+    console.log("Stop follow");
+    if (Q.stage(STAGE_LEVEL).has("viewport")) {
+      Q.stage(STAGE_LEVEL).del("viewport");
+    }
+    Q.stage(STAGE_LEVEL).add("viewport");
+  });
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -544,12 +541,6 @@ var pressKey = function(player, keyCode) {
   
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
-    
-    // Don't allow the player to use server side controls
-    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
-      return;
-    }
-    
     player.inputs[actionName] = true;
     Q.input.trigger(actionName);
     Q.input.trigger('keydown',keyCode);

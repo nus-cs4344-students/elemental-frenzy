@@ -30,12 +30,3 @@ var KEYBOARD_CONTROLS_SESSION = {
   F : "toggleFollow",
   G : "stopFollow"
 };
-
-var KEYBOARD_CONTROLS_SESSION_ONLY = {
-  "server_left": "server_left",
-  "server_up": "server_up",
-  "server_down": "server_down",
-  "server_right": "server_right",
-  "toggleFollow": "toggleFollow",
-  "stopFollow": "stopFollow"
-}
