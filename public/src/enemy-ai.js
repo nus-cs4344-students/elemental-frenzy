@@ -66,12 +66,12 @@ Q.Sprite.extend("Enemy",{
   
   takeDamage: function(dmgAndShooter) {
     var dmg = dmgAndShooter.dmg,
-    shooter = dmgAndShooter.shooter;
+        shooterEntityType = dmgAndShooter.shooterEntityType,
+        shooterId = dmgAndShooter.shooterId;
     this.p.currentHealth -= dmg;
     if (this.p.currentHealth <= 0) {
-      Q.state.trigger("enemyDied", shooter);
+      Q.state.trigger("enemyDied", {entityType: shooterEntityType, spriteId: shooterId});
       removeEnemySprite(this.p.spriteId);
-      // Q.input.trigger("removeSprite", {entityType: this.p.entityType, spriteId: this.p.spriteId});
     }
   },
     

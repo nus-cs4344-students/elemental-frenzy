@@ -229,16 +229,16 @@ Q.Sprite.extend("Player",{
     }
   
     var dmg = dmgAndShooter.dmg,
-    shooter = dmgAndShooter.shooter;
+        shooterEntityType = dmgAndShooter.shooter.entityType,
+        shooterId = dmgAndShooter.shooter.spriteId;
     this.p.currentHealth -= dmg;
-    console.log("Took damage by " + shooter + ". currentHealth = " + this.p.currentHealth);
+    console.log(this.p.entityType + " " + this.p.spriteId + " took damage by " + shooterEntityType + " " + shooterId + ". currentHealth = " + this.p.currentHealth);
     
     if (this.p.isServerSide) {
       sendToApp('spriteTookDmg', {
-        entityType: this.p.entityType,
-        spriteId: this.p.spriteId,
         dmg: dmg,
-        shooter: shooter
+        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
+        shooter: {entityType: shooterEntityType, spriteId: shooterId}
       });
     }
 
@@ -253,26 +253,29 @@ Q.Sprite.extend("Player",{
 
     if (this.p.isServerSide && // Only the server decides if the player dies or not
         this.p.currentHealth <= 0) {
-      this.die(shooter);
+      this.die(shooterEntityType, shooterId);
     }
   },
   
-  die: function(killer) {
+  die: function(killerEntityType, killerId) {
     this.p.canFire = false;
+    var killerName = getSprite(killerEntityType, killerId).p.name;
     
     if(!this.p.isServerSide){
-      Q.stageScene("endGame",1, { label: "You are killed by "+killer });
+      Q.stageScene("endGame",1, { label: "You are killed by " + killerEntityType + " " + killerId });
     }
 
-    console.log(this.p.name + " died to " + killer);
+    console.log(this.p.name + " died to " + killerName);
   
-    Q.state.trigger("playerDied", {victim: this.p.name, killer: killer});
+    Q.state.trigger("playerDied", {
+      victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+      killer: {entityType: killerEntityType, spriteId: killerId}
+    });
     
     if (this.p.isServerSide) {
       sendToApp('spriteDied', {
-        entityType: this.p.entityType,
-        spriteId: this.p.spriteId,
-        killer: killer
+        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+        killer: {entityType: killerEntityType, spriteId: killerId}
       });
     }
 
