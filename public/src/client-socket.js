@@ -79,7 +79,6 @@ var clone = function(item){
 };
 
 var updateSprite = function(entityType, id, properties){
-  // Clone to avoid bad stuff happening due to references
   
   var eType = entityType;
   if(!eType){
@@ -111,6 +110,7 @@ var updateSprite = function(entityType, id, properties){
     return;
   }
 
+  // Clone to avoid bad stuff happening due to references
   var clonedProps = clone(properties);
   if(!clonedProps){
     console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
@@ -751,6 +751,20 @@ socket.on('removeSprite', function(data){
   }
 
   removeSprite(eType, spriteId, props);
+});
+
+// player takes damage
+socket.on('playerTookDmg', function(data) {
+  console.log("Event: playerTookDmg: data: " + getJSON(data));
+  var spriteId = data.spriteId;
+      
+  var playerSprite = getPlayerSprite(spriteId);
+  if (typeof playerSprite === 'undefined') {
+    console.log("Error in playerTookDmg socket event: PLAYER " + spriteId + " does not exist");
+    return;
+  }
+  
+  playerSprite.trigger('takeDamage', {dmg: data.dmg, shooter: data.shooter});
 });
 
 

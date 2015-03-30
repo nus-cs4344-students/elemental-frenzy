@@ -177,6 +177,9 @@ var sendToPlayer = function(playerId, eventName, eventData) {
 };
 
 var sendToPlayers = function(players, eventName, eventData) {
+  if (typeof players === 'undefined') {
+    players = getAllPlayers();
+  }
   for(var p in players){
     sendToPlayer(p, eventName, eventData);
   }
@@ -347,9 +350,11 @@ io.on('connection', function (socket) {
       case 'removeSprite':{
         sendToPlayers(data.eventData.players, data.eventName, data.eventData);
         // console.log("Sending to multiple players from session "+sId+" -> "+getJSON(data));
+        break;
       }
-      case 'updateEnemy': {
-        // broadcastFromSession(sId, data.eventName, data.eventData);
+      case 'updateEnemy': 
+      case 'playerTookDmg':{
+        broadcastFromSession(sId, data.eventName, data.eventData);
         // console.log("Broadcast from session "+sId+" -> "+getJSON(data));
         break;
       }
