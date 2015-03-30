@@ -33,6 +33,21 @@ Quintus["2D"] = function(Q) {
         this.on('poststep',this.viewport,'follow');
         this.viewport.follow(true);
       },
+      
+      softFollow: function(sprite, directions, boundingBox) {
+        this.off('poststep',this.viewport,'follow');
+        this.viewport.directions = directions || { x: true, y: true };
+        this.viewport.following = sprite;
+        if(Q._isUndefined(boundingBox) && this.lists.TileLayer !== undefined) {
+          this.viewport.boundingBox = Q._detect(this.lists.TileLayer, function(layer) {
+            return layer.p.boundingBox ? { minX: 0, maxX: layer.p.w, minY: 0, maxY: layer.p.h } : null;
+          });
+        } else {
+          this.viewport.boundingBox = boundingBox;
+        }
+        this.on('poststep',this.viewport,'follow');
+        this.viewport.follow(false);
+      },
 
       unfollow: function() {
         this.off('poststep',this.viewport,'follow');
