@@ -77,7 +77,7 @@ Q.component("dmgDisplay", {
     var dmg = dmgAndShooter.dmg;
     this.entity.p.dmgDisplayDmgList.push(dmg);
     this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
-    this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 20, 0]); // starting position of the display is on the right of the entity
+    this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
   },
   
   step: function(dt) {

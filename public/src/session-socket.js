@@ -28,10 +28,11 @@ var DEFAULT_SESSION = {
   sessionId: 0
 };
 
+var isSession = true;
 var gameState;
 var session;
 var allSprites;
-var spriteId=0;
+var spriteId = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 
 var creates = {
@@ -490,6 +491,27 @@ var initialization = function(){
     console.log("Stop follow");
     Q.stage(STAGE_LEVEL).unfollow();
   });
+
+  // toggling elements
+  Q.input.on("toggleNextElement", function(data) {
+    
+    var spriteId = data.spriteId;
+    if(!spriteId){
+      console.log("Trying to toggle element without id");
+      return;
+    }
+
+    var eType = data.entityType;
+    if(!eType){
+      console.log("Trying to toggle element without entityType");
+      return;
+    }
+
+    var player = getSprite(eType, spriteId);
+    if(!player){
+      player.p.element = (player.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
+    }
+  });  
 };
 
 var loadGameSession = function(sessionId) {
@@ -740,7 +762,7 @@ socket.on('join', function(data) {
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
-    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId]});
+    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
     
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
@@ -758,6 +780,25 @@ socket.on('join', function(data) {
     var newPlayerData = {sessionId: session.sessionId};
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinFailed', eventData: newPlayerData});
   }
+});
+
+// when a player request to respawn
+socket.on('respawn', function(data) {
+  
+  var pId = data.spriteId;
+  if(!pId){
+    console.log("Player without id requests to respawn");
+    return;
+  }
+
+  var cId = data.characterId;
+  if(!cId){
+    console.log("Player without character id requests to respawn");
+    return;
+  }
+
+  // respawn player and creates sprite for it
+  addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
 });
 
 // when one or more players disconnected from app.js
@@ -788,7 +829,7 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  Q.pause();
+  Q.pauseGame();
 });
 
 

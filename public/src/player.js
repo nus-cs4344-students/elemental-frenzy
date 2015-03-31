@@ -14,7 +14,7 @@ var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
-var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 1;
+var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -75,26 +75,7 @@ Q.Sprite.extend("Player",{
     }
   },
   
-  addEventListeners: function() {
-    var that = this;
-    
-    // Write event handlers to respond hook into behaviors.
-    // hit.sprite is called everytime the player collides with a sprite
-    this.on("hit.sprite",function(collision) {
-      // Check the collision, if it's the Tower, you win!
-      if(collision.obj.isA("Tower")) {
-        // Q.stageScene("endGame",1, { label: "You Won!" }); 
-        // this.destroy();
-      }
-    });
-  
-    if (this.p.isServerSide) {
-      // Event listener for toggling elements
-      Q.input.on("toggleNextElement", function() {
-        that.p.element = (that.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-      });   
-    }
-  
+  addEventListeners: function() { 
     this.on('takeDamage');       
     this.on('fire');
     this.on('fired');
@@ -268,25 +249,42 @@ Q.Sprite.extend("Player",{
 
     var killerName = getSprite(killerEntityType, killerId).p.name;
     
-    if(!this.p.isServerSide){
-      Q.stageScene("endGame",1, { label: "You are killed by " + killerEntityType + " " + killerId });
-    }
+    var vType = this.p.entityType;
+    var vId = this.p.spriteId;
+    var vCharId = this.p.characterId;
+    var vSessionId = this.p.sessionId;
+
+    var killedData = {killerEntityType: killerEntityType, 
+                      killerId: killerId,
+                      victimEntityType: vType,
+                      victimId: vId};
+
+    Q.stageScene(SCENE_KILLED_INFO, STAGE_KILLED_INFO, killedData);
+
 
     console.log(this.p.name + " died to " + killerName);
   
     Q.state.trigger("playerDied", {
-      victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+      victim: {entityType: vType, spriteId: vId}, 
       killer: {entityType: killerEntityType, spriteId: killerId}
     });
     
     if (this.p.isServerSide) {
+      
       sendToApp('spriteDied', {
-        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+        victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
       });
+
+    } else{
+
+      // client side trigger respan event
+      setTimeout(function(){
+        Q.input.trigger('respawn', {sessionId: vSessionId, spriteId: vId, characterId: vCharId});
+      }, 5000);
     }
 
-    removePlayerSprite(this.p.spriteId);
+    removePlayerSprite(vId);
   },
   
   climbLadder: function(col){

@@ -5,22 +5,9 @@ var UI_OVERLAY_ALPHA_VALUE = 0.3;
 var UI_TEXT_ALPHA_VALUE = 0.7;
 var UI_PADDING_VALUE = 20; //in pixels
 
-Q.el.addEventListener('keyup',function(e) {
-  //9 == TAB KEY
-  if (e.keyCode == 9) {
-    //Q.clearStage(STAGE_UI);
-  }
-});
 
-Q.el.addEventListener('keydown',function(e) {
-  //9 == TAB KEY
-  if (e.keyCode == 9) {
-    //Q.clearStage(STAGE_UI);
-    //Q.stageScene("scoreScreen", STAGE_UI); 
-  }
-});
-
-Q.scene('scoreScreen', function(stage) {
+// shifted to scene.js
+Q.scene('scoreScreenNotInUse', function(stage) {
   //every line takes about 30 pixels
   var offsetY = 30;
 

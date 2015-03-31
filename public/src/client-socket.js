@@ -22,6 +22,7 @@ var selfId;
 var sessionId;
 var allSprites;
 var gameState;
+var isSession = false;
 var isSessionConnected = false;
 
 var creates = {
@@ -455,22 +456,32 @@ var initialization = function(){
     Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
 
-  Q.input.on('removeSprite', function(data){
+   Q.input.on('respawn', function(data){
+    console.log("respawn "+getJSON(data));
 
-    var eType = data.entityType;
-    if(!eType){
-      console.log("Tring to destroy sprite without entityType");
-      return;
-    }    
-
-    var spriteId = data.spriteId;
-    if(!spriteId){
-      console.log("Tring to destroy sprite without sprite id");
+    var sId = data.sessionId;
+    sId = sId ? sId : sessionId; 
+    if(!sId){
+      console.log("Tring to respawn in a session without session id");
       return;
     }
 
-    removeSprite(eType, spriteId);
+    var spriteId = data.spriteId;
+    if(!spriteId){
+      console.log("Tring to respawn in session "+sId+" without sprite id");
+      return;
+    }
+
+    var cId = data.characterId;
+    if(!cId){
+      console.log("Tring to respawn in session "+sId+" without character id");
+      return;
+    }
+
+    // send request to app.js of respawning in a session
+    Q.input.trigger('sessionCast', {eventName:'respawn', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
+
     
   Q.input.on('sessionCast', function(data) {
 
@@ -499,8 +510,17 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
+
+
   Q.el.addEventListener('keydown', function(e) {
     if (!isSessionConnected) {
+      return;
+    }
+
+    //9 == TAB KEY
+    if (e.keyCode == 9) {
+      Q.clearStage(STAGE_SCORE);
+      Q.stageScene("scoreScreen", STAGE_SCORE); 
       return;
     }
 
@@ -510,6 +530,7 @@ var initialization = function(){
     
     var eData = { sessionId: sessionId,
                   spriteId: selfId,
+                  entityType: 'PLAYER',
                   e: createdEvt
     };
 
@@ -522,12 +543,19 @@ var initialization = function(){
       return;
     }
 
+    //9 == TAB KEY
+    if (e.keyCode == 9) {
+      Q.clearStage(STAGE_SCORE);
+      return;
+    }
+
     var createdEvt = {
       keyCode: e.keyCode
     };
 
     var eData = { sessionId: sessionId,
                   spriteId: selfId,
+                  entityType: 'PLAYER',
                   e: createdEvt
     };
 
@@ -557,6 +585,7 @@ var initialization = function(){
 
     var eData = { sessionId: sessionId,
                   spriteId: selfId,
+                  entityType: 'PLAYER',
                   e: createdEvt
     };
 
@@ -811,14 +840,15 @@ socket.on('spriteDied', function(data) {
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,
       killerId = data.killer.spriteId;
-      
-  if (victimEntityType == 'PLAYER' && victimId != selfId) {
-    // Not myself, so this is an ACTOR
-    victimEntityType = 'ACTOR';
-  }
+  
+  // getSprite will convert it
+  // if (victimEntityType == 'PLAYER' && victimId != selfId) {
+  //   // Not myself, so this is an ACTOR
+  //   victimEntityType = 'ACTOR';
+  // }
   
   var sprite = getSprite(victimEntityType, victimId);
-  if (typeof sprite === 'undefined') {
+  if (!sprite) {
     console.log("Error in spriteDied socket event: " + victimEntityType + " " + victimId + " does not exist");
     return;
   }
