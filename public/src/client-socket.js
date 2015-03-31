@@ -128,12 +128,13 @@ var updateSprite = function(entityType, id, properties){
 
   console.log("Updated "+eType+" id " + spriteId);
   
-  var prevX = allSprites[eType][spriteId].p.x,
-      prevY = allSprites[eType][spriteId].p.y,
-      prevVX = allSprites[eType][spriteId].p.vx,
-      prevVY = allSprites[eType][spriteId].p.vy,
-      prevAX = allSprites[eType][spriteId].p.ax,
-      prevAY = allSprites[eType][spriteId].p.ay,
+  var spriteToUpdate = getSprite(eType, spriteId);
+  var prevX = spriteToUpdate.p.x,
+      prevY = spriteToUpdate.p.y,
+      prevVX = spriteToUpdate.p.vx,
+      prevVY = spriteToUpdate.p.vy,
+      prevAX = spriteToUpdate.p.ax,
+      prevAY = spriteToUpdate.p.ay,
       prevIsJumping = allSprites[eType][spriteId].p.jumping;
   var dx = clonedProps.x - prevX,
       dy = clonedProps.y - prevY;
@@ -160,8 +161,8 @@ var updateSprite = function(entityType, id, properties){
   }
   
   clonedProps.isServerSide = false;
-  allSprites[eType][spriteId].p = clonedProps;
-  gameState.sprites[eType][spriteId] = {p: allSprites[eType][spriteId].p}; 
+  spriteToUpdate.p = clonedProps;
+  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
 
   return;
 }
