@@ -136,6 +136,8 @@ var getNextSprite = function(entityType, theSpriteId) {
     }
   }
   
+  console.log("spriteCount: " + spriteCount + " upperBoundId: " + upperBoundId + " smallestId: " + smallestId);
+  
   if (spriteCount == 0) {
     return;
   } else if (upperBoundId) {
