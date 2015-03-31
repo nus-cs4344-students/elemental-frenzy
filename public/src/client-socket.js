@@ -752,6 +752,10 @@ socket.on('addSprite', function(data){
 
 // update sprite
 socket.on('updateSprite', function(data){
+  var receivedTimeStamp = data.timestamp;
+  var curTimeStamp = (new Date()).getTime();
+  console.log("Message: updateSprite: timeStamp: ");
+  console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
   if (!isSessionConnected) {
     return;
   }

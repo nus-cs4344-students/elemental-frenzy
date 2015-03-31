@@ -702,6 +702,7 @@ var sendToApp = function(eventName, eventData){
     return;
   }
 
+  eventData.timestamp = (new Date()).getTime();
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };
 
