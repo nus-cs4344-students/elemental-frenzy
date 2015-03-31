@@ -5,6 +5,8 @@ var HEALTHBAR_WIDTH_SF = 1.5;
 var HEALTHBAR_HEIGHT_SF = 0.2;
 var HEALTHBAR_HEIGHT_OFFSET = 5;
 
+var updateInterval = 100;
+
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
 // Usage:
 //  1. Ensure the entity it is attached to has a p.currentHealth and p.maxHealth property,
@@ -243,7 +245,7 @@ Q.component("serverSprite", {
       // console.log("EntityType " + entity.p.entityType + " id " + entity.p.spriteId + " in session "+entity.p.sessionId+" sending update from server");
       
       Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p}});
-    }, 500);
+    }, updateInterval);
     
     that.on('destroyed', this, 'destroy');
   },
