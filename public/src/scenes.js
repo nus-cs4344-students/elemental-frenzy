@@ -366,11 +366,23 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var vType = stage.options.victimEntityType;
   var vId = stage.options.victimId;
 
+  var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
+                                          y: Q.height/3,
+                                          size: 20,
+                                          align: 'center',
+                                          color: 'black',
+                                          label: ' ',
+                                          countDown: 5,
+                                          vx: 0,
+                                          vy: -0.5
+                                        }));
+
   var msg;
   if(kType && kId && vType && vId){
     if(!isSession){
       // client side
       msg = "You are killed by "+getSprite(kType,kId).p.name;
+
     }else{
       // session side
       msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' \
@@ -381,29 +393,28 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
     return;
   }
 
+
   killedInfo.push(msg);
   killedInfoTimeLeft.push(3); // display for 3 second
-  killedInfoPosition.push([0, Q.height/4]); // starting position of the display is on the right of the entity
-
-  var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
-                                          y: Q.height/4
-                                          size: 20,
-                                          align: 'center',
-                                          color: 'black',
-                                          label: " ",
-                                          vx: 0,
-                                          vy: -0.5
-                                        }));
+  killedInfoPosition.push([0, -40]);
 
   kInfo.on('step', kInfo, function(dt){
+    this.p.label = "Respawning in " + Math.floor(this.p.countDown);
+
+    this.p.countDown -= dt;
+    if(this.p.countDown < 0){
+      this.destroy();
+      return;
+    }
+
     for (var i = 0; i < killedInfoTimeLeft.length; i++) {
       killedInfoTimeLeft[i] -= dt;
+      
       if (killedInfoTimeLeft[i] <= 0) {
         // No need to display anymore, so remove it
         killedInfoTimeLeft.splice(i, 1);
         killedInfo.splice(i, 1);
-        killedInfoPosition.splice(i, 1);
-        this.destroy();
+        killedInfoPosition.splice(i, 1);console.log("remove kinfo");
       } else {
         // Need to display, so shift by vx, vy
         killedInfoPosition[i][0] += this.p.vx;

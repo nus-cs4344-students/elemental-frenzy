@@ -760,7 +760,7 @@ socket.on('join', function(data) {
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
-    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId]});
+    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
     
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
@@ -796,8 +796,8 @@ socket.on('respawn', function(data) {
   }
 
   // respawn player and creates sprite for it
-  addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId]});
-}
+  addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
+});
 
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
@@ -827,7 +827,7 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  Q.pause();
+  Q.pauseGame();
 });
 
 

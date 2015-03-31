@@ -460,6 +460,7 @@ var initialization = function(){
     console.log("respawn "+getJSON(data));
 
     var sId = data.sessionId;
+    sId = sId ? sId : sessionId; 
     if(!sId){
       console.log("Tring to respawn in a session without session id");
       return;
@@ -876,5 +877,5 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
 
-  Q.pause();
+  Q.pauseGame();
 });

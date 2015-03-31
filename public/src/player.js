@@ -251,8 +251,9 @@ Q.Sprite.extend("Player",{
     
     var vType = this.p.entityType;
     var vId = this.p.spriteId;
-    var vSheet = this.p.sheet;
-    
+    var vCharId = this.p.characterId;
+    var vSessionId = this.p.sessionId;
+
     var killedData = {killerEntityType: killerEntityType, 
                       killerId: killerId,
                       victimEntityType: vType,
@@ -264,14 +265,14 @@ Q.Sprite.extend("Player",{
     console.log(this.p.name + " died to " + killerName);
   
     Q.state.trigger("playerDied", {
-      victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+      victim: {entityType: vType, spriteId: vId}, 
       killer: {entityType: killerEntityType, spriteId: killerId}
     });
     
     if (this.p.isServerSide) {
       
       sendToApp('spriteDied', {
-        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId}, 
+        victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
       });
 
@@ -279,11 +280,11 @@ Q.Sprite.extend("Player",{
 
       // client side trigger respan event
       setTimeout(function(){
-        Q.input.trigger('respawn', {spriteId: vId, entityType: vType, sheet: vSheet});
+        Q.input.trigger('respawn', {sessionId: vSessionId, spriteId: vId, characterId: vCharId});
       }, 5000);
     }
 
-    removePlayerSprite(this.p.spriteId);
+    removePlayerSprite(vId);
   },
   
   climbLadder: function(col){
