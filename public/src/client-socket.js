@@ -847,5 +847,5 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
 
-  Q.pause();
+  Q.pauseGame();
 });
