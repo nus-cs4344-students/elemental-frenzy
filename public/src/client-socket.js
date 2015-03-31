@@ -25,6 +25,9 @@ var gameState;
 var isSession = false;
 var isSessionConnected = false;
 
+// Networking
+var threshold_clientDistanceFromServerUpdate = 30;
+
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
   ACTOR: function(p) { return new Q.Actor(p); },
@@ -124,9 +127,41 @@ var updateSprite = function(entityType, id, properties){
   }
 
   console.log("Updated "+eType+" id " + spriteId);
+  
+  var prevX = allSprites[eType][spriteId].p.x,
+      prevY = allSprites[eType][spriteId].p.y,
+      prevVX = allSprites[eType][spriteId].p.vx,
+      prevVY = allSprites[eType][spriteId].p.vy,
+      prevAX = allSprites[eType][spriteId].p.ax,
+      prevAY = allSprites[eType][spriteId].p.ay,
+      prevIsJumping = allSprites[eType][spriteId].p.jumping;
+  var dx = clonedProps.x - prevX,
+      dy = clonedProps.y - prevY;
+  var dist = Math.sqrt(dx*dx + dy*dy);
+  
+  console.log("distance from server update: " + dist + " threshold: " + threshold_clientDistanceFromServerUpdate);
+  
+  if (eType == 'PLAYER' && spriteId == selfId && 
+      dist <= threshold_clientDistanceFromServerUpdate) {
+    clonedProps.x = prevX;
+    clonedProps.y = prevY; // Causing high jumps
+    //clonedProps.vx = prevVX;
+    //clonedProps.vy = prevVY;
+    //clonedProps.ax = prevAX;
+    //clonedProps.ay = prevAY;
+  } else if (eType == 'PLAYER' && spriteId == selfId &&
+      dist > threshold_clientDistanceFromServerUpdate) {
+    clonedProps.x = prevX + dx/5; // Convergence
+    clonedProps.y = prevY + dy/5; //
+    clonedProps.vx = prevVX;
+    clonedProps.vy = prevVY;
+    clonedProps.ax = prevAX;
+    clonedProps.ay = prevAY;
+  }
+  
   clonedProps.isServerSide = false;
   allSprites[eType][spriteId].p = clonedProps;
-  gameState.sprites[eType][spriteId] = {p: clonedProps}; 
+  gameState.sprites[eType][spriteId] = {p: allSprites[eType][spriteId].p}; 
 
   return;
 }
@@ -754,8 +789,8 @@ socket.on('addSprite', function(data){
 socket.on('updateSprite', function(data){
   var receivedTimeStamp = data.timestamp;
   var curTimeStamp = (new Date()).getTime();
-  console.log("Message: updateSprite: timeStamp: ");
-  console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
+  //console.log("Message: updateSprite: timeStamp: ");
+  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
   if (!isSessionConnected) {
     return;
   }
