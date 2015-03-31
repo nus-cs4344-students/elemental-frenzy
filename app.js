@@ -26,6 +26,10 @@ var totalPlayerCount = 0;
 var playerId = 0;
 var sessionId = 0;
 
+// Artificial delay
+var delay_s2p = 100;
+var delay_p2s = 100;
+
 // ## Helper functions
 var getSocketOfPlayerId = function(playerId) {
   return playerIdToSocketMap[playerId];
@@ -172,7 +176,11 @@ var sendToPlayer = function(playerId, eventName, eventData) {
   }
   
   // console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
-  getSocketOfPlayerId(playerId).emit(eventName, eventData);
+  setTimeout(function() {
+    if (getSocketOfPlayerId(playerId)) {
+      getSocketOfPlayerId(playerId).emit(eventName, eventData);
+    }
+  }, delay_s2p);
   return true;
 };
 
@@ -213,7 +221,11 @@ var sendToSession = function(sessionId, eventName, eventData) {
   }
   
   // console.log("Sending "+getJSON(eventData)+" of event["+eventName+"] to session " + sessionId);
-  getSocketOfSessionId(sessionId).emit(eventName, eventData);
+  setTimeout(function() {
+    if (getSocketOfSessionId(sessionId)) {
+      getSocketOfSessionId(sessionId).emit(eventName, eventData);
+    }
+  }, delay_p2s);
   return true;
 };
 
