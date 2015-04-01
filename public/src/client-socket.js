@@ -561,91 +561,41 @@ var initialization = function(){
     
     var actionName;
     var keyCode = e.keyCode;
-    if(Q.input.keys[keyCode]) {
-      actionName = Q.input.keys[keyCode];
-
-      var player = getPlayerSprite(selfId);
-      if(player){
-        player.trigger(actionName);
-      }
-    }else{
+    if(!Q.input.keys[keyCode]) {
       // unrecognized keyboard input
       // refer to KEYBOARD_CONTROLS_PLAYER
+      console.log("Unrecognized keydown");
       return;
     }
 
-    var isSendToSession;
-    switch(actionName){
-      case 'displayScoreScreen':{
-        Q.clearStage(STAGE_SCORE);
-        Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
-        isSendToSession = false;
-        break;
-      }
-      default:{
-        isSendToSession = true;
-        break;
-      }
-    }
+    actionName = Q.input.keys[keyCode];
 
-    if(isSessionConnected && isSendToSession){
-      var createdEvt = {
-        keyCode: e.keyCode
-      };
-      
-      var eData = { sessionId: sessionId,
-                    spriteId: selfId,
-                    entityType: 'PLAYER',
-                    e: createdEvt
-      };
-
-      Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
+    var player = getPlayerSprite(selfId);
+    if(player){
+      player.trigger(actionName, e);
+    } else {
+      console.log("Cannot locate current player to perform keydown");
     }
   });
 
   Q.el.addEventListener('keyup', function(e) {
     
-    var actionName;
+        var actionName;
     var keyCode = e.keyCode;
-    if(Q.input.keys[keyCode]) {
-      actionName = Q.input.keys[keyCode];
-      
-      var player = getPlayerSprite(selfId);
-      if(player){
-        player.trigger(actionName + "Up");
-      }
-    }else{
+    if(!Q.input.keys[keyCode]) {
       // unrecognized keyboard input
       // refer to KEYBOARD_CONTROLS_PLAYER
+      console.log("Unrecognized keyup");
       return;
     }
 
-    var isSendToSession;
-    switch(actionName){
-      case 'displayScoreScreen':{
-        Q.clearStage(STAGE_SCORE);
-        isSendToSession = false;
-        break;
-      }
-      default:{
-        isSendToSession = true;
-        break;
-      }
-    }
+    actionName = Q.input.keys[keyCode];
 
-    if(isSessionConnected && isSendToSession){
-
-      var createdEvt = {
-        keyCode: e.keyCode
-      };
-
-      var eData = { sessionId: sessionId,
-                    spriteId: selfId,
-                    entityType: 'PLAYER',
-                    e: createdEvt
-      };
-
-      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+    var player = getPlayerSprite(selfId);
+    if(player){
+      player.trigger(actionName+"Up", e);
+    } else {
+      console.log("Cannot locate current player to perform keyup");
     }
   });  
 
@@ -679,8 +629,13 @@ var initialization = function(){
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
 
     // Trigger the fire animation of the player
-    getPlayerSprite(selfId).trigger('fire', createdEvt);
-    
+    var player = getPlayerSprite(selfId);
+    if(player){
+      player.trigger('fire', createdEvt);
+    } else {
+      console.log("Cannot locate current player to perform mouseup");
+    }
+
     // console.log("Player props: " + getJSON(getPlayerSprite(selfId).p));
   });
 };
@@ -797,6 +752,7 @@ socket.on('updateSessions', function(data){
 // player successfully joined a session and receive game state + session info 
 socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
+  
   sessionId = data.sessionId;
   gameState = data.gameState;
 

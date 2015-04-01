@@ -564,9 +564,6 @@ var pressKey = function(player, keyCode) {
     
     player.inputs[actionName] = true;
     player.trigger(actionName);
-
-    Q.input.trigger(actionName);
-    Q.input.trigger('keydown',keyCode);
   }
 };
 
@@ -592,9 +589,6 @@ var releaseKey = function(player, keyCode) {
     
     player.inputs[actionName] = false;
     player.trigger(actionName+"Up");
-
-    Q.input.trigger(actionName + "Up");
-    Q.input.trigger('keyup',keyCode);
   }
 };
 

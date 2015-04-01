@@ -418,7 +418,7 @@ Q.scene(SCENE_HUD, function(stage) {
           nextAngle = 360;
         }
 
-        console.log("angle "+nextAngle);
+        // converage the angle
         if(nextAngle%10){
           nextAngle += 10 - nextAngle%10;
         }

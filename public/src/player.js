@@ -64,11 +64,11 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
-  
-    this.addEventListeners();
+    this.add('2d, serverPlatformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
 
     this.takeDamageIntervalId = -1;
+
+    this.addEventListeners();
 
     // Add to the game state!
     // Kills = Deaths = 0
@@ -79,11 +79,61 @@ Q.Sprite.extend("Player",{
   
   addEventListeners: function() { 
 
-    this.on('takeDamage');
+    if(!this.p.isServerSide){
+      this.on('displayScoreScreenUp', this, 'hideScoreScreen');
+      this.on('displayScoreScreen', this, 'displayScoreScreen');
+    }
+
+    this.on('left, leftUp, right, rightUp, up, upUp, down, downUp', this, 'move');
     this.on('toggleNextElementUp', this, 'toggleNextElement');
+    this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
+  },
+
+  move: function(e){
+
+    if(this.p.isServerSide || isSessionConnected){
+      // server side doesnt need to send key event
+      // client side doesnt need to send key when it is not connected
+      return;
+    }
+
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER',
+                  e: createdEvt
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
+  },
+
+  displayScoreScreen: function(){
+
+    if(!this.p.isServerSide && !isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+
+    this.hideScoreScreen();
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  },
+
+  hideScoreScreen: function(){
+
+    if(!this.p.isServerSide && !isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+    
+    Q.clearStage(STAGE_SCORE);
   },
 
   toggleNextElement: function(){
