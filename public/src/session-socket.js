@@ -543,14 +543,15 @@ var loadGameSession = function(sessionId) {
   }
 };
 
-var pressKey = function(player, keyCode) {
+var pressKey = function(player, e) {
   if(!player){
-    console.log("Player without sprite released the key");
+    console.log("Player without sprite pressed the key");
     return;
   }
 
+  var keyCode = e.keyCode;
   if(!keyCode){
-    console.log("Player released unknown key");
+    console.log("Player pressed unknown key");
     return;
   }
 
@@ -563,19 +564,17 @@ var pressKey = function(player, keyCode) {
     }
     
     player.inputs[actionName] = true;
-    player.trigger(actionName);
-
-    Q.input.trigger(actionName);
-    Q.input.trigger('keydown',keyCode);
+    player.trigger(actionName, e);
   }
 };
 
-var releaseKey = function(player, keyCode) {
+var releaseKey = function(player, e) {
   if(!player){
     console.log("Player without sprite released the key");
     return;
   }
 
+  var keyCode = e.keyCode;
   if(!keyCode){
     console.log("Player released unknown key");
     return;
@@ -591,10 +590,7 @@ var releaseKey = function(player, keyCode) {
     }
     
     player.inputs[actionName] = false;
-    player.trigger(actionName+"Up");
-
-    Q.input.trigger(actionName + "Up");
-    Q.input.trigger('keyup',keyCode);
+    player.trigger(actionName+"Up", e);
   }
 };
 
@@ -850,7 +846,7 @@ socket.on('keydown', function(data) {
   var player = getPlayerSprite(pId);
   
   // Simulate player pressing the key
-  pressKey(player, kCode);
+  pressKey(player, e);
 });
 
 socket.on('keyup', function(data) {
@@ -881,7 +877,7 @@ socket.on('keyup', function(data) {
   var player = getPlayerSprite(pId);
 
   // Simulate player releasing the key
-  releaseKey(player, e.keyCode);
+  releaseKey(player, e);
 });
 
 socket.on('mouseup', function(data) {

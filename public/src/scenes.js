@@ -385,6 +385,11 @@ Q.scene(SCENE_HUD, function(stage) {
   // convert into number
   element = Number(element);
   
+  if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
+    console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
+    return;
+  }
+
   var eleSelectors = {};
   var eleW = 70;
   var eleH = 30;
@@ -413,7 +418,7 @@ Q.scene(SCENE_HUD, function(stage) {
           nextAngle = 360;
         }
 
-        console.log("angle "+nextAngle);
+        // converage the angle
         if(nextAngle%10){
           nextAngle += 10 - nextAngle%10;
         }

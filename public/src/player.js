@@ -14,10 +14,11 @@ var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
-var PLAYER_DEFAULT_ELEMENT = 0; // fire
+var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
+var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.3;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -34,7 +35,6 @@ Q.Sprite.extend("Player",{
     this._super(p, {
       spriteId: -1,
       entityType: 'PLAYER',
-      sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
       sprite: PLAYER_ANIMATION,
       x: 410,          
       y: 90,            
@@ -44,10 +44,9 @@ Q.Sprite.extend("Player",{
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
       maxMana: PLAYER_DEFAULT_MAX_MANA,
       currentMana: PLAYER_DEFAULT_MAX_MANA,
-      name: "no_name",
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
-      element: PLAYER_DEFAULT_ELEMENT,
+      characterId: PLAYER_DEFAULT_CHARACTERID,
       fireAnimation: PLAYER_NO_FIRE_ANIMATION,
       fireTargetX: 0, // position x of target in game world
       fireTargetY: 0,  // possition y of target in game world
@@ -56,10 +55,15 @@ Q.Sprite.extend("Player",{
       onLadder: false,
       ladderX: 0,
       takeDamageCooldown: 0,
+      toggleElementCooldown: 0,
       update: true//,
       //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
     });
 
+    this.p.element = this.p.characterId;
+    this.p.sheet = PLAYER_CHARACTERS[this.p.characterId];
+    this.p.name = PLAYER_NAMES[this.p.characterId];
+    
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
     // and kinetics (velocity, gravity)
@@ -67,11 +71,11 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
-  
-    this.addEventListeners();
+    this.add('2d, serverPlatformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
 
     this.takeDamageIntervalId = -1;
+
+    this.addEventListeners();
 
     // Add to the game state!
     // Kills = Deaths = 0
@@ -82,18 +86,109 @@ Q.Sprite.extend("Player",{
   
   addEventListeners: function() { 
 
-    this.on('takeDamage');
+    if(!this.p.isServerSide){
+      this.on('displayScoreScreenUp', this, 'hideScoreScreen');
+      this.on('displayScoreScreen', this, 'displayScoreScreen');
+    }
+
+    this.on('left, right, up, down,', this, 'move');
+    this.on('leftUp, rightUp, upUp, downUp', this, 'moveUp');
     this.on('toggleNextElementUp', this, 'toggleNextElement');
+    this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
   },
 
-  toggleNextElement: function(){
+  move: function(e){
+    
+    if(this.p.isServerSide || !isSessionConnected){
+      // server side doesnt need to send key event
+      // client side doesnt need to send key when it is not connected
+      return;
+    }
+
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER',
+                  e: createdEvt
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
+  },
+
+  moveUp: function(e){
+
+    if(this.p.isServerSide || !isSessionConnected){
+      // server side doesnt need to send key event
+      // client side doesnt need to send key when it is not connected
+      return;
+    }
+
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER',
+                  e: createdEvt
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+  },
+
+
+  displayScoreScreen: function(){
+
+    if(!this.p.isServerSide && !isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+
+    this.hideScoreScreen();
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  },
+
+  hideScoreScreen: function(){
+
+    if(!this.p.isServerSide && !isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+
+    Q.clearStage(STAGE_SCORE);
+  },
+
+  toggleNextElement: function(e){
+    if(this.p.toggleElementCooldown > 0){
+      return;
+    }
+
+    this.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
     var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
     this.p.element = nextElement;
 
-    if(!this.p.isServerSide){
+    if(!this.p.isServerSide && isSessionConnected){
+      var createdEvt = {
+        keyCode: e.keyCode
+      };
+      
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER',
+                    e: createdEvt
+      };
+
+      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+
       Q.input.trigger('hudNextElement');
     }
   },
@@ -373,6 +468,7 @@ Q.Sprite.extend("Player",{
     this.p.onLadder = false;
     this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
+    this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 
     if (this.p.currentMana < this.p.maxMana) {
       this.p.currentMana += PLAYER_DEFAULT_MANA_REGEN;
