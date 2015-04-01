@@ -267,7 +267,7 @@ Q.component("serverPlatformerControls", {
   added: function() {
     var p = this.entity.p;
   
-  this.entity.inputs = [];
+    this.entity.inputs = [];
 
     Q._defaults(p,this.defaults);
 

@@ -139,8 +139,8 @@ var updateSprite = function(entityType, id, properties){
   var dx = clonedProps.x - prevX,
       dy = clonedProps.y - prevY;
   var dist = Math.sqrt(dx*dx + dy*dy);
-  
-  console.log("distance from server update: " + dist + " threshold: " + threshold_clientDistanceFromServerUpdate);
+   
+ // console.log("distance from server update: " + dist + " threshold: " + threshold_clientDistanceFromServerUpdate);
   
   if (eType == 'PLAYER' && spriteId == selfId && 
       dist <= threshold_clientDistanceFromServerUpdate) {
@@ -358,6 +358,15 @@ var addSprite = function(entityType, id, properties) {
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p};
 
+  if(sprite.p.spriteId == selfId && eType == 'PLAYER'){
+    
+    if(!Q.stage(STAGE_LEVEL).has('viewport')){
+      Q.stage(STAGE_LEVEL).add('viewport');
+    }
+
+    Q.stage(STAGE_LEVEL).softFollow(sprite);
+  }
+
   return sprite;
 };
 
@@ -461,8 +470,8 @@ var updateSessions = function(sessionsInfo){
   sessions = sessionsInfo;
 
   if(isSessionConnected){
-    console.log("Sessions updated but bypassing welcome screen session update event \
-                when player is connected to one of the sessions");
+    console.log("Sessions updated but bypassing welcome screen session update event"+
+                "when player is connected to one of the sessions");
     return;
   }
 
@@ -549,53 +558,95 @@ var initialization = function(){
 
 
   Q.el.addEventListener('keydown', function(e) {
-    if (!isSessionConnected) {
-      return;
-    }
-
-    //9 == TAB KEY
-    if (e.keyCode == 9) {
-      Q.clearStage(STAGE_SCORE);
-      Q.stageScene("scoreScreen", STAGE_SCORE); 
-      return;
-    }
-
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
     
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
+    var actionName;
+    var keyCode = e.keyCode;
+    if(Q.input.keys[keyCode]) {
+      actionName = Q.input.keys[keyCode];
 
-    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
+      var player = getPlayerSprite(selfId);
+      if(player){
+        player.trigger(actionName);
+      }
+    }else{
+      // unrecognized keyboard input
+      // refer to KEYBOARD_CONTROLS_PLAYER
+      return;
+    }
+
+    var isSendToSession;
+    switch(actionName){
+      case 'displayScoreScreen':{
+        Q.clearStage(STAGE_SCORE);
+        Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+        isSendToSession = false;
+        break;
+      }
+      default:{
+        isSendToSession = true;
+        break;
+      }
+    }
+
+    if(isSessionConnected && isSendToSession){
+      var createdEvt = {
+        keyCode: e.keyCode
+      };
+      
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER',
+                    e: createdEvt
+      };
+
+      Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
+    }
   });
 
   Q.el.addEventListener('keyup', function(e) {
     
-    if(!isSessionConnected){
+    var actionName;
+    var keyCode = e.keyCode;
+    if(Q.input.keys[keyCode]) {
+      actionName = Q.input.keys[keyCode];
+      
+      var player = getPlayerSprite(selfId);
+      if(player){
+        player.trigger(actionName + "Up");
+      }
+    }else{
+      // unrecognized keyboard input
+      // refer to KEYBOARD_CONTROLS_PLAYER
       return;
     }
 
-    //9 == TAB KEY
-    if (e.keyCode == 9) {
-      Q.clearStage(STAGE_SCORE);
-      return;
+    var isSendToSession;
+    switch(actionName){
+      case 'displayScoreScreen':{
+        Q.clearStage(STAGE_SCORE);
+        isSendToSession = false;
+        break;
+      }
+      default:{
+        isSendToSession = true;
+        break;
+      }
     }
 
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
+    if(isSessionConnected && isSendToSession){
 
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
+      var createdEvt = {
+        keyCode: e.keyCode
+      };
 
-    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER',
+                    e: createdEvt
+      };
+
+      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+    }
   });  
 
   // Event listener for firing
@@ -650,11 +701,10 @@ var loadGameSession = function() {
 
   // load default values
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
-  allSprites = clone(DEFAULT_SPRITES);
 
   // clear welcome screen
   Q.clearStage(STAGE_WELCOME);
-
+  
   // Load the level
   Q.stageScene(gameState.level, STAGE_LEVEL);
   
@@ -684,8 +734,12 @@ var loadGameSession = function() {
               spritesToAdd[i].props);
   }
 
+  // load element selector
+  var currentPlayer = getPlayerSprite(selfId);
+  Q.stageScene(SCENE_HUD, STAGE_HUD, {element: currentPlayer.p.element});
+
   // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport").follow(getPlayerSprite(selfId));
+  Q.stage(STAGE_LEVEL).add("viewport");
 }
 
 var sendToApp = function(eventName, eventData){
@@ -712,6 +766,7 @@ socket.on('connected', function(data) {
   console.log("Connected as PLAYER "+selfId);
 
   updateSessions(s);
+  allSprites = clone(DEFAULT_SPRITES);
 
   // setup Quintus event listeners
   initialization();
@@ -901,7 +956,10 @@ socket.on('spriteDied', function(data) {
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
+    // clear other screens
   Q.clearStage(STAGE_LEVEL);
+  Q.clearStage(STAGE_HUD);
+
   isSessionConnected = false;
 });
 
@@ -916,6 +974,6 @@ socket.on('playerDisconnected', function(data) {
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
-
+  isSessionConnected = false;
   Q.pauseGame();
 });

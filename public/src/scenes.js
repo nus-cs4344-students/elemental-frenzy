@@ -12,6 +12,7 @@ var SCENE_SCORE = 'scoreScreen';
 var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
+var SCENE_HUD = 'hudScreen';
 
 
 // ## UI constants
@@ -360,6 +361,91 @@ Q.scene('level3',function(stage) {
   );
 });
 
+Q.scene(SCENE_HUD, function(stage) {
+  
+  // session does not need to show element selector
+  if(isSession){
+    return;
+  }
+
+  var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                       y: Q.height/10,
+                                                       w: 9*Q.width/10,
+                                                       h: Q.height/10,
+                                                       fill: DARK_GREY
+                                                      }));
+
+
+  var element = stage.options.element || '';
+  // convert into number
+  element = Number(element);
+  
+  var eleSelectors = {};
+  var eleW = 70;
+  var eleH = 30;
+  var inactiveScale = 0.35;
+  var activeScale = 1;
+
+  var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
+                                                         y: 0,
+                                                         activeElement: element,
+                                                        }));
+
+  for(var eId in ELEBALL_ELEMENTNAMES){
+    
+    var eleId = Number(eId);
+    var isActive = eleId == element;
+    var eleAngle = eleId * 90;
+    var scaling = isActive ? activeScale : inactiveScale;
+    eleSelectors[eId] = selector.insert(new Q.UI.Button({ x: scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2,
+                                                          y: scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2,
+                                                          angle: eleAngle,
+                                                          scale: scaling,
+                                                          sheet: ELEBALL_ELEMENTNAMES[eId],
+                                                          sprite: ELEBALL_ANIMATION
+                                                          }));
+
+    if(isActive){
+      eleSelectors[eId].add('animation');
+      eleSelectors[eId].play('fire');
+    }else if(eleSelectors[eId].has('animation')){
+      eleSelectors[eId].del('animation');
+    }
+  }
+
+  Q.input.on('hudNextElement', function(data){
+    var nextElement = data.element;
+
+    if(nextElement == undefined){
+      console.log("Invalid element during HUD next element toggling");
+      return;
+    }
+
+    selector.p.activeElement = nextElement;
+    
+    for(var eId in eleSelectors){
+      var eleId = Number(eId);
+      var isActive = eleId == nextElement;
+      var eleAngle = eleId * 90;
+      var scaling = isActive ? activeScale : inactiveScale;
+
+      var eS = eleSelectors[eId];
+      eS.p.scale = scaling;
+      eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
+      eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
+
+      if(isActive){
+        eS.add('animation');
+        eS.play('fire');
+      }else if(eS.has('animation')){
+        eS.del('animation');
+      }
+    }
+
+    selector.p.angle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+  });
+});
+
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var kType = stage.options.killerEntityType;
   var kId = stage.options.killerId;
@@ -385,11 +471,11 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 
     }else{
       // session side
-      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' \
-            is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
+      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
+            "is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
     }
   }else{
-    console.log("Insufficient killed info : "+getJSON(stage.options));
+    console.log("Insufficient killed info: "+getJSON(stage.options));
     return;
   }
 

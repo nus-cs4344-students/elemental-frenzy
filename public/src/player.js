@@ -76,10 +76,21 @@ Q.Sprite.extend("Player",{
   },
   
   addEventListeners: function() { 
-    this.on('takeDamage');       
+
+    this.on('takeDamage');
+    this.on('toggleNextElementUp', this, 'toggleNextElement');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
+  },
+
+  toggleNextElement: function(){
+    var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
+    this.p.element = nextElement;
+
+    if(!this.p.isServerSide){
+      Q.input.trigger('hudNextElement', {element: nextElement});
+    }
   },
 
   fire: function(e){
@@ -303,6 +314,7 @@ Q.Sprite.extend("Player",{
   
     // Update countdown
     //this.p.updateCountdown -= dt;
+
 
     if(this.p.onLadder) {
       this.p.gravity = 0;

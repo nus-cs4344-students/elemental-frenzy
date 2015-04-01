@@ -58,6 +58,8 @@ Q.Sprite.extend("Eleball", {
 
     this.add("2dEleball, animation");
     
+    this.play("fire");
+
     this.on("onHit");
     
     // Destroy itself after 10 seconds
@@ -77,7 +79,6 @@ Q.Sprite.extend("Eleball", {
   },
   
   step: function(dt) {
-    this.play("fire");
   }
 });
 

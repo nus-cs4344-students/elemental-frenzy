@@ -305,7 +305,7 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
+  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(sprite.has('platformerControls')){
@@ -491,27 +491,6 @@ var initialization = function(){
     console.log("Stop follow");
     Q.stage(STAGE_LEVEL).unfollow();
   });
-
-  // toggling elements
-  Q.input.on("toggleNextElement", function(data) {
-    
-    var spriteId = data.spriteId;
-    if(!spriteId){
-      console.log("Trying to toggle element without id");
-      return;
-    }
-
-    var eType = data.entityType;
-    if(!eType){
-      console.log("Trying to toggle element without entityType");
-      return;
-    }
-
-    var player = getSprite(eType, spriteId);
-    if(!player){
-      player.p.element = (player.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-    }
-  });  
 };
 
 var loadGameSession = function(sessionId) {
@@ -575,7 +554,6 @@ var pressKey = function(player, keyCode) {
     return;
   }
 
-  
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
     
@@ -585,6 +563,8 @@ var pressKey = function(player, keyCode) {
     }
     
     player.inputs[actionName] = true;
+    player.trigger(actionName);
+
     Q.input.trigger(actionName);
     Q.input.trigger('keydown',keyCode);
   }
@@ -604,7 +584,15 @@ var releaseKey = function(player, keyCode) {
 
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
+
+     // Don't allow the player to use server side controls
+    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
+      return;
+    }
+    
     player.inputs[actionName] = false;
+    player.trigger(actionName+"Up");
+
     Q.input.trigger(actionName + "Up");
     Q.input.trigger('keyup',keyCode);
   }
