@@ -14,10 +14,11 @@ var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
-var PLAYER_DEFAULT_ELEMENT = 0; // fire
+var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
+var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.3;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -45,7 +46,7 @@ Q.Sprite.extend("Player",{
       currentMana: PLAYER_DEFAULT_MAX_MANA,
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
-      characterId: PLAYER_DEFAULT_ELEMENT,
+      characterId: PLAYER_DEFAULT_CHARACTERID,
       fireAnimation: PLAYER_NO_FIRE_ANIMATION,
       fireTargetX: 0, // position x of target in game world
       fireTargetY: 0,  // possition y of target in game world
@@ -54,6 +55,7 @@ Q.Sprite.extend("Player",{
       onLadder: false,
       ladderX: 0,
       takeDamageCooldown: 0,
+      toggleElementCooldown: 0,
       update: true//,
       //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
     });
@@ -165,6 +167,12 @@ Q.Sprite.extend("Player",{
   },
 
   toggleNextElement: function(e){
+    if(this.p.toggleElementCooldown > 0){
+      return;
+    }
+
+    this.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
     var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
     this.p.element = nextElement;
 
@@ -460,6 +468,7 @@ Q.Sprite.extend("Player",{
     this.p.onLadder = false;
     this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
+    this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 
     if (this.p.currentMana < this.p.maxMana) {
       this.p.currentMana += PLAYER_DEFAULT_MANA_REGEN;
