@@ -735,8 +735,7 @@ var loadGameSession = function() {
   }
 
   // load element selector
-  var currentPlayer = getPlayerSprite(selfId);
-  Q.stageScene(SCENE_HUD, STAGE_HUD, {element: currentPlayer.p.element});
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");

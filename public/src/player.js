@@ -31,7 +31,6 @@ Q.Sprite.extend("Player",{
     this._super(p, {
       spriteId: -1,
       entityType: 'PLAYER',
-      sheet: PLAYER_CHARACTERS[PLAYER_FIRE],
       sprite: PLAYER_ANIMATION,
       x: 410,          
       y: 90,            
@@ -39,10 +38,9 @@ Q.Sprite.extend("Player",{
       canFire: true,
       maxHealth: PLAYER_DEFAULT_MAXHEALTH,
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
-      name: "no_name",
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
-      element: PLAYER_DEFAULT_ELEMENT,
+      characterId: PLAYER_DEFAULT_ELEMENT,
       fireAnimation: PLAYER_NO_FIRE_ANIMATION,
       fireTargetX: 0, // position x of target in game world
       fireTargetY: 0,  // possition y of target in game world
@@ -55,6 +53,10 @@ Q.Sprite.extend("Player",{
       //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
     });
 
+    this.p.element = this.p.characterId;
+    this.p.sheet = PLAYER_CHARACTERS[this.p.characterId];
+    this.p.name = PLAYER_NAMES[this.p.characterId];
+    
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
     // and kinetics (velocity, gravity)
