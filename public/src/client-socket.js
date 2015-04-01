@@ -580,7 +580,7 @@ var initialization = function(){
 
   Q.el.addEventListener('keyup', function(e) {
     
-        var actionName;
+    var actionName;
     var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
       // unrecognized keyboard input
@@ -752,7 +752,7 @@ socket.on('updateSessions', function(data){
 // player successfully joined a session and receive game state + session info 
 socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
-  
+
   sessionId = data.sessionId;
   gameState = data.gameState;
 

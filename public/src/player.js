@@ -84,7 +84,8 @@ Q.Sprite.extend("Player",{
       this.on('displayScoreScreen', this, 'displayScoreScreen');
     }
 
-    this.on('left, leftUp, right, rightUp, up, upUp, down, downUp', this, 'move');
+    this.on('left, right, up, down,', this, 'move');
+    this.on('leftUp, rightUp, upUp, downUp', this, 'moveUp');
     this.on('toggleNextElementUp', this, 'toggleNextElement');
     this.on('takeDamage');
     this.on('fire');
@@ -93,8 +94,8 @@ Q.Sprite.extend("Player",{
   },
 
   move: function(e){
-
-    if(this.p.isServerSide || isSessionConnected){
+    
+    if(this.p.isServerSide || !isSessionConnected){
       // server side doesnt need to send key event
       // client side doesnt need to send key when it is not connected
       return;
@@ -112,6 +113,28 @@ Q.Sprite.extend("Player",{
 
     Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
   },
+
+  moveUp: function(e){
+
+    if(this.p.isServerSide || !isSessionConnected){
+      // server side doesnt need to send key event
+      // client side doesnt need to send key when it is not connected
+      return;
+    }
+
+    var createdEvt = {
+      keyCode: e.keyCode
+    };
+    
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER',
+                  e: createdEvt
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+  },
+
 
   displayScoreScreen: function(){
 
@@ -132,7 +155,7 @@ Q.Sprite.extend("Player",{
       // to show score screen
       return;
     }
-    
+
     Q.clearStage(STAGE_SCORE);
   },
 
