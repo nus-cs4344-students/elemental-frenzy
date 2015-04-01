@@ -38,10 +38,10 @@ Q.component("healthBar", {
   }
 });
 
-// ## Healthbar component to be attached to an entity with currentHealth and maxHealth
+// ## Manabar component to be attached to an entity with currentMana and maxMana
 // Usage:
-//  1. Ensure the entity it is attached to has a p.currentHealth and p.maxHealth property,
-//  2. then call the draw(ctx) method of the healthBar in the draw method of the entity.
+//  1. Ensure the entity it is attached to has a p.currentMana and p.maxMana property,
+//  2. then call the draw(ctx) method of the manaBar in the draw method of the entity.
 Q.component("manaBar", {
   added: function() {
     this.entity.on('draw', this, 'draw');
