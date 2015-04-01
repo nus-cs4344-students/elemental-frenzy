@@ -376,52 +376,86 @@ Q.scene(SCENE_HUD, function(stage) {
                                                       }));
 
 
-  var element = stage.options.element || '';
+  var currentPlayer = getPlayerSprite(selfId);
+  if(!currentPlayer){
+    console.log("Cannot locate current player during HUD element selector initialization");
+    return;
+  }
+  var element = currentPlayer.p.element;
   // convert into number
   element = Number(element);
   
   var eleSelectors = {};
   var eleW = 70;
   var eleH = 30;
-  var inactiveScale = 0.35;
+  var inactiveScale = 0.3;
   var activeScale = 1;
-
+  var scalingStep = 0.1;
+  var angleStep = 10;
   var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
                                                          y: 0,
-                                                         activeElement: element,
+                                                         targetAngle: 0,
                                                         }));
 
+  selector.on('step', function(dt){
+      var a = this.p.angle;
+      var tAngle = this.p.targetAngle;
+
+     if(a != tAngle){
+        
+        var sign = a > tAngle ? -1 : 1;        
+        if(Math.abs(a - tAngle) > 180){
+          sign = -sign;
+        }
+
+        var nextAngle = a + sign*angleStep;
+        if(nextAngle<0){
+          nextAngle = 360;
+        }
+
+        console.log("angle "+nextAngle);
+        if(nextAngle%10){
+          nextAngle += 10 - nextAngle%10;
+        }
+
+        this.p.angle = nextAngle % 361;
+      }
+  });
+
   for(var eId in ELEBALL_ELEMENTNAMES){
-    
     var eleId = Number(eId);
-    var isActive = eleId == element;
     var eleAngle = eleId * 90;
+    var isActive = eleId == element;
     var scaling = isActive ? activeScale : inactiveScale;
-    eleSelectors[eId] = selector.insert(new Q.UI.Button({ x: scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2,
-                                                          y: scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2,
+    eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
+                                                          sprite: ELEBALL_ANIMATION,
                                                           angle: eleAngle,
                                                           scale: scaling,
-                                                          sheet: ELEBALL_ELEMENTNAMES[eId],
-                                                          sprite: ELEBALL_ANIMATION
+                                                          targetScale: 1
                                                           }));
 
-    if(isActive){
-      eleSelectors[eId].add('animation');
-      eleSelectors[eId].play('fire');
-    }else if(eleSelectors[eId].has('animation')){
-      eleSelectors[eId].del('animation');
-    }
+    eleSelectors[eId].on('step', function(dt){
+      var s = this.p.scale;
+      var tScale = this.p.targetScale;
+
+      if(s != tScale){
+        
+        var sign = s > tScale ? -1 : 1;
+        this.p.scale += sign*scalingStep;
+
+        if(Math.abs(this.p.scale - tScale)< 0.01){
+          this.p.scale = tScale;
+        }
+      }
+    });
   }
 
-  Q.input.on('hudNextElement', function(data){
-    var nextElement = data.element;
+  var updateEleSelector = function(nextElement){
 
     if(nextElement == undefined){
       console.log("Invalid element during HUD next element toggling");
       return;
     }
-
-    selector.p.activeElement = nextElement;
     
     for(var eId in eleSelectors){
       var eleId = Number(eId);
@@ -430,7 +464,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var scaling = isActive ? activeScale : inactiveScale;
 
       var eS = eleSelectors[eId];
-      eS.p.scale = scaling;
+      eS.p.targetScale = scaling;
       eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
       eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
 
@@ -441,8 +475,22 @@ Q.scene(SCENE_HUD, function(stage) {
         eS.del('animation');
       }
     }
+    selector.p.targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+  };
 
-    selector.p.angle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+  updateEleSelector(element);
+  
+
+  Q.input.on('hudNextElement', function(data){
+
+    var currentPlayer = getPlayerSprite(selfId);
+    if(!currentPlayer){
+      console.log("Cannot locate current player during HUD element selector update");
+      return;
+    }
+    var element = currentPlayer.p.element;
+
+    updateEleSelector(element);
   });
 });
 

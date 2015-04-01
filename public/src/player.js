@@ -89,7 +89,7 @@ Q.Sprite.extend("Player",{
     this.p.element = nextElement;
 
     if(!this.p.isServerSide){
-      Q.input.trigger('hudNextElement', {element: nextElement});
+      Q.input.trigger('hudNextElement');
     }
   },
 
