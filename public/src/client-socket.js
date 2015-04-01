@@ -556,7 +556,7 @@ var initialization = function(){
     //9 == TAB KEY
     if (e.keyCode == 9) {
       Q.clearStage(STAGE_SCORE);
-      Q.stageScene("scoreScreen", STAGE_SCORE); 
+      Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
       return;
     }
 

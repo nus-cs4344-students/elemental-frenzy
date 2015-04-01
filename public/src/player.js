@@ -145,6 +145,7 @@ Q.Sprite.extend("Player",{
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
 
+    //after eleball fired, decrease mana
     this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
 
     // Only on the server side do we insert this immediately.
