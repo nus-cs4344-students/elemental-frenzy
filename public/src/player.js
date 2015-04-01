@@ -164,11 +164,23 @@ Q.Sprite.extend("Player",{
     Q.clearStage(STAGE_SCORE);
   },
 
-  toggleNextElement: function(){
+  toggleNextElement: function(e){
     var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
     this.p.element = nextElement;
 
-    if(!this.p.isServerSide){
+    if(!this.p.isServerSide && isSessionConnected){
+      var createdEvt = {
+        keyCode: e.keyCode
+      };
+      
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER',
+                    e: createdEvt
+      };
+
+      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
+
       Q.input.trigger('hudNextElement');
     }
   },
