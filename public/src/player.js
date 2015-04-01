@@ -9,6 +9,9 @@ var PLAYER_NAMES = ["Fire", "Earth" , "Lightning", "Water"];
 var PLAYER_NAME_COLORS = ["orange", "brown" , "yellow", "cyan"];
 var PLAYER_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
 var PLAYER_DEFAULT_MAXHEALTH = 50;
+var PLAYER_DEFAULT_MAX_MANA = 50;
+var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
+var PLAYER_DEFAULT_MANA_REGEN = 0.2;
 var PLAYER_DEFAULT_COOLDOWN = 0.3;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_ELEMENT = 0; // fire
@@ -38,6 +41,8 @@ Q.Sprite.extend("Player",{
       canFire: true,
       maxHealth: PLAYER_DEFAULT_MAXHEALTH,
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
+      maxMana: PLAYER_DEFAULT_MAX_MANA,
+      currentMana: PLAYER_DEFAULT_MAX_MANA,
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
       characterId: PLAYER_DEFAULT_ELEMENT,
@@ -171,7 +176,8 @@ Q.Sprite.extend("Player",{
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
    
-    if (this.p.cooldown > 0 || !this.p.canFire) {
+    if (this.p.cooldown > 0 || !this.p.canFire || 
+        this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
       return;
     }
 
@@ -224,6 +230,9 @@ Q.Sprite.extend("Player",{
     this.p.fireAnimation = PLAYER_NO_FIRE_ANIMATION;
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
+
+    //after eleball fired, decrease mana
+    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
 
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
@@ -439,6 +448,10 @@ Q.Sprite.extend("Player",{
     this.p.onLadder = false;
     this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
+
+    if (this.p.currentMana < this.p.maxMana) {
+      this.p.currentMana += PLAYER_DEFAULT_MANA_REGEN;
+    }
   }
 
 });
