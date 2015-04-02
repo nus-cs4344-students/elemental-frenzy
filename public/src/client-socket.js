@@ -28,6 +28,7 @@ var isSessionConnected = false;
 
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
+var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -83,6 +84,25 @@ var clone = function(item){
   }
 };
 
+// Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
+var checkGoodSprite = function(eType, spriteId, callerName) {
+  callername = callername || 'nameNotSpecifiedFunction';
+  if (typeof eType == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
+    return false;
+  }
+  if (typeof spriteId == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined spriteId");
+    return false;
+  }
+  if (typeof getSprite(eType, spriteId) == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): " + eType + " " + spriteId + " is undefined");
+    return false;
+  }
+  
+  return true;
+}
+
 var updateSprite = function(entityType, id, properties){
   
   var eType = entityType;
@@ -126,44 +146,24 @@ var updateSprite = function(entityType, id, properties){
     console.log("Trying to update non existing sprite "+eType+" "+spriteId);
     return;
   }
-
-  console.log("Updated "+eType+" id " + spriteId);
   
   var spriteToUpdate = getSprite(eType, spriteId);
-  var prevX = spriteToUpdate.p.x,
-      prevY = spriteToUpdate.p.y,
-      prevVX = spriteToUpdate.p.vx,
-      prevVY = spriteToUpdate.p.vy,
-      prevAX = spriteToUpdate.p.ax,
-      prevAY = spriteToUpdate.p.ay,
-      prevIsJumping = allSprites[eType][spriteId].p.jumping;
-  var dx = clonedProps.x - prevX,
-      dy = clonedProps.y - prevY;
-  var dist = Math.sqrt(dx*dx + dy*dy);
-   
- // console.log("distance from server update: " + dist + " threshold: " + threshold_clientDistanceFromServerUpdate);
-  
-  if (eType == 'PLAYER' && spriteId == selfId && 
-      dist <= threshold_clientDistanceFromServerUpdate) {
-    clonedProps.x = prevX;
-    clonedProps.y = prevY; // Causing high jumps
-    //clonedProps.vx = prevVX;
-    //clonedProps.vy = prevVY;
-    //clonedProps.ax = prevAX;
-    //clonedProps.ay = prevAY;
-  } else if (eType == 'PLAYER' && spriteId == selfId &&
-      dist > threshold_clientDistanceFromServerUpdate) {
-    clonedProps.x = prevX + dx/5; // Convergence
-    clonedProps.y = prevY + dy/5; //
-    clonedProps.vx = prevVX;
-    clonedProps.vy = prevVY;
-    clonedProps.ax = prevAX;
-    clonedProps.ay = prevAY;
+  // The player will be the authority for his position and movement, the server follows,
+  // so don't update the player
+  if (eType == 'PLAYER' && spriteId == selfId) {
+    // Include here the properties of a player that should get updated by the server
+    spriteToUpdate.p.currentHealth = clonedProps.currentHealth;
+    spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
+    spriteToUpdate.p.currentMana = clonedProps.currentMana;
+    spriteToUpdate.p.maxMana = clonedProps.maxMana;
+    spriteToUpdate.p.dmg = clonedProps.dmg;
+  } else {
+    clonedProps.isServerSide = false;
+    spriteToUpdate.p = clonedProps;
+    gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
   }
   
-  clonedProps.isServerSide = false;
-  spriteToUpdate.p = clonedProps;
-  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
+  console.log("Updated "+eType+" id " + spriteId);
 
   return;
 }
@@ -352,6 +352,21 @@ var addSprite = function(entityType, id, properties) {
   console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
 
+  if (eType == 'PLAYER') {
+    // Update server about the player's position (player authority on his movement)
+    var interval_updateServer = setInterval(function() {
+      if (!sprite || sprite.p.isServerSide) {
+        // (Defensive) Remove interval because it is gone/not on the client side
+        clearInterval(interval_updateServer);
+      }
+      console.log("Sending authoritativeUpdateSprite message: by " + sprite.p.entityType + " " + sprite.p.spriteId);
+      Q.input.trigger('sessionCast', {eventName:'authoritativeUpdateSprite', eventData: {
+        entityType: 'PLAYER',
+        spriteId: sprite.p.spriteId,
+        p: sprite.p
+      }});
+    }, interval_updateServer_timeInterval);
+  }
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
@@ -488,13 +503,13 @@ var initialization = function(){
 
     var sId = data.sessionId;
     if(!sId){
-      console.log("Tring to join a session without session id");
+      console.log("Trying to join a session without session id");
       return;
     }
 
     var cId = data.characterId;
     if(!cId){
-      console.log("Tring to join session "+sId+" without character id");
+      console.log("Trying to join session "+sId+" without character id");
       return;
     }
 
@@ -508,19 +523,19 @@ var initialization = function(){
     var sId = data.sessionId;
     sId = sId ? sId : sessionId; 
     if(!sId){
-      console.log("Tring to respawn in a session without session id");
+      console.log("Trying to respawn in a session without session id");
       return;
     }
 
     var spriteId = data.spriteId;
     if(!spriteId){
-      console.log("Tring to respawn in session "+sId+" without sprite id");
+      console.log("Trying to respawn in session "+sId+" without sprite id");
       return;
     }
 
     var cId = data.characterId;
     if(!cId){
-      console.log("Tring to respawn in session "+sId+" without character id");
+      console.log("Trying to respawn in session "+sId+" without character id");
       return;
     }
 
