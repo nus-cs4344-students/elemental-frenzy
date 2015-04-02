@@ -16,7 +16,7 @@ Q.Sprite.extend("Actor", {
   
   init: function(p, defaultP) {
     
-    require(['src/helper-functions'], function() {
+    require(['helper-functions'], function() {
       p = mergeObjects(p, defaultP);
     });
     
