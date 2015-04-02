@@ -40,12 +40,28 @@ Q.scene(SCENE_WELCOME,function(stage) {
     welcomeSessionSelected = undefined;
   }
 
-  var boldFont = Math.ceil(2*Q.height/3) +' '+Math.ceil(Q.height/40)+'px Arial';
-  var normalFont = Math.ceil(Q.height/3) +' '+Math.ceil(Q.height/50)+'px Arial';
+  var titleSize = Math.ceil(Q.height/20);
+  titleSize -= titleSize%2;
+  var boldSize = Math.ceil(Q.height/40);
+  boldSize -= boldSize%2;
+  var normalSize = Math.ceil(Q.height/50);
+  normalSize -= normalSize%2;
+
+  var titleWeight = 800;
+  var boldWeight = 600;
+  var normalWeight =  200;
+
+  var boldFont = boldWeight +' '+boldSize+'px Arial';
+  var normalFont = normalWeight+' '+normalSize+'px Arial';
+ 
+
+  console.log(boldFont);
+  console.log(normalFont);
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
-                                            size: Q.height/20,
+                                            weight: titleWeight,
+                                            size: titleSize,
                                             align: 'center',
                                             color: 'red',
                                             label: "Elemental Frenzy"
@@ -58,14 +74,13 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
                                                   y: 11*Q.height/13,
-                                                  w: 80,
-                                                  h: 35,
+                                                  // w: 80,
+                                                  // h: 35,
                                                   label: 'Join',
-                                                  font: boldFont,
+                                                  size: boldSize,
                                                   fontColor: 'black'
                                                 }));
-console.log(boldFont);
-console.log(normalFont);
+
   buttonJoin.on("click", function() {
     if(!isWelcomeSelectedSessionFull && welcomeSessionSelected && welcomeCharSelected && !isCharacterInUse(welcomeCharSelected)){
       Q.input.trigger('join', {sessionId: welcomeSessionSelected, characterId: welcomeCharSelected});
@@ -94,6 +109,11 @@ console.log(normalFont);
       if(isCharacterInUse(cs.p.characterId)){
         cs.p.frame = 7;
         cs.p.playAnim = 'run_in';
+        cs.p.fill = null;
+
+        if(cs.p.characterId == welcomeCharSelected){
+          welcomeCharSelected = undefined;
+        }
       }else{
         cs.p.frame = 33;
         cs.p.playAnim = 'run_out';
@@ -145,11 +165,10 @@ console.log(normalFont);
                                     w: 3*sessionsSection.p.w/5,
                                     h: 1*sessionsSection.p.h/9,
                                     label: sLabel,
-                                    font: '400 14px Arial',
+                                    font: normalFont,
                                     fontColor:  isFull ? 'red' : 'black',
                                     sessionId: sInfo.sessionId,
-                                    isFull: isFull,
-                                    isSelected: false
+                                    isFull: isFull
                                   });
     sessionSprites[numSession] = sSprite;
     numSession++;
@@ -158,7 +177,8 @@ console.log(normalFont);
   // please choose a session
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
                                                   y:sessionsSection.p.y - 3*sessionsSection.p.h/7,
-                                                  size: 18,
+                                                  weight: boldWeight,
+                                                  size: boldSize,
                                                   align: 'center',
                                                   color: 'black',
                                                   label: "Please choose a session to join"
@@ -182,9 +202,9 @@ console.log(normalFont);
                                               w: 3*sessionsSection.p.w/5,
                                               h: 1*sessionsSection.p.h/9,
                                               label: 'No session is avaiable at the moment',
-                                              font: '400 14px Arial',
+                                              font: normalFont,
                                               fontColor: 'black',
-                                              buttonId: numSession,
+                                              buttonId: numSession
                                             }));
   }
 
@@ -222,11 +242,11 @@ console.log(normalFont);
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({ x:0,
                                     y:40,
-                                    size: 12,
+                                    weight: normalWeight,
+                                    size: normalSize,
                                     align: 'center',
                                     color: PLAYER_NAME_COLORS[numChar],
-                                    label: PLAYER_NAMES[numChar],
-                                    selected: false
+                                    label: PLAYER_NAMES[numChar]
                                   });
     numChar++;
   }
@@ -235,7 +255,8 @@ console.log(normalFont);
   // please choose your characterSprites
   var choicecharacterSprites = stage.insert(new Q.UI.Text({x:characterSection.p.x,
                                                     y:characterSection.p.y - 2*characterSection.p.h/5,
-                                                    size: 18,
+                                                    weight: boldWeight,
+                                                    size: boldSize,
                                                     align: 'center',
                                                     color: 'black',
                                                     label: "Please choose your character"
@@ -260,16 +281,12 @@ console.log(normalFont);
     
     sessionSprites[s].on("click", function() {  
 
-      if(this.p.isSelected || this.p.isFull){
-        
+      if(this.p.fill){
         this.p.fill = null;
         welcomeSessionSelected = undefined;
         isWelcomeSelectedSessionFull = false;
-        this.p.isSelected = false;
 
       }else{
-
-        this.p.isSelected = true;
         this.p.fill = LIGHT_GREY;
         welcomeSessionSelected = this.p.sessionId;
         isWelcomeSelectedSessionFull = this.p.isFull;
@@ -300,24 +317,21 @@ console.log(normalFont);
     
     characterSprites[c].on("click", function() {  
 
-      if(this.p.isSelected){
-
-        this.p.isSelected = false;
+      if(this.p.fill){
+        // deselect character
         this.p.fill = null;
         welcomeCharSelected = undefined;
         isWelcomeSelectedCharInUse = false;
 
+      }else if(isCharacterInUse(this.p.characterId)){
+        // select in use character
+        isWelcomeSelectedCharInUse = true;
       }else{
-
-        if(isCharacterInUse(this.p.characterId)){
-         isWelcomeSelectedCharInUse = true;
-        }
-
-        this.p.isSelected = true;
+        
+        // select not in use character
+        isWelcomeSelectedCharInUse = false;
         this.p.fill = LIGHT_GREY;
         welcomeCharSelected = this.p.characterId;
-
-        
         // reset others
         for(var o in characterSprites){
           if(characterSprites[o].p.characterId != this.p.characterId){
