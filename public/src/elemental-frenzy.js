@@ -33,7 +33,6 @@ var Q = window.Q
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .controls()
         .touch()
         .enableSound();
     
@@ -45,6 +44,7 @@ require(['src/helper-functions']);
 // ## Set keyboard controls
 require(['src/keyboard-controls'], function() {
   Q.input.keyboardControls(KEYBOARD_CONTROLS_PLAYER);
+  Q.input.touchControls({controls: TOUCH_CONTROLS_PLAYER});
 });
 // ## Game state
 require(['src/game-state']);

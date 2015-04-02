@@ -15,6 +15,14 @@ var KEYBOARD_CONTROLS_PLAYER = {
   RIGHT : "",
 };
 
+var TOUCH_CONTROLS_PLAYER = [ 
+  ['left','<' ],
+  ['right','>' ],
+  [],  // use an empty array as a spacer
+  ['up','up'],
+  ['toggleNextElement', 'next']
+];
+
 var KEYBOARD_CONTROLS_SESSION = {
   W : "up",
   S : "down",
