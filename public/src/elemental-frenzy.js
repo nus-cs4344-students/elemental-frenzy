@@ -4,20 +4,52 @@
 var HOSTNAME = "localhost";
 var PORT = 4344;
 var io = io();
-var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// ## Set socket event listeners
+// require(['client-socket'], function(){console.log('client-socket loaded');});
+require(['client-socket']);
 
 var _assetsLoaded = false; // Global variable to be checked before trying to load game
 
-// # Quintus platformer example
-//
-// [Run the example](../quintus/examples/platformer/index.html)
-// WARNING: this game must be run from a non-file:// url
-// as it loads a level json file.
-//
-// This is the example from the website homepage, it consists
-// a simple, non-animated platformer with some enemies and a 
-// target for the player.
-window.addEventListener("load",function() {
+requirejs.config({
+    //Remember: only use shim config for non-AMD scripts,
+    //scripts that do not already call define(). The shim
+    //config will not work correctly if used on AMD scripts,
+    //in particular, the exports and init config will not
+    //be triggered, and the deps config will be confusing
+    //for those cases.
+    shim: {
+        'scenes': {
+            //These script dependencies should be loaded before loading
+            //scenes.js
+            deps: ['helper-functions', 'keyboard-controls',
+                  'game-state', 'components',
+                  'eleballs', 'player', 'actor', 'enemy-ai',
+                  'tower', 'ladder']//,
+            
+            //Once loaded, use the global 'Scenes' as the
+            //module value.
+            
+            // exports: 'Scenes'
+        }
+    }
+});
+
+// To find out why DomReady is used
+// Refer to http://requirejs.org/docs/api.html#pageload
+require(['./../lib/domReady'], function (domReady) {
+  domReady(function () {
+    //This function is called once the DOM is ready.
+    //It will be safe to query the DOM and manipulate
+    //DOM nodes in this function.
+    
+    //console.log('Dom Ready');
+
+    startClient();
+  });
+});
+
+var startClient = function() {
 
 // Set up an instance of the Quintus engine  and include
 // the Sprites, Scenes, Input and 2D module. The 2D module
@@ -35,35 +67,6 @@ var Q = window.Q
         // And turn on default input controls and touch input (for UI)
         .touch()
         .enableSound();
-    
-
-// ## Set socket event listeners
-require(['src/client-socket']);
-// ## Helper functions
-require(['src/helper-functions']);
-// ## Set keyboard controls
-require(['src/keyboard-controls'], function() {
-  Q.input.keyboardControls(KEYBOARD_CONTROLS_PLAYER);
-  Q.input.touchControls({controls: TOUCH_CONTROLS_PLAYER});
-});
-// ## Game state
-require(['src/game-state']);
-// ## Scenes for the game
-require(['src/scenes']);
-// ## Components to be used by eleballs/players/actors
-require(['src/components']);
-// ## Eleball sprites
-require(['src/eleballs']);
-// ## Player sprite
-require(['src/player']);
-// ## Actor sprite (other players)
-require(['src/actor']);
-// ## Enemy sprite
-require(['src/enemy-ai']);
-// ## Tower sprite
-require(['src/tower']);
-// ## Ladders
-require(['src/ladder']);
 
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
@@ -93,11 +96,42 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("ladder.png", "ladder.json");
   
-  _assetsLoaded = true;
+  // console.log('Asset loaded');
+
+  // ## Scenes for the game
+  require(['scenes']);
+  // ## Components to be used by eleballs/players/actors
+  require(['components']);
+  // ## Eleball sprites
+  require(['eleballs']);
+  // ## Player sprite
+  require(['player']);
+  // ## Actor sprite (other players)
+  require(['actor']);
+  // ## Enemy sprite
+  require(['enemy-ai']);
+  // ## Tower sprite
+  require(['tower']);
+  // ## Ladders
+  require(['ladder']);
+
+  // ## Helper functions
+  require(['helper-functions']);
+  // ## Set keyboard controls
+  require(['keyboard-controls'], function() {
+    Q.input.keyboardControls(KEYBOARD_CONTROLS_PLAYER);
+    Q.input.touchControls({controls: TOUCH_CONTROLS_PLAYER});
+  });
+
+  // ## Game state
+  require(['game-state']);
   
-  // Finally, call stageScene to run the game
-  //Q.stageScene("level2");
+  // console.log('required finished');
+
+  _assetsLoaded = true;
 });
+
+
 
 // ## Possible Experimentations:
 // 
@@ -112,4 +146,4 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
 
 
 
-});
+};
