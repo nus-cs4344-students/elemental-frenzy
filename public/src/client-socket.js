@@ -556,10 +556,8 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
+  Q.input.on('keydown', function(e){
 
-
-  Q.el.addEventListener('keydown', function(e) {
-    
     var actionName;
     var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
@@ -578,10 +576,11 @@ var initialization = function(){
     } else {
       console.log("Cannot locate current player to perform keydown");
     }
+
   });
 
-  Q.el.addEventListener('keyup', function(e) {
-    
+  Q.input.on('keyup', function(e){
+
     var actionName;
     var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
@@ -600,6 +599,15 @@ var initialization = function(){
     } else {
       console.log("Cannot locate current player to perform keyup");
     }
+
+  });
+
+  Q.el.addEventListener('keydown', function(e) {
+    Q.input.trigger('keydown',e);
+  });
+
+  Q.el.addEventListener('keyup', function(e) {
+    Q.input.trigger('keyup',e);    
   });  
 
   // Event listener for firing
