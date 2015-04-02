@@ -282,7 +282,7 @@ Q.component("serverSprite", {
   },
   
   destroy: function() {
-    // console.log("Destroying server side updating interval");
+    console.log("Destroying server side updating interval");
     clearInterval(this.serverUpdateInterval);
   }
 });

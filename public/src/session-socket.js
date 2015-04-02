@@ -47,6 +47,10 @@ var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
 }
 
+var getCurrentTime = function() {
+  return (new Date()).getTime();
+}
+
 var cloneObject = function (obj){
   var clone = {};
   for(var oKey in obj){
@@ -94,7 +98,7 @@ var getNextSpriteId = function(){
 
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
 var checkGoodSprite = function(eType, spriteId, callerName) {
-  callername = callername || 'nameNotSpecifiedFunction';
+  callerName = callerName || 'nameNotSpecifiedFunction';
   if (typeof eType == 'undefined') {
     console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
     return false;
@@ -258,7 +262,16 @@ var updateSprite = function(eType, spriteId, updateProps) {
     return;
   }
   
-  getSprite(eType, spriteId).p = updateProps;
+  console.log("Updating " + eType + " " + spriteId);
+  
+  updateProps.isServerSide = true;
+  var spriteToUpdate = getSprite(eType, spriteId);
+  spriteToUpdate.p.x = updateProps.x;
+  spriteToUpdate.p.y = updateProps.y;
+  spriteToUpdate.p.vx = updateProps.vx;
+  spriteToUpdate.p.vy = updateProps.vy;
+  spriteToUpdate.p.ax = updateProps.ax;
+  spriteToUpdate.p.ay = updateProps.ay;
 }
 
 var isSpriteExists = function(entityType, id){
@@ -290,7 +303,9 @@ var isSpriteExists = function(entityType, id){
 /*
  Create and add sprite into game state and insert it into active stage
  */
-var addSprite = function(entityType, id, properties) {  
+var addSprite = function(entityType, id, properties, delayToInsert) {  
+  delayToInsert = delayToInsert || 0;
+  
   var eType = entityType;
   if(!eType){
     console.log("Trying to add sprite without entityType");
@@ -352,7 +367,9 @@ var addSprite = function(entityType, id, properties) {
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
-  insertIntoStage(sprite);
+  setTimeout(function() {
+    insertIntoStage(sprite);
+  }, delayToInsert);
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p}; 
 
@@ -372,8 +389,9 @@ var addEnemyEleballSprite = function(ballId, properties){
   return addSprite('ENEMYELEBALL', ballId, properties);
 };
 
-var addPlayerEleballSprite = function(ballId, properties){
-  return addSprite('PLAYERELEBALL', ballId, properties);
+var addPlayerEleballSprite = function(ballId, properties, delayToInsert){
+  delayToInsert = delayToInsert || 0;
+  return addSprite('PLAYERELEBALL', ballId, properties, delayToInsert);
 };
 
 
@@ -533,7 +551,7 @@ var loadGameSession = function(sessionId) {
 
   console.log("Loading game state...");
 
-  // initialize game state and sesion
+  // initialize game state and session
   gameState = clone(DEFAULT_GAMESTATE);
   session = clone(DEFAULT_SESSION);
   session.sessionId = sessionId;
@@ -642,7 +660,7 @@ var joinSession = function(playerId, characterId) {
 
   // session full
   if(session.playerCount >= session.playerMaxCount){
-    console.log("Session "+sesion.sessionId +" is full");
+    console.log("Session "+session.sessionId +" is full");
     return false;
   }
 
@@ -799,6 +817,14 @@ socket.on('join', function(data) {
   }
 });
 
+// When a player joins, he will try to synchronize clocks
+socket.on('synchronizeClocks', function(data) {
+  data.sessionReceiveTime = getCurrentTime();
+  data.clientSendTime = data.timestamp;
+  var playerId = data.playerId;
+  Q.input.trigger('singleCast', {receiverId: playerId, eventName:'synchronizeClocks', eventData: data});
+});
+
 // when a player request to respawn
 socket.on('respawn', function(data) {
   
@@ -937,7 +963,18 @@ socket.on('mouseup', function(data) {
   }
   
   var player = getPlayerSprite(pId);
+  var now = (new Date()).getTime();
+  var oneWayDelay = now - data.timestamp;
+  var timeBeforeShooting = (1000*PLAYER_FIRE_ANIMATION_TIME) - (2 * oneWayDelay);
+  console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
+              " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
   player.trigger('fire', e);
+  setTimeout(function() {
+    // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
+    if (player) {
+      player.trigger('fired', {e: e, delayToInsert: oneWayDelay});
+    }      
+  }, timeBeforeShooting);
   
   // console.log("Player firing, properties are: " + getJSON(player.p));
 });

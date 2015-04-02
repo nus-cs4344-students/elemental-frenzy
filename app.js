@@ -27,8 +27,8 @@ var playerId = 0;
 var sessionId = 0;
 
 // Artificial delay
-var delay_s2p = 100;
-var delay_p2s = 100;
+var delay_s2p = 200;
+var delay_p2s = 200;
 
 // ## Helper functions
 var getSocketOfPlayerId = function(playerId) {
@@ -125,9 +125,11 @@ var removeSessionFromSocket = function(sessionId){
 }
 
 var removeSession = function(sessionId){
-  removeSessionFromPlayer(sessionId);
-  removeSessionFromSocket(sessionId);
-  delete sessions[sessionId];
+  setTimeout(function() {
+    removeSessionFromPlayer(sessionId);
+    removeSessionFromSocket(sessionId);
+    delete sessions[sessionId];
+  }, delay_s2p * 2);
 };
 
 var removePlayersFromSession = function(sessionId){
@@ -158,8 +160,10 @@ var removePlayerFromSocket = function(playerId){
 
 // remove player from socket and session map
 var removePlayer = function(playerId){
-  removePlayerFromSocket(playerId);
-  removePlayerFromSession(playerId);
+  setTimeout(function() {
+    removePlayerFromSocket(playerId);
+    removePlayerFromSession(playerId);
+  }, delay_p2s * 2);
 };
 
 var getJSON = function(obj){
@@ -354,6 +358,7 @@ io.on('connection', function (socket) {
       }
       case 'joinSuccessful':
       case 'joinFailed':
+      case 'synchronizeClocks':
       case 'addSprite':
       case 'updateSprite':
       case 'removeSprite':{

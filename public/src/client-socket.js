@@ -23,11 +23,15 @@ var sessionId;
 var allSprites;
 var gameState;
 var isSession = false;
-var isSessionConnected = false;
 
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
+var time_sentMouseUp;
+var timestampOffset;
+var _isSessionConnected = false;
+var _clockSynchronized = false;
+var _gameLoaded = false;
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -41,6 +45,32 @@ var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
 }
 
+var getCurrentTime = function() {
+  return (new Date()).getTime();
+}
+
+
+function isCyclic (obj) {
+  var seenObjects = [];
+
+  function detect (obj) {
+    if (obj && typeof obj === 'object') {
+      if (seenObjects.indexOf(obj) !== -1) {
+        return true;
+      }
+      seenObjects.push(obj);
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && detect(obj[key])) {
+          console.log(obj, 'cycle at ' + key);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return detect(obj);
+}
 
 var cloneObject = function (obj){
   var clone = {};
@@ -62,6 +92,9 @@ var cloneArray = function (arr){
   var clone = [];
   for(var i = 0; i<arr.length; i++){
     var item = arr[i];
+    if (typeof item === 'undefined') {
+      continue;
+    }
     if(item instanceof Array){
       clone.push(cloneArray(item));
     }else if(typeof item === 'object') {
@@ -74,6 +107,9 @@ var cloneArray = function (arr){
 };
 
 var clone = function(item){
+  if (isCyclic(item)) {
+    return;
+  }
   if(item instanceof Array){
     return cloneArray(item);
   }else if(typeof item === 'object') {
@@ -135,7 +171,9 @@ var updateSprite = function(entityType, id, properties){
   }
 
   // Clone to avoid bad stuff happening due to references
+  //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
+  //console.log("Done cloning properties of " + eType + " " + spriteId);
   if(!clonedProps){
     console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
     return;
@@ -147,6 +185,7 @@ var updateSprite = function(entityType, id, properties){
   }
   
   var spriteToUpdate = getSprite(eType, spriteId);
+  clonedProps.isServerSide = false;
   // The player will be the authority for his position and movement, the server follows,
   // so don't update the player
   if (eType == 'PLAYER' && spriteId == selfId) {
@@ -157,11 +196,10 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
     spriteToUpdate.p.dmg = clonedProps.dmg;
   } else {
-    clonedProps.isServerSide = false;
     spriteToUpdate.p = clonedProps;
-    gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
   }
   
+  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
   console.log("Updated "+eType+" id " + spriteId);
 
   return;
@@ -335,7 +373,9 @@ var addSprite = function(entityType, id, properties) {
     return;
   }
 
+  //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
+  //console.log("Done cloning properties of " + eType + " " + spriteId);
   if(!clonedProps){
     clonedProps = {};
     console.log("Trying to add sprite with default properties");
@@ -350,6 +390,12 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.isServerSide = false; 
   console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
+  
+  // DEBUGGING PURPOSES
+  if (eType == 'PLAYERELEBALL') {
+    var now = getCurrentTime();
+    console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
+  }
 
   if (eType == 'PLAYER') {
     // Update server about the player's position (player authority on his movement)
@@ -358,8 +404,8 @@ var addSprite = function(entityType, id, properties) {
         // (Defensive) Remove interval because it is gone/not on the client side
         clearInterval(interval_updateServer);
       }
-      console.log("Sending authoritativeUpdateSprite message: by " + sprite.p.entityType + " " + sprite.p.spriteId);
-      Q.input.trigger('sessionCast', {eventName:'authoritativeUpdateSprite', eventData: {
+      console.log("Sending authoritativeSpriteUpdate message: by " + sprite.p.entityType + " " + sprite.p.spriteId);
+      Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
         entityType: 'PLAYER',
         spriteId: sprite.p.spriteId,
         p: sprite.p
@@ -484,7 +530,7 @@ var updateSessions = function(sessionsInfo){
 
   sessions = sessionsInfo;
 
-  if(isSessionConnected){
+  if(_isSessionConnected){
     console.log("Sessions updated but bypassing welcome screen session update event"+
                 "when player is connected to one of the sessions");
     return;
@@ -616,7 +662,7 @@ var initialization = function(){
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
-    if(!isSessionConnected){
+    if(!_isSessionConnected){
       return;
     }
 
@@ -640,6 +686,9 @@ var initialization = function(){
                   entityType: 'PLAYER',
                   e: createdEvt
     };
+    
+    time_sentMouseUp = getCurrentTime();
+    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
 
@@ -670,7 +719,9 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
+  //console.log("Cloning gamestate");
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
+  //console.log("Done cloning gamestate");
 
   // clear welcome screen
   Q.clearStage(STAGE_WELCOME);
@@ -709,16 +760,19 @@ var loadGameSession = function() {
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
+  
+  _gameLoaded = true;
 }
 
 var sendToApp = function(eventName, eventData){
+  eventData.timestamp = (new Date()).getTime();
+  eventData.timestamp += timestampOffset || 0;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
 }
 
 
 // when client is connected to app.js
 socket.on('connected', function(data) {
-
   var sId = data.spriteId;
   if(!sId){
     console.log("Connected as PLAYER without id");
@@ -735,7 +789,9 @@ socket.on('connected', function(data) {
   console.log("Connected as PLAYER "+selfId);
 
   updateSessions(s);
+  //console.log("Cloning defaultsprites");
   allSprites = clone(DEFAULT_SPRITES);
+  //console.log("Done cloning defaultsprites");
 
   // setup Quintus event listeners
   initialization();
@@ -771,11 +827,35 @@ socket.on('joinSuccessful', function(data){
   sessionId = data.sessionId;
   gameState = data.gameState;
 
-  isSessionConnected = true;
+  _isSessionConnected = true;
+  
+  // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
+  Q.input.trigger('sessionCast', {
+    eventName: 'synchronizeClocks',
+    eventData: {playerId: selfId}
+  });
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
-  loadGameSession();
+  var interval_loadGameSession = setInterval(function() {
+    // Only load the game after the clock is synchronized
+    if (_clockSynchronized) {
+      console.log("Clock synchronized with timestampOffset = " + timestampOffset);
+      loadGameSession();
+      clearInterval(interval_loadGameSession);
+    }
+  }, 100);
+});
+
+socket.on('synchronizeClocks', function(data) {
+  // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
+  var clientReceiveTime = getCurrentTime();         // t3
+  var sessionSendTime = data.timestamp;             // t2
+  var sessionReceiveTime = data.sessionReceiveTime; // t1
+  var clientSendTime = data.clientSendTime;         // t0
+  
+  timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  _clockSynchronized = true;
 });
 
 // Failed to join a session
@@ -817,9 +897,10 @@ socket.on('updateSprite', function(data){
   var curTimeStamp = (new Date()).getTime();
   //console.log("Message: updateSprite: timeStamp: ");
   //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
-  if (!isSessionConnected) {
+  if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
     return;
   }
+  console.log("_clockSynchronized = " + _clockSynchronized);
 
   var props = data.p;
   if(!props){
@@ -930,7 +1011,7 @@ socket.on('sessionDisconnected', function(){
   Q.clearStage(STAGE_LEVEL);
   Q.clearStage(STAGE_HUD);
 
-  isSessionConnected = false;
+  _isSessionConnected = false;
 });
 
 // when one or more players disconnected from app.js
@@ -944,6 +1025,6 @@ socket.on('playerDisconnected', function(data) {
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
-  isSessionConnected = false;
+  _isSessionConnected = false;
   Q.pauseGame();
 });
