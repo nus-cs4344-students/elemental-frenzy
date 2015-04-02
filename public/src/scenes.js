@@ -74,10 +74,10 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
                                                   y: 11*Q.height/13,
-                                                  // w: 80,
-                                                  // h: 35,
+                                                  w: Q.width/10,
+                                                  h: Q.height/20,
                                                   label: 'Join',
-                                                  size: boldSize,
+                                                  font: boldFont,
                                                   fontColor: 'black'
                                                 }));
 
@@ -131,12 +131,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                           y: 7*Q.height/11,
-                                                          w: 2*Q.width/3,
+                                                          w: 3*Q.width/4,
                                                           h: Q.height/3,
                                                           fill: DARK_GREY
                                                         }));
 
-  var offsetY = 25;
+  var sSpriteW = 3*sessionsSection.p.w/5;
+  var sSpriteH = 2*sessionsSection.p.h/19;
+  var offsetY = sSpriteH + 5;
   var sessionSprites = {};
   var charactersInUse = {};
   var numSession = 0;
@@ -162,8 +164,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
     var sSprite = new Q.UI.Button({ fill: welcomeSessionSelected == sInfo.sessionId ? LIGHT_GREY : null,
                                     x: 0,
                                     y: numSession*offsetY,
-                                    w: 3*sessionsSection.p.w/5,
-                                    h: 1*sessionsSection.p.h/9,
+                                    w: sSpriteW,
+                                    h: sSpriteH,
                                     label: sLabel,
                                     font: normalFont,
                                     fontColor:  isFull ? 'red' : 'black',
@@ -176,7 +178,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // please choose a session
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
-                                                  y:sessionsSection.p.y - 3*sessionsSection.p.h/7,
+                                                  y:sessionsSection.p.y - 4*sessionsSection.p.h/9,
                                                   weight: boldWeight,
                                                   size: boldSize,
                                                   align: 'center',
@@ -187,7 +189,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // insert session into container
   var container_session = stage.insert(new Q.UI.Container({ x: sessionsSection.p.x, 
-                                                            y: sessionsSection.p.y - 2*sessionsSection.p.h/11, 
+                                                            y: sessionsSection.p.y - 4*sessionsSection.p.h/15, 
                                                           }));
 
   for(var s in sessionSprites){
@@ -200,7 +202,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               x: 0,
                                               y: 0,
                                               w: 3*sessionsSection.p.w/5,
-                                              h: 1*sessionsSection.p.h/9,
+                                              h: 2*sessionsSection.p.h/19,
                                               label: 'No session is avaiable at the moment',
                                               font: normalFont,
                                               fontColor: 'black',
@@ -214,16 +216,16 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // characterSprites selection section
   var characterSection = stage.insert(new Q.UI.Container({x: Q.width/2, 
-                                                          y: Q.height/3,
-                                                          w: 2*Q.width/3,
-                                                          h: 150,
+                                                          y: 4*Q.height/13,
+                                                          w: 3*Q.width/4,
+                                                          h: Q.height/4,
                                                           fill: DARK_GREY
                                                         }));
 
   var characterSprites = {};
   var nameSprites = {};
   var numChar = 0;
-  var offsetX = 70;
+  var offsetX = Math.max(40, Q.width/10);
   // console.log("character in use : "+JSON.stringify(charactersInUse,null,4));
   for(var c in PLAYER_CHARACTERS){
 
@@ -241,7 +243,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({ x:0,
-                                    y:40,
+                                    y: Math.max(20, Q.height/20),
                                     weight: normalWeight,
                                     size: normalSize,
                                     align: 'center',
@@ -253,14 +255,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
 
   // please choose your characterSprites
-  var choicecharacterSprites = stage.insert(new Q.UI.Text({x:characterSection.p.x,
-                                                    y:characterSection.p.y - 2*characterSection.p.h/5,
-                                                    weight: boldWeight,
-                                                    size: boldSize,
-                                                    align: 'center',
-                                                    color: 'black',
-                                                    label: "Please choose your character"
-                                                  }));
+  var choicecharacterSprites = stage.insert(new Q.UI.Text({ x:characterSection.p.x,
+                                                            y:characterSection.p.y - 3*characterSection.p.h/7,
+                                                            weight: boldWeight,
+                                                            size: boldSize,
+                                                            align: 'center',
+                                                            color: 'black',
+                                                            label: "Please choose your character"
+                                                          }));
 
   // insert characterSprites and nameSprites into container
   var nChar = 0;
