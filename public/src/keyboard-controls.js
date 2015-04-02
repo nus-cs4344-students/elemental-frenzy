@@ -23,6 +23,15 @@ var TOUCH_CONTROLS_PLAYER = [
   ['toggleNextElement', 'next']
 ];
 
+var TOUCH_CONTROLS_SESSION = [ 
+  ['left','<' ],
+  ['right','>' ],
+  ['up','up'],
+  ['down','down'],
+  ['toggleFollow', 'tf'],
+  ['stopFollow', 'sf']
+];
+
 var KEYBOARD_CONTROLS_SESSION = {
   W : "up",
   S : "down",
