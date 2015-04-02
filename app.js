@@ -243,8 +243,8 @@ io.on('connection', function (socket) {
 
   } else if(isClient && (!sessions || sessionSize <= 0)){
 
+    // no session avaiable but player can wait for new session
     console.log("There is no session running");
-    return;
 
   }
   
