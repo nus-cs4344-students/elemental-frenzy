@@ -71,7 +71,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
 
@@ -251,9 +251,6 @@ Q.Sprite.extend("Player",{
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
 
-    //after eleball fired, decrease mana
-    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
-
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
     if (!this.p.isServerSide){
@@ -317,6 +314,9 @@ Q.Sprite.extend("Player",{
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
 
     this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
+
+    //after eleball fired, decrease mana
+    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
   },
 
   takeDamage: function(dmgAndShooter) {
