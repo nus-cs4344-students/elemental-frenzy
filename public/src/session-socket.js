@@ -92,6 +92,25 @@ var getNextSpriteId = function(){
   return ++spriteId;
 }
 
+// Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
+var checkGoodSprite = function(eType, spriteId, callerName) {
+  callername = callername || 'nameNotSpecifiedFunction';
+  if (typeof eType == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
+    return false;
+  }
+  if (typeof spriteId == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined spriteId");
+    return false;
+  }
+  if (typeof getSprite(eType, spriteId) == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): " + eType + " " + spriteId + " is undefined");
+    return false;
+  }
+  
+  return true;
+}
+
 // Returns the player sprite reference of the sprite with spriteId immediately larger than the given currentPId
 // or that of the smallest spriteId if there is none bigger.
 // Returns undefined if there are no sprites.
@@ -229,6 +248,19 @@ var getPlayerEleballProperties  = function(ballId) {
   return getSpriteProperties('PLAYERELEBALL' , ballId);
 };
 
+var updateSprite = function(eType, spriteId, updateProps) {
+  if ( !checkGoodSprite(eType, spriteId, 'updateSprite')) {
+    return;
+  }
+  if (!updateProps) {
+    // Bad properties
+    console.log("Error in updateSprite(): undefined properties");
+    return;
+  }
+  
+  getSprite(eType, spriteId).p = updateProps;
+}
+
 var isSpriteExists = function(entityType, id){
   var eType = entityType;
   if(!eType){
@@ -308,7 +340,7 @@ var addSprite = function(entityType, id, properties) {
   // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
-  if(sprite.has('platformerControls')){
+  if(eType == 'PLAYER' && sprite.has('platformerControls')){
     sprite.del('platformerControls');
     sprite.add('serverPlatformerControls');
   }
@@ -817,6 +849,11 @@ socket.on('disconnect', function(){
   Q.pauseGame();
 });
 
+// Authoritative message about the movement of the sprite from a client
+// Session must obey
+socket.on('authoritativeSpriteUpdate', function(data) {
+  updateSprite(data.entityType, data.spriteId, data.p);
+});
 
 socket.on('keydown', function(data) {
   var pId = data.spriteId;

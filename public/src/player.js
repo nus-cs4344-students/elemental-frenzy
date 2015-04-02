@@ -71,8 +71,8 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, serverPlatformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
-
+    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
+    
     this.takeDamageIntervalId = -1;
 
     this.addEventListeners();
@@ -341,8 +341,8 @@ Q.Sprite.extend("Player",{
       
       this.p.currentHealth -= dmg;
       
-      console.log(this.p.entityType + " " + this.p.spriteId + " took damage by " + shooterEntityType + " \
-                  " + shooterId + ". currentHealth = " + this.p.currentHealth);
+      console.log(this.p.entityType + " " + this.p.spriteId + " took damage by " + shooterEntityType + 
+                  " " + shooterId + ". currentHealth = " + this.p.currentHealth);
 
   
       sendToApp('spriteTookDmg', {
