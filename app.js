@@ -22,7 +22,6 @@ var sessionIdToPlayerIdMap = {};
 
 var sessions = {}; // indexed by session id
 
-var totalPlayerCount = 0;
 var playerId = 0;
 var sessionId = 0;
 
@@ -236,12 +235,13 @@ io.on('connection', function (socket) {
   var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
   var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;;
 
-  if(isSession && sizeOfObject(sessions) >= SESSION_MAX_COUNT){
+  var sessionSize = sizeOfObject(sessions);
+  if(isSession && sessionSize >= SESSION_MAX_COUNT){
 
-    console.log("There is/are already " + sessions.length + " sessions(s) running");
+    console.log("There is/are already " + sessionSize + " sessions(s) running");
     return;
 
-  } else if(isClient && (!sessions || sessions.length <= 0)){
+  } else if(isClient && (!sessions || sessionSize <= 0)){
 
     console.log("There is no session running");
     return;
@@ -249,8 +249,8 @@ io.on('connection', function (socket) {
   }
   
   if(isClient && !getPlayerIdOfSocketId(socket.conn.id)) {
-    totalPlayerCount++;
     playerId++;
+    console.log("Player "+playerId+" has connected");
 
     // Store the socket of each player
     addPlayerSocket(socket, playerId);
@@ -262,6 +262,7 @@ io.on('connection', function (socket) {
 
   }else if(isSession && !getSessionIdOfSocketId(socket.conn.id)){
     sessionId++;
+    console.log("Session "+sessionId+" has connected");
 
     // Store the socket of each session
     addSessionSocket(socket, sessionId);
@@ -301,7 +302,6 @@ io.on('connection', function (socket) {
       // inform respective session about the player disconnection
       !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
 
-      totalPlayerCount--;
       removePlayer(pId);
 
     }else if(sId && pId){
