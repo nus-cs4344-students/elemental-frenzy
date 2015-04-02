@@ -1,6 +1,14 @@
 "use strict";
 
-require(['src/helper-functions']);
+require(['helper-functions']);
+
+// console.log("connecting");
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// Debugging purpose
+// App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
+
+//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var DEFAULT_LEVEL = 'level2';
 var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}}, 
