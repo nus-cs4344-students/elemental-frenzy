@@ -617,6 +617,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 Q.scene(SCENE_SCORE, function(stage) {
   //every line takes about 30 pixels
   var offsetY = 30;
+  var scoreSize = (Q.width > 600) ? 24 : Math.ceil(Q.width / 30);
 
   /*
   ** Set up UI containers
@@ -667,18 +668,18 @@ Q.scene(SCENE_SCORE, function(stage) {
   var nameTitle = stage.insert(new Q.UI.Text({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), nameContainer);
 
   var killsTitle = stage.insert(new Q.UI.Text({ 
         label: "KILLS",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), killsContainer);
   
@@ -686,9 +687,9 @@ Q.scene(SCENE_SCORE, function(stage) {
   var deathsTitle = stage.insert(new Q.UI.Text({ 
         label: "DEATHS",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), deathsContainer);
 
@@ -721,6 +722,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), nameContainer);
 
@@ -730,6 +732,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), killsContainer);
 
@@ -739,6 +742,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), deathsContainer);
 
