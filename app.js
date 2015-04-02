@@ -216,7 +216,7 @@ var broadcastFromSession = function(sessionId, eventName, eventData) {
  */
 var sendToSession = function(sessionId, eventName, eventData) {
   if (!getSocketOfSessionId(sessionId)) {
-    console.log("Session " + sessionId + " has not yet connected...");
+    console.log("Error in sendToSession(): Session " + sessionId + " has not yet connected... so event [ " + eventName + " ] cannot be sent");
     return false;
   }
   
