@@ -1,7 +1,14 @@
 "use strict";
 
-require(['src/helper-functions']);
-require(['src/scenes']);
+require(['helper-functions']);
+
+// console.log("connecting");
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// Debugging purpose
+// App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
+
+//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var DEFAULT_GAMESTATE = {
   level: '',
@@ -491,9 +498,11 @@ var updateSessions = function(sessionsInfo){
     return;
   }
 
-  // refresh welcome screen
-  Q.clearStage(STAGE_WELCOME);
-  Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  if(_assetsLoaded){
+    // refresh welcome screen
+    Q.clearStage(STAGE_WELCOME);
+    Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  }
 }
 
 var initialization = function(){
