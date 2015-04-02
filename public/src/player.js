@@ -18,7 +18,7 @@ var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 var PLAYER_ANIMATION = "character";
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
-var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.3;
+var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite

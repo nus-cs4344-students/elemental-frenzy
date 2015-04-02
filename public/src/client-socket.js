@@ -1,6 +1,7 @@
 "use strict";
 
 require(['src/helper-functions']);
+require(['src/scenes']);
 
 var DEFAULT_GAMESTATE = {
   level: '',
@@ -572,6 +573,7 @@ var initialization = function(){
 
     var player = getPlayerSprite(selfId);
     if(player){
+      player.inputs[actionName] = true;
       player.trigger(actionName, e);
     } else {
       console.log("Cannot locate current player to perform keydown");
@@ -593,6 +595,7 @@ var initialization = function(){
 
     var player = getPlayerSprite(selfId);
     if(player){
+      player.inputs[actionName] = false;
       player.trigger(actionName+"Up", e);
     } else {
       console.log("Cannot locate current player to perform keyup");

@@ -48,6 +48,8 @@ require(['src/keyboard-controls'], function() {
 });
 // ## Game state
 require(['src/game-state']);
+// ## Scenes for the game
+require(['src/scenes']);
 // ## Components to be used by eleballs/players/actors
 require(['src/components']);
 // ## Eleball sprites
@@ -60,8 +62,6 @@ require(['src/actor']);
 require(['src/enemy-ai']);
 // ## Tower sprite
 require(['src/tower']);
-// ## Scenes for the game
-require(['src/scenes']);
 // ## Ladders
 require(['src/ladder']);
 

@@ -32,17 +32,20 @@ var killedInfo = [];
 var killedInfoTimeLeft= [];
 var killedInfoPosition = [];
 
-// welcome screen to allow player to choose characterSprites
+// welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
 
+  // clear sessioned selected when the session is longer available
   if(welcomeSessionSelected && !sessions[welcomeSessionSelected]){
     welcomeSessionSelected = undefined;
   }
 
+  var boldFont = Math.ceil(2*Q.height/3) +' '+Math.ceil(Q.height/40)+'px Arial';
+  var normalFont = Math.ceil(Q.height/3) +' '+Math.ceil(Q.height/50)+'px Arial';
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
-                                            size: 50,
+                                            size: Q.height/20,
                                             align: 'center',
                                             color: 'red',
                                             label: "Elemental Frenzy"
@@ -50,6 +53,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // join button
   var isShow = !isWelcomeSelectedSessionFull && welcomeSessionSelected && !isWelcomeSelectedCharInUse && welcomeCharSelected;
+
   var buttonJoin = stage.insert(new Q.UI.Button({ fill: DARK_GREY,
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
@@ -57,10 +61,11 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   w: 80,
                                                   h: 35,
                                                   label: 'Join',
-                                                  font: '800 18px Arial',
+                                                  font: boldFont,
                                                   fontColor: 'black'
                                                 }));
-
+console.log(boldFont);
+console.log(normalFont);
   buttonJoin.on("click", function() {
     if(!isWelcomeSelectedSessionFull && welcomeSessionSelected && welcomeCharSelected && !isCharacterInUse(welcomeCharSelected)){
       Q.input.trigger('join', {sessionId: welcomeSessionSelected, characterId: welcomeCharSelected});
@@ -80,6 +85,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // console.log('charac usage: '+JSON.stringify(charactersInUse,null,4));
     // console.log("session selected "+welcomeSessionSelected);
     // console.log("character Selected : "+welcomeCharSelected);
+
     for(var c in characterSprites){
 
       var cs = characterSprites[c];
@@ -142,7 +148,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                     font: '400 14px Arial',
                                     fontColor:  isFull ? 'red' : 'black',
                                     sessionId: sInfo.sessionId,
-                                    isFull: isFull
+                                    isFull: isFull,
+                                    isSelected: false
                                   });
     sessionSprites[numSession] = sSprite;
     numSession++;
@@ -177,7 +184,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               label: 'No session is avaiable at the moment',
                                               font: '400 14px Arial',
                                               fontColor: 'black',
-                                              buttonId: numSession
+                                              buttonId: numSession,
                                             }));
   }
 
@@ -218,7 +225,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                     size: 12,
                                     align: 'center',
                                     color: PLAYER_NAME_COLORS[numChar],
-                                    label: PLAYER_NAMES[numChar]
+                                    label: PLAYER_NAMES[numChar],
+                                    selected: false
                                   });
     numChar++;
   }
@@ -252,12 +260,16 @@ Q.scene(SCENE_WELCOME,function(stage) {
     
     sessionSprites[s].on("click", function() {  
 
-      if(this.p.fill){
+      if(this.p.isSelected || this.p.isFull){
+        
         this.p.fill = null;
         welcomeSessionSelected = undefined;
         isWelcomeSelectedSessionFull = false;
+        this.p.isSelected = false;
 
       }else{
+
+        this.p.isSelected = true;
         this.p.fill = LIGHT_GREY;
         welcomeSessionSelected = this.p.sessionId;
         isWelcomeSelectedSessionFull = this.p.isFull;
@@ -288,18 +300,24 @@ Q.scene(SCENE_WELCOME,function(stage) {
     
     characterSprites[c].on("click", function() {  
 
-      if(this.p.fill){
+      if(this.p.isSelected){
+
+        this.p.isSelected = false;
         this.p.fill = null;
         welcomeCharSelected = undefined;
         isWelcomeSelectedCharInUse = false;
 
       }else{
-        this.p.fill = LIGHT_GREY;
-        welcomeCharSelected = this.p.characterId;
 
         if(isCharacterInUse(this.p.characterId)){
          isWelcomeSelectedCharInUse = true;
         }
+
+        this.p.isSelected = true;
+        this.p.fill = LIGHT_GREY;
+        welcomeCharSelected = this.p.characterId;
+
+        
         // reset others
         for(var o in characterSprites){
           if(characterSprites[o].p.characterId != this.p.characterId){
@@ -396,34 +414,35 @@ Q.scene(SCENE_HUD, function(stage) {
   var inactiveScale = 0.3;
   var activeScale = 1;
   var scalingStep = 0.1;
-  var angleStep = 10;
   var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
                                                          y: 0,
-                                                         targetAngle: 0,
+                                                         angleStep: 0,
+                                                         activeElement: element,
+                                                         targetAngle: 0
                                                         }));
 
   selector.on('step', function(dt){
-      var a = this.p.angle;
-      var tAngle = this.p.targetAngle;
 
-     if(a != tAngle){
-        
-        var sign = a > tAngle ? -1 : 1;        
-        if(Math.abs(a - tAngle) > 180){
-          sign = -sign;
-        }
+    var player = getPlayerSprite(selfId);
+    if(player && this.p.activeElement != player.p.element){
+      console.log("Element selector out of sync: player-"+player.p.element+" selector-"+this.p.activeElement);
+      updateEleSelector(player.p.element);
+    }
 
-        var nextAngle = a + sign*angleStep;
+    var a = this.p.angle;
+    var aStep = this.p.angleStep;
+    var tAngle = this.p.targetAngle;
+
+     if(aStep > 0 && Math.abs(a - tAngle) > 5){
+
+        var aS = aStep * dt;
+        var nextAngle = a - aS;
+
         if(nextAngle<0){
-          nextAngle = 360;
+          nextAngle = 360 + nextAngle;
         }
 
-        // converage the angle
-        if(nextAngle%10){
-          nextAngle += 10 - nextAngle%10;
-        }
-
-        this.p.angle = nextAngle % 361;
+        this.p.angle = Math.max(nextAngle % 360, 0);
       }
   });
 
@@ -480,7 +499,11 @@ Q.scene(SCENE_HUD, function(stage) {
         eS.del('animation');
       }
     }
-    selector.p.targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+
+    var targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+    selector.p.targetAngle = targetAngle;
+    selector.p.angleStep = Math.abs(targetAngle - selector.p.angle)/0.3;
+    selector.p.activeElement = nextElement;
   };
 
   updateEleSelector(element);
