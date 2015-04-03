@@ -312,7 +312,7 @@ var isSpriteExists = function(entityType, id){
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties, delayToInsert) {  
-  delayToInsert = delayToInsert || 0;
+  delayToInsert = delayToInsert ? delayToInsert : 0;
   
   var eType = entityType;
   if(!eType){

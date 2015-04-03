@@ -128,7 +128,7 @@ var removeSession = function(sessionId){
     removeSessionFromPlayer(sessionId);
     removeSessionFromSocket(sessionId);
     delete sessions[sessionId];
-  }, delay_s2p * 2);
+  }, delay_s2p * 5);
 };
 
 var removePlayersFromSession = function(sessionId){
@@ -162,7 +162,7 @@ var removePlayer = function(playerId){
   setTimeout(function() {
     removePlayerFromSocket(playerId);
     removePlayerFromSession(playerId);
-  }, delay_p2s * 2);
+  }, delay_p2s * 5);
 };
 
 var getJSON = function(obj){

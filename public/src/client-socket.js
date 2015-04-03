@@ -408,7 +408,7 @@ var addSprite = function(entityType, id, properties) {
   if (eType == 'PLAYER') {
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
-      if (!sprite || sprite.p.isServerSide) {
+      if (!sprite || sprite.p.isServerSide || sprite.p.isDead) {
         // (Defensive) Remove interval because it is gone/not on the client side
         clearInterval(interval_updateServer);
       }
@@ -682,7 +682,9 @@ var initialization = function(){
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
-    if(!_isSessionConnected){
+    var player = getPlayerSprite(selfId);
+    if(!_isSessionConnected || !player.p.canFire || player.p.isDead
+        || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
       return;
     }
 
@@ -713,7 +715,6 @@ var initialization = function(){
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
 
     // Trigger the fire animation of the player
-    var player = getPlayerSprite(selfId);
     if(player){
       player.trigger('fire', createdEvt);
     } else {

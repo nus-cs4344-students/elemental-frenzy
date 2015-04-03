@@ -10,7 +10,7 @@ var PLAYER_NAME_COLORS = ["orange", "brown" , "yellow", "cyan"];
 var PLAYER_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
-var PLAYER_DEFAULT_MANA_PER_SHOT = 0;
+var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
 var PLAYER_DEFAULT_COOLDOWN = 1.0;
 var PLAYER_DEFAULT_DMG = 2;
@@ -43,6 +43,7 @@ Q.Sprite.extend("Player",{
       y: 90,            
       cooldown: 0,    // can fire immediately
       canFire: true,
+      isDead: false,
       maxHealth: PLAYER_DEFAULT_MAXHEALTH,
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
       maxMana: PLAYER_DEFAULT_MAX_MANA,
@@ -77,6 +78,11 @@ Q.Sprite.extend("Player",{
     this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
+    
+    // DEBUGGING
+    setInterval(function() {
+      console.log("Player cooldown: " + that.p.cooldown);
+    }, 100);
 
     this.addEventListeners();
 
@@ -200,11 +206,14 @@ Q.Sprite.extend("Player",{
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
    
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
-    if (this.p.cooldown > 0 || !this.p.canFire || 
+    if (this.p.isDead || !this.p.canFire ||
         this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
       return;
     }
     time_fromFire = getCurrentTime();
+    
+    // Will be set to true in the fired function
+    this.p.canFire = false;
 
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
@@ -253,11 +262,18 @@ Q.Sprite.extend("Player",{
   fired: function(data){
     console.log("fired event triggered " + (getCurrentTime() - time_fromFire) + "ms after fire event was triggered");
     
+    // fired will be triggered after the animation is over, so this is the time that the player can fire again
+    this.p.canFire = true;
+    
     if (typeof data === 'undefined') {
       // This makes calling 'fired' after being done with the 'fire' animation NOT WORK!!!
       // But necessary because server will calculate when to call this fired function anyway.
       // And we don't want the 'fire' animation to ALWAYS fire an eleball because of our
       // network architecture
+      return;
+    }
+    
+    if (this.p.isDead || this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
       return;
     }
     
@@ -267,12 +283,7 @@ Q.Sprite.extend("Player",{
     delayToInsert = delayToInsert || 0; // milliseconds
     
     
-    if (this.p.cooldown > 0 || !this.p.canFire || 
-        this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
-      return;
-    }
-    
-    console.log("cooldown is " + this.p.cooldown);
+    //console.log("cooldown is " + this.p.cooldown);
 
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
@@ -348,8 +359,6 @@ Q.Sprite.extend("Player",{
 
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
 
-    this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
-
     //after eleball fired, decrease mana
     this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
   },
@@ -395,7 +404,7 @@ Q.Sprite.extend("Player",{
   },
   
   die: function(killerEntityType, killerId) {
-    this.p.canFire = false;
+    this.p.isDead = true;
 
     var killerName = getSprite(killerEntityType, killerId).p.name;
     
@@ -501,7 +510,6 @@ Q.Sprite.extend("Player",{
     
 
     this.p.onLadder = false;
-    this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
     this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 
