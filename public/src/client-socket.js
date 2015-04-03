@@ -1,6 +1,14 @@
 "use strict";
 
-require(['src/helper-functions']);
+require(['helper-functions']);
+
+// console.log("connecting");
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// Debugging purpose
+// App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
+
+//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var DEFAULT_GAMESTATE = {
   level: '',
@@ -8,7 +16,9 @@ var DEFAULT_GAMESTATE = {
             ACTOR: {},
             PLAYERELEBALL: {},
             ENEMYELEBALL: {},
-            ENEMY: {}}
+            ENEMY: {}},
+  kills: {},
+  deaths: {}
 };
 
 var DEFAULT_SPRITES = { PLAYER: {},
@@ -23,7 +33,15 @@ var sessionId;
 var allSprites;
 var gameState;
 var isSession = false;
-var isSessionConnected = false;
+
+// Networking
+var threshold_clientDistanceFromServerUpdate = 30;
+var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
+var time_sentMouseUp;
+var timestampOffset;
+var _isSessionConnected = false;
+var _clockSynchronized = false;
+var _gameLoaded = false;
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -37,6 +55,32 @@ var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
 }
 
+var getCurrentTime = function() {
+  return (new Date()).getTime();
+}
+
+
+function isCyclic (obj) {
+  var seenObjects = [];
+
+  function detect (obj) {
+    if (obj && typeof obj === 'object') {
+      if (seenObjects.indexOf(obj) !== -1) {
+        return true;
+      }
+      seenObjects.push(obj);
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && detect(obj[key])) {
+          console.log(obj, 'cycle at ' + key);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return detect(obj);
+}
 
 var cloneObject = function (obj){
   var clone = {};
@@ -58,6 +102,9 @@ var cloneArray = function (arr){
   var clone = [];
   for(var i = 0; i<arr.length; i++){
     var item = arr[i];
+    if (typeof item === 'undefined') {
+      continue;
+    }
     if(item instanceof Array){
       clone.push(cloneArray(item));
     }else if(typeof item === 'object') {
@@ -70,6 +117,9 @@ var cloneArray = function (arr){
 };
 
 var clone = function(item){
+  if (isCyclic(item)) {
+    return;
+  }
   if(item instanceof Array){
     return cloneArray(item);
   }else if(typeof item === 'object') {
@@ -78,6 +128,25 @@ var clone = function(item){
     return item;
   }
 };
+
+// Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
+var checkGoodSprite = function(eType, spriteId, callerName) {
+  callername = callername || 'nameNotSpecifiedFunction';
+  if (typeof eType == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
+    return false;
+  }
+  if (typeof spriteId == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined spriteId");
+    return false;
+  }
+  if (typeof getSprite(eType, spriteId) == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): " + eType + " " + spriteId + " is undefined");
+    return false;
+  }
+  
+  return true;
+}
 
 var updateSprite = function(entityType, id, properties){
   
@@ -112,7 +181,9 @@ var updateSprite = function(entityType, id, properties){
   }
 
   // Clone to avoid bad stuff happening due to references
+  //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
+  //console.log("Done cloning properties of " + eType + " " + spriteId);
   if(!clonedProps){
     console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
     return;
@@ -122,11 +193,24 @@ var updateSprite = function(entityType, id, properties){
     console.log("Trying to update non existing sprite "+eType+" "+spriteId);
     return;
   }
-
-  console.log("Updated "+eType+" id " + spriteId);
+  
+  var spriteToUpdate = getSprite(eType, spriteId);
   clonedProps.isServerSide = false;
-  allSprites[eType][spriteId].p = clonedProps;
-  gameState.sprites[eType][spriteId] = {p: clonedProps}; 
+  // The player will be the authority for his position and movement, the server follows,
+  // so don't update the player
+  if (eType == 'PLAYER' && spriteId == selfId) {
+    // Include here the properties of a player that should get updated by the server
+    spriteToUpdate.p.currentHealth = clonedProps.currentHealth;
+    spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
+    spriteToUpdate.p.currentMana = clonedProps.currentMana;
+    spriteToUpdate.p.maxMana = clonedProps.maxMana;
+    spriteToUpdate.p.dmg = clonedProps.dmg;
+  } else {
+    spriteToUpdate.p = clonedProps;
+  }
+  
+  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
+  console.log("Updated "+eType+" id " + spriteId);
 
   return;
 }
@@ -299,7 +383,9 @@ var addSprite = function(entityType, id, properties) {
     return;
   }
 
+  //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
+  //console.log("Done cloning properties of " + eType + " " + spriteId);
   if(!clonedProps){
     clonedProps = {};
     console.log("Trying to add sprite with default properties");
@@ -314,13 +400,43 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.isServerSide = false; 
   console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
+  
+  // DEBUGGING PURPOSES
+  if (eType == 'PLAYERELEBALL') {
+    var now = getCurrentTime();
+    console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
+  }
 
+  if (eType == 'PLAYER') {
+    // Update server about the player's position (player authority on his movement)
+    var interval_updateServer = setInterval(function() {
+      if (!sprite || sprite.p.isServerSide || 
+          sprite.p.isDead || !_isSessionConnected) {
+        // (Defensive) Remove interval because it is gone/not on the client side
+        clearInterval(interval_updateServer);
+      }
+      Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
+        entityType: 'PLAYER',
+        spriteId: sprite.p.spriteId,
+        p: sprite.p
+      }});
+    }, interval_updateServer_timeInterval);
+  }
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
   insertIntoStage(sprite);
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p};
+
+  if(sprite.p.spriteId == selfId && eType == 'PLAYER'){
+    
+    if(!Q.stage(STAGE_LEVEL).has('viewport')){
+      Q.stage(STAGE_LEVEL).add('viewport');
+    }
+
+    Q.stage(STAGE_LEVEL).softFollow(sprite);
+  }
 
   return sprite;
 };
@@ -424,15 +540,17 @@ var updateSessions = function(sessionsInfo){
 
   sessions = sessionsInfo;
 
-  if(isSessionConnected){
-    console.log("Sessions updated but bypassing welcome screen session update event \
-                when player is connected to one of the sessions");
+  if(_isSessionConnected){
+    console.log("Sessions updated but bypassing welcome screen session update event"+
+                "when player is connected to one of the sessions");
     return;
   }
 
-  // refresh welcome screen
-  Q.clearStage(STAGE_WELCOME);
-  Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  if(_assetsLoaded){
+    // refresh welcome screen
+    Q.clearStage(STAGE_WELCOME);
+    Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  }
 }
 
 var initialization = function(){
@@ -442,13 +560,13 @@ var initialization = function(){
 
     var sId = data.sessionId;
     if(!sId){
-      console.log("Tring to join a session without session id");
+      console.log("Trying to join a session without session id");
       return;
     }
 
     var cId = data.characterId;
     if(!cId){
-      console.log("Tring to join session "+sId+" without character id");
+      console.log("Trying to join session "+sId+" without character id");
       return;
     }
 
@@ -462,19 +580,19 @@ var initialization = function(){
     var sId = data.sessionId;
     sId = sId ? sId : sessionId; 
     if(!sId){
-      console.log("Tring to respawn in a session without session id");
+      console.log("Trying to respawn in a session without session id");
       return;
     }
 
     var spriteId = data.spriteId;
     if(!spriteId){
-      console.log("Tring to respawn in session "+sId+" without sprite id");
+      console.log("Trying to respawn in session "+sId+" without sprite id");
       return;
     }
 
     var cId = data.characterId;
     if(!cId){
-      console.log("Tring to respawn in session "+sId+" without character id");
+      console.log("Trying to respawn in session "+sId+" without character id");
       return;
     }
 
@@ -510,61 +628,55 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
-
-
-  Q.el.addEventListener('keydown', function(e) {
-    if (!isSessionConnected) {
+  Q.input.on('keydown', function(keyCode){
+    var e = {keyCode: keyCode};
+    var actionName;
+    if(!Q.input.keys[keyCode]) {
+      // unrecognized keyboard input
+      // refer to KEYBOARD_CONTROLS_PLAYER
+      console.log("Unrecognized keydown: keycode is " + keyCode);
       return;
     }
 
-    //9 == TAB KEY
-    if (e.keyCode == 9) {
-      Q.clearStage(STAGE_SCORE);
-      Q.stageScene("scoreScreen", STAGE_SCORE); 
-      return;
+    actionName = Q.input.keys[keyCode];
+
+    var player = getPlayerSprite(selfId);
+    if(player){
+      player.inputs[actionName] = true;
+      player.trigger(actionName, e);
+    } else {
+      console.log("Cannot locate current player to perform keydown");
     }
 
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-    
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
   });
 
-  Q.el.addEventListener('keyup', function(e) {
-    
-    if(!isSessionConnected){
+  Q.input.on('keyup', function(keyCode){
+    var e = {keyCode: keyCode};
+    var actionName;
+    if(!Q.input.keys[keyCode]) {
+      // unrecognized keyboard input
+      // refer to KEYBOARD_CONTROLS_PLAYER
+      console.log("Unrecognized keyup: keycode is " + keyCode);
       return;
     }
 
-    //9 == TAB KEY
-    if (e.keyCode == 9) {
-      Q.clearStage(STAGE_SCORE);
-      return;
+    actionName = Q.input.keys[keyCode];
+
+    var player = getPlayerSprite(selfId);
+    if(player){
+      player.inputs[actionName] = false;
+      player.trigger(actionName+"Up", e);
+    } else {
+      console.log("Cannot locate current player to perform keyup");
     }
 
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
-  });  
+  }); 
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
-    if(!isSessionConnected){
+    var player = getPlayerSprite(selfId);
+    if(!_isSessionConnected || !player.p.canFire || player.p.isDead
+        || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
       return;
     }
 
@@ -588,12 +700,19 @@ var initialization = function(){
                   entityType: 'PLAYER',
                   e: createdEvt
     };
+    
+    time_sentMouseUp = getCurrentTime();
+    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
 
     // Trigger the fire animation of the player
-    getPlayerSprite(selfId).trigger('fire', createdEvt);
-    
+    if(player){
+      player.trigger('fire', createdEvt);
+    } else {
+      console.log("Cannot locate current player to perform mouseup");
+    }
+
     // console.log("Player props: " + getJSON(getPlayerSprite(selfId).p));
   });
 };
@@ -613,12 +732,13 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
+  //console.log("Cloning gamestate");
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
-  allSprites = clone(DEFAULT_SPRITES);
+  //console.log("Done cloning gamestate");
 
   // clear welcome screen
   Q.clearStage(STAGE_WELCOME);
-
+  
   // Load the level
   Q.stageScene(gameState.level, STAGE_LEVEL);
   
@@ -648,18 +768,24 @@ var loadGameSession = function() {
               spritesToAdd[i].props);
   }
 
+  // load element selector
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+
   // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport").follow(getPlayerSprite(selfId));
+  Q.stage(STAGE_LEVEL).add("viewport");
+  
+  _gameLoaded = true;
 }
 
 var sendToApp = function(eventName, eventData){
+  eventData.timestamp = (new Date()).getTime();
+  eventData.timestamp += timestampOffset || 0;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
 }
 
 
 // when client is connected to app.js
 socket.on('connected', function(data) {
-
   var sId = data.spriteId;
   if(!sId){
     console.log("Connected as PLAYER without id");
@@ -676,6 +802,9 @@ socket.on('connected', function(data) {
   console.log("Connected as PLAYER "+selfId);
 
   updateSessions(s);
+  //console.log("Cloning defaultsprites");
+  allSprites = clone(DEFAULT_SPRITES);
+  //console.log("Done cloning defaultsprites");
 
   // setup Quintus event listeners
   initialization();
@@ -704,17 +833,56 @@ socket.on('updateSessions', function(data){
   updateSessions(s);
 });
 
+socket.on('gameStateChanged', function(data) {
+  console.log("Received event gameStateChanged");
+  if (typeof data.kills === 'undefined') {
+    console.log("Error in event gameStateChanged: data.kills is undefined");
+    return;
+  }
+  if (typeof data.deaths === 'undefined') {
+    console.log("Error in event gameStateChanged: data.deaths is undefined");
+    return;
+  }
+  
+  Q.state.set({kills: data.kills, deaths: data.deaths});
+});
+
 // player successfully joined a session and receive game state + session info 
 socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
+
   sessionId = data.sessionId;
   gameState = data.gameState;
 
-  isSessionConnected = true;
+  _isSessionConnected = true;
+  
+  // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
+  Q.input.trigger('sessionCast', {
+    eventName: 'synchronizeClocks',
+    eventData: {playerId: selfId}
+  });
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
-  loadGameSession();
+  var interval_loadGameSession = setInterval(function() {
+    // Only load the game after the clock is synchronized
+    if (_clockSynchronized) {
+      console.log("Clock synchronized with timestampOffset = " + timestampOffset);
+      loadGameSession();
+      clearInterval(interval_loadGameSession);
+    }
+  }, 100);
+});
+
+socket.on('synchronizeClocks', function(data) {
+  // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
+  var clientReceiveTime = getCurrentTime();         // t3
+  var sessionSendTime = data.timestamp;             // t2
+  var sessionReceiveTime = data.sessionReceiveTime; // t1
+  var clientSendTime = data.clientSendTime;         // t0
+  
+  timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  _clockSynchronized = true;
 });
 
 // Failed to join a session
@@ -752,7 +920,11 @@ socket.on('addSprite', function(data){
 
 // update sprite
 socket.on('updateSprite', function(data){
-  if (!isSessionConnected) {
+  var receivedTimeStamp = data.timestamp;
+  var curTimeStamp = (new Date()).getTime();
+  //console.log("Message: updateSprite: timeStamp: ");
+  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
+  if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
     return;
   }
 
@@ -835,7 +1007,6 @@ socket.on('spriteTookDmg', function(data) {
 
 // sprite died
 socket.on('spriteDied', function(data) {
-  console.log("Event: spriteDied: data: " + getJSON(data));
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,
@@ -861,8 +1032,11 @@ socket.on('spriteDied', function(data) {
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
+    // clear other screens
   Q.clearStage(STAGE_LEVEL);
-  isSessionConnected = false;
+  Q.clearStage(STAGE_HUD);
+
+  _isSessionConnected = false;
 });
 
 // when one or more players disconnected from app.js
@@ -876,6 +1050,6 @@ socket.on('playerDisconnected', function(data) {
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
-
+  _isSessionConnected = false;
   Q.pauseGame();
 });

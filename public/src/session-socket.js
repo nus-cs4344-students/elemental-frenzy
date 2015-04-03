@@ -1,6 +1,14 @@
 "use strict";
 
-require(['src/helper-functions']);
+require(['helper-functions']);
+
+// console.log("connecting");
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// Debugging purpose
+// App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
+
+//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var DEFAULT_LEVEL = 'level2';
 var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}}, 
@@ -18,7 +26,9 @@ var DEFAULT_GAMESTATE = {
             PLAYERELEBALL: {},
             ENEMYELEBALL: {},
             ENEMY: {}
-           } 
+           },
+  kills: {},
+  deaths: {}
 };
 
 var DEFAULT_SESSION = {
@@ -45,6 +55,10 @@ var creates = {
 
 var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
+}
+
+var getCurrentTime = function() {
+  return (new Date()).getTime();
 }
 
 var cloneObject = function (obj){
@@ -90,6 +104,25 @@ var clone = function(item){
 
 var getNextSpriteId = function(){
   return ++spriteId;
+}
+
+// Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
+var checkGoodSprite = function(eType, spriteId, callerName) {
+  callerName = callerName || 'nameNotSpecifiedFunction';
+  if (typeof eType == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
+    return false;
+  }
+  if (typeof spriteId == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): undefined spriteId");
+    return false;
+  }
+  if (typeof getSprite(eType, spriteId) == 'undefined') {
+    console.log("Error in " + callerName + "(): checkGoodSprite(): " + eType + " " + spriteId + " is undefined");
+    return false;
+  }
+  
+  return true;
 }
 
 // Returns the player sprite reference of the sprite with spriteId immediately larger than the given currentPId
@@ -229,6 +262,28 @@ var getPlayerEleballProperties  = function(ballId) {
   return getSpriteProperties('PLAYERELEBALL' , ballId);
 };
 
+var updateSprite = function(eType, spriteId, updateProps) {
+  if ( !checkGoodSprite(eType, spriteId, 'updateSprite')) {
+    return;
+  }
+  if (!updateProps) {
+    // Bad properties
+    console.log("Error in updateSprite(): undefined properties");
+    return;
+  }
+  
+  console.log("Updating " + eType + " " + spriteId);
+  
+  updateProps.isServerSide = true;
+  var spriteToUpdate = getSprite(eType, spriteId);
+  spriteToUpdate.p.x = updateProps.x;
+  spriteToUpdate.p.y = updateProps.y;
+  spriteToUpdate.p.vx = updateProps.vx;
+  spriteToUpdate.p.vy = updateProps.vy;
+  spriteToUpdate.p.ax = updateProps.ax;
+  spriteToUpdate.p.ay = updateProps.ay;
+}
+
 var isSpriteExists = function(entityType, id){
   var eType = entityType;
   if(!eType){
@@ -258,7 +313,9 @@ var isSpriteExists = function(entityType, id){
 /*
  Create and add sprite into game state and insert it into active stage
  */
-var addSprite = function(entityType, id, properties) {  
+var addSprite = function(entityType, id, properties, delayToInsert) {  
+  delayToInsert = delayToInsert ? delayToInsert : 0;
+  
   var eType = entityType;
   if(!eType){
     console.log("Trying to add sprite without entityType");
@@ -305,10 +362,10 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
+  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
-  if(sprite.has('platformerControls')){
+  if(eType == 'PLAYER' && sprite.has('platformerControls')){
     sprite.del('platformerControls');
     sprite.add('serverPlatformerControls');
   }
@@ -320,7 +377,9 @@ var addSprite = function(entityType, id, properties) {
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
-  insertIntoStage(sprite);
+  setTimeout(function() {
+    insertIntoStage(sprite);
+  }, delayToInsert);
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p}; 
 
@@ -340,8 +399,9 @@ var addEnemyEleballSprite = function(ballId, properties){
   return addSprite('ENEMYELEBALL', ballId, properties);
 };
 
-var addPlayerEleballSprite = function(ballId, properties){
-  return addSprite('PLAYERELEBALL', ballId, properties);
+var addPlayerEleballSprite = function(ballId, properties, delayToInsert){
+  delayToInsert = delayToInsert || 0;
+  return addSprite('PLAYERELEBALL', ballId, properties, delayToInsert);
 };
 
 
@@ -491,27 +551,6 @@ var initialization = function(){
     console.log("Stop follow");
     Q.stage(STAGE_LEVEL).unfollow();
   });
-
-  // toggling elements
-  Q.input.on("toggleNextElement", function(data) {
-    
-    var spriteId = data.spriteId;
-    if(!spriteId){
-      console.log("Trying to toggle element without id");
-      return;
-    }
-
-    var eType = data.entityType;
-    if(!eType){
-      console.log("Trying to toggle element without entityType");
-      return;
-    }
-
-    var player = getSprite(eType, spriteId);
-    if(!player){
-      player.p.element = (player.p.element + 1) % ELEBALL_ELEMENTNAMES.length;
-    }
-  });  
 };
 
 var loadGameSession = function(sessionId) {
@@ -522,7 +561,7 @@ var loadGameSession = function(sessionId) {
 
   console.log("Loading game state...");
 
-  // initialize game state and sesion
+  // initialize game state and session
   gameState = clone(DEFAULT_GAMESTATE);
   session = clone(DEFAULT_SESSION);
   session.sessionId = sessionId;
@@ -562,20 +601,35 @@ var loadGameSession = function(sessionId) {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+  
+  // On Q.state change, update local gameState and
+  // update players
+  Q.state.on('change', function() {
+    gameState.kills = Q.state.get('kills');
+    gameState.deaths = Q.state.get('deaths');
+    console.log("Broadcasting event gameStateChanged");
+    Q.input.trigger('broadcastAll', {
+      eventName: 'gameStateChanged', 
+      eventData: {
+        kills: gameState.kills,
+        deaths: gameState.deaths
+      }
+    });
+  });
 };
 
-var pressKey = function(player, keyCode) {
+var pressKey = function(player, e) {
   if(!player){
-    console.log("Player without sprite released the key");
+    console.log("Player without sprite pressed the key");
     return;
   }
 
+  var keyCode = e.keyCode;
   if(!keyCode){
-    console.log("Player released unknown key");
+    console.log("Player pressed unknown key");
     return;
   }
 
-  
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
     
@@ -585,17 +639,17 @@ var pressKey = function(player, keyCode) {
     }
     
     player.inputs[actionName] = true;
-    Q.input.trigger(actionName);
-    Q.input.trigger('keydown',keyCode);
+    player.trigger(actionName, e);
   }
 };
 
-var releaseKey = function(player, keyCode) {
+var releaseKey = function(player, e) {
   if(!player){
     console.log("Player without sprite released the key");
     return;
   }
 
+  var keyCode = e.keyCode;
   if(!keyCode){
     console.log("Player released unknown key");
     return;
@@ -604,9 +658,14 @@ var releaseKey = function(player, keyCode) {
 
   if(Q.input.keys[keyCode]) {
     var actionName = Q.input.keys[keyCode];
+
+     // Don't allow the player to use server side controls
+    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
+      return;
+    }
+    
     player.inputs[actionName] = false;
-    Q.input.trigger(actionName + "Up");
-    Q.input.trigger('keyup',keyCode);
+    player.trigger(actionName+"Up", e);
   }
 };
 
@@ -626,7 +685,7 @@ var joinSession = function(playerId, characterId) {
 
   // session full
   if(session.playerCount >= session.playerMaxCount){
-    console.log("Session "+sesion.sessionId +" is full");
+    console.log("Session "+session.sessionId +" is full");
     return false;
   }
 
@@ -702,6 +761,7 @@ var sendToApp = function(eventName, eventData){
     return;
   }
 
+  eventData.timestamp = (new Date()).getTime();
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };
 
@@ -782,6 +842,14 @@ socket.on('join', function(data) {
   }
 });
 
+// When a player joins, he will try to synchronize clocks
+socket.on('synchronizeClocks', function(data) {
+  data.sessionReceiveTime = getCurrentTime();
+  data.clientSendTime = data.timestamp;
+  var playerId = data.playerId;
+  Q.input.trigger('singleCast', {receiverId: playerId, eventName:'synchronizeClocks', eventData: data});
+});
+
 // when a player request to respawn
 socket.on('respawn', function(data) {
   
@@ -832,6 +900,11 @@ socket.on('disconnect', function(){
   Q.pauseGame();
 });
 
+// Authoritative message about the movement of the sprite from a client
+// Session must obey
+socket.on('authoritativeSpriteUpdate', function(data) {
+  updateSprite(data.entityType, data.spriteId, data.p);
+});
 
 socket.on('keydown', function(data) {
   var pId = data.spriteId;
@@ -861,7 +934,7 @@ socket.on('keydown', function(data) {
   var player = getPlayerSprite(pId);
   
   // Simulate player pressing the key
-  pressKey(player, kCode);
+  pressKey(player, e);
 });
 
 socket.on('keyup', function(data) {
@@ -892,7 +965,7 @@ socket.on('keyup', function(data) {
   var player = getPlayerSprite(pId);
 
   // Simulate player releasing the key
-  releaseKey(player, e.keyCode);
+  releaseKey(player, e);
 });
 
 socket.on('mouseup', function(data) {
@@ -915,7 +988,18 @@ socket.on('mouseup', function(data) {
   }
   
   var player = getPlayerSprite(pId);
+  var now = (new Date()).getTime();
+  var oneWayDelay = now - data.timestamp;
+  var timeBeforeShooting = (1000*PLAYER_FIRE_ANIMATION_TIME) - (2 * oneWayDelay);
+  console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
+              " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
   player.trigger('fire', e);
+  setTimeout(function() {
+    // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
+    if (player) {
+      player.trigger('fired', {e: e, delayToInsert: oneWayDelay});
+    }      
+  }, timeBeforeShooting);
   
   // console.log("Player firing, properties are: " + getJSON(player.p));
 });

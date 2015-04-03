@@ -3,7 +3,12 @@
 // ## Healthbar constants
 var HEALTHBAR_WIDTH_SF = 1.5;
 var HEALTHBAR_HEIGHT_SF = 0.2;
-var HEALTHBAR_HEIGHT_OFFSET = 5;
+var HEALTHBAR_HEIGHT_OFFSET = 9.0;
+
+// ## manaBar constants
+var MANABAR_WIDTH_SF = 1.5;
+var MANABAR_HEIGHT_SF = 0.2;
+var MANABAR_HEIGHT_OFFSET = 2.0;
 
 var updateInterval = 100;
 
@@ -29,6 +34,32 @@ Q.component("healthBar", {
           width * hf, height);
     ctx.fillStyle = "black";
     ctx.strokeRect(-width/2, -this.entity.p.cy - height - HEALTHBAR_HEIGHT_OFFSET,
+          width, height);
+  }
+});
+
+// ## Manabar component to be attached to an entity with currentMana and maxMana
+// Usage:
+//  1. Ensure the entity it is attached to has a p.currentMana and p.maxMana property,
+//  2. then call the draw(ctx) method of the manaBar in the draw method of the entity.
+Q.component("manaBar", {
+  added: function() {
+    this.entity.on('draw', this, 'draw');
+  },
+  
+  draw: function(ctx) {
+    var color = '#FF00FF'; // defaults to purple
+    if (this.entity.isA('Player')) {
+      color = '#0000FF'; // player manaBar is blue
+    }
+    var hf = this.entity.p.currentMana / this.entity.p.maxMana;
+    var width = this.entity.p.w * MANABAR_WIDTH_SF;
+    var height = this.entity.p.h * MANABAR_HEIGHT_SF;
+    ctx.fillStyle = color;
+    ctx.fillRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
+          width * hf, height);
+    ctx.fillStyle = "black";
+    ctx.strokeRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
           width, height);
   }
 });
@@ -244,14 +275,14 @@ Q.component("serverSprite", {
     this.serverUpdateInterval = setInterval(function() {    
       // console.log("EntityType " + entity.p.entityType + " id " + entity.p.spriteId + " in session "+entity.p.sessionId+" sending update from server");
       
-      Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p}});
+      Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p} });
     }, updateInterval);
     
     that.on('destroyed', this, 'destroy');
   },
   
   destroy: function() {
-    // console.log("Destroying server side updating interval");
+    console.log("Destroying server side updating interval");
     clearInterval(this.serverUpdateInterval);
   }
 });
@@ -267,7 +298,7 @@ Q.component("serverPlatformerControls", {
   added: function() {
     var p = this.entity.p;
   
-  this.entity.inputs = [];
+    this.entity.inputs = [];
 
     Q._defaults(p,this.defaults);
 

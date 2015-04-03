@@ -12,6 +12,7 @@ var SCENE_SCORE = 'scoreScreen';
 var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
+var SCENE_HUD = 'hudScreen';
 
 
 // ## UI constants
@@ -31,17 +32,36 @@ var killedInfo = [];
 var killedInfoTimeLeft= [];
 var killedInfoPosition = [];
 
-// welcome screen to allow player to choose characterSprites
+// welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
 
+  // clear sessioned selected when the session is longer available
   if(welcomeSessionSelected && !sessions[welcomeSessionSelected]){
     welcomeSessionSelected = undefined;
   }
 
+  var titleSize = Math.ceil(Q.height/20);
+  titleSize -= titleSize%2;
+  var boldSize = Math.ceil(Q.height/40);
+  boldSize -= boldSize%2;
+  var normalSize = Math.ceil(Q.height/50);
+  normalSize -= normalSize%2;
+
+  var titleWeight = 800;
+  var boldWeight = 600;
+  var normalWeight =  200;
+
+  var boldFont = boldWeight +' '+boldSize+'px Arial';
+  var normalFont = normalWeight+' '+normalSize+'px Arial';
+ 
+
+  console.log(boldFont);
+  console.log(normalFont);
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
-                                            size: 50,
+                                            weight: titleWeight,
+                                            size: titleSize,
                                             align: 'center',
                                             color: 'red',
                                             label: "Elemental Frenzy"
@@ -49,14 +69,15 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // join button
   var isShow = !isWelcomeSelectedSessionFull && welcomeSessionSelected && !isWelcomeSelectedCharInUse && welcomeCharSelected;
+
   var buttonJoin = stage.insert(new Q.UI.Button({ fill: DARK_GREY,
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
                                                   y: 11*Q.height/13,
-                                                  w: 80,
-                                                  h: 35,
+                                                  w: Q.width/10,
+                                                  h: Q.height/20,
                                                   label: 'Join',
-                                                  font: '800 18px Arial',
+                                                  font: boldFont,
                                                   fontColor: 'black'
                                                 }));
 
@@ -79,6 +100,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // console.log('charac usage: '+JSON.stringify(charactersInUse,null,4));
     // console.log("session selected "+welcomeSessionSelected);
     // console.log("character Selected : "+welcomeCharSelected);
+
     for(var c in characterSprites){
 
       var cs = characterSprites[c];
@@ -87,6 +109,11 @@ Q.scene(SCENE_WELCOME,function(stage) {
       if(isCharacterInUse(cs.p.characterId)){
         cs.p.frame = 7;
         cs.p.playAnim = 'run_in';
+        cs.p.fill = null;
+
+        if(cs.p.characterId == welcomeCharSelected){
+          welcomeCharSelected = undefined;
+        }
       }else{
         cs.p.frame = 33;
         cs.p.playAnim = 'run_out';
@@ -104,12 +131,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                           y: 7*Q.height/11,
-                                                          w: 2*Q.width/3,
+                                                          w: 3*Q.width/4,
                                                           h: Q.height/3,
                                                           fill: DARK_GREY
                                                         }));
 
-  var offsetY = 25;
+  var sSpriteW = 3*sessionsSection.p.w/5;
+  var sSpriteH = 2*sessionsSection.p.h/19;
+  var offsetY = sSpriteH + 5;
   var sessionSprites = {};
   var charactersInUse = {};
   var numSession = 0;
@@ -135,10 +164,10 @@ Q.scene(SCENE_WELCOME,function(stage) {
     var sSprite = new Q.UI.Button({ fill: welcomeSessionSelected == sInfo.sessionId ? LIGHT_GREY : null,
                                     x: 0,
                                     y: numSession*offsetY,
-                                    w: 3*sessionsSection.p.w/5,
-                                    h: 1*sessionsSection.p.h/9,
+                                    w: sSpriteW,
+                                    h: sSpriteH,
                                     label: sLabel,
-                                    font: '400 14px Arial',
+                                    font: normalFont,
                                     fontColor:  isFull ? 'red' : 'black',
                                     sessionId: sInfo.sessionId,
                                     isFull: isFull
@@ -149,8 +178,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // please choose a session
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
-                                                  y:sessionsSection.p.y - 3*sessionsSection.p.h/7,
-                                                  size: 18,
+                                                  y:sessionsSection.p.y - 4*sessionsSection.p.h/9,
+                                                  weight: boldWeight,
+                                                  size: boldSize,
                                                   align: 'center',
                                                   color: 'black',
                                                   label: "Please choose a session to join"
@@ -159,7 +189,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // insert session into container
   var container_session = stage.insert(new Q.UI.Container({ x: sessionsSection.p.x, 
-                                                            y: sessionsSection.p.y - 2*sessionsSection.p.h/11, 
+                                                            y: sessionsSection.p.y - 4*sessionsSection.p.h/15, 
                                                           }));
 
   for(var s in sessionSprites){
@@ -172,9 +202,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               x: 0,
                                               y: 0,
                                               w: 3*sessionsSection.p.w/5,
-                                              h: 1*sessionsSection.p.h/9,
+                                              h: 2*sessionsSection.p.h/19,
                                               label: 'No session is avaiable at the moment',
-                                              font: '400 14px Arial',
+                                              font: normalFont,
                                               fontColor: 'black',
                                               buttonId: numSession
                                             }));
@@ -186,16 +216,16 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // characterSprites selection section
   var characterSection = stage.insert(new Q.UI.Container({x: Q.width/2, 
-                                                          y: Q.height/3,
-                                                          w: 2*Q.width/3,
-                                                          h: 150,
+                                                          y: 4*Q.height/13,
+                                                          w: 3*Q.width/4,
+                                                          h: Q.height/4,
                                                           fill: DARK_GREY
                                                         }));
 
   var characterSprites = {};
   var nameSprites = {};
   var numChar = 0;
-  var offsetX = 70;
+  var offsetX = Math.max(40, Q.width/10);
   // console.log("character in use : "+JSON.stringify(charactersInUse,null,4));
   for(var c in PLAYER_CHARACTERS){
 
@@ -213,8 +243,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({ x:0,
-                                    y:40,
-                                    size: 12,
+                                    y: Math.max(20, Q.height/20),
+                                    weight: normalWeight,
+                                    size: normalSize,
                                     align: 'center',
                                     color: PLAYER_NAME_COLORS[numChar],
                                     label: PLAYER_NAMES[numChar]
@@ -224,13 +255,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
 
   // please choose your characterSprites
-  var choicecharacterSprites = stage.insert(new Q.UI.Text({x:characterSection.p.x,
-                                                    y:characterSection.p.y - 2*characterSection.p.h/5,
-                                                    size: 18,
-                                                    align: 'center',
-                                                    color: 'black',
-                                                    label: "Please choose your character"
-                                                  }));
+  var choicecharacterSprites = stage.insert(new Q.UI.Text({ x:characterSection.p.x,
+                                                            y:characterSection.p.y - 3*characterSection.p.h/7,
+                                                            weight: boldWeight,
+                                                            size: boldSize,
+                                                            align: 'center',
+                                                            color: 'black',
+                                                            label: "Please choose your character"
+                                                          }));
 
   // insert characterSprites and nameSprites into container
   var nChar = 0;
@@ -288,17 +320,20 @@ Q.scene(SCENE_WELCOME,function(stage) {
     characterSprites[c].on("click", function() {  
 
       if(this.p.fill){
+        // deselect character
         this.p.fill = null;
         welcomeCharSelected = undefined;
         isWelcomeSelectedCharInUse = false;
 
+      }else if(isCharacterInUse(this.p.characterId)){
+        // select in use character
+        isWelcomeSelectedCharInUse = true;
       }else{
+        
+        // select not in use character
+        isWelcomeSelectedCharInUse = false;
         this.p.fill = LIGHT_GREY;
         welcomeCharSelected = this.p.characterId;
-
-        if(isCharacterInUse(this.p.characterId)){
-         isWelcomeSelectedCharInUse = true;
-        }
         // reset others
         for(var o in characterSprites){
           if(characterSprites[o].p.characterId != this.p.characterId){
@@ -360,6 +395,149 @@ Q.scene('level3',function(stage) {
   );
 });
 
+Q.scene(SCENE_HUD, function(stage) {
+  
+  // session does not need to show element selector
+  if(isSession){
+    return;
+  }
+
+  var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                       y: Q.height/10,
+                                                       w: 9*Q.width/10,
+                                                       h: Q.height/10,
+                                                       fill: DARK_GREY
+                                                      }));
+
+
+  var currentPlayer = getPlayerSprite(selfId);
+  if(!currentPlayer){
+    console.log("Cannot locate current player during HUD element selector initialization");
+    return;
+  }
+  var element = currentPlayer.p.element;
+  // convert into number
+  element = Number(element);
+  
+  if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
+    console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
+    return;
+  }
+
+  var eleSelectors = {};
+  var eleW = 70;
+  var eleH = 30;
+  var inactiveScale = 0.3;
+  var activeScale = 1;
+  var scalingStep = 0.1;
+  var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
+                                                         y: 0,
+                                                         angleStep: 0,
+                                                         activeElement: element,
+                                                         targetAngle: 0
+                                                        }));
+
+  selector.on('step', function(dt){
+
+    var player = getPlayerSprite(selfId);
+    if(player && this.p.activeElement != player.p.element){
+      console.log("Element selector out of sync: player-"+player.p.element+" selector-"+this.p.activeElement);
+      updateEleSelector(player.p.element);
+    }
+
+    var a = this.p.angle;
+    var aStep = this.p.angleStep;
+    var tAngle = this.p.targetAngle;
+
+     if(aStep > 0 && Math.abs(a - tAngle) > 5){
+
+        var aS = aStep * dt;
+        var nextAngle = a - aS;
+
+        if(nextAngle<0){
+          nextAngle = 360 + nextAngle;
+        }
+
+        this.p.angle = Math.max(nextAngle % 360, 0);
+      }
+  });
+
+  for(var eId in ELEBALL_ELEMENTNAMES){
+    var eleId = Number(eId);
+    var eleAngle = eleId * 90;
+    var isActive = eleId == element;
+    var scaling = isActive ? activeScale : inactiveScale;
+    eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
+                                                          sprite: ELEBALL_ANIMATION,
+                                                          angle: eleAngle,
+                                                          scale: scaling,
+                                                          targetScale: 1
+                                                          }));
+
+    eleSelectors[eId].on('step', function(dt){
+      var s = this.p.scale;
+      var tScale = this.p.targetScale;
+
+      if(s != tScale){
+        
+        var sign = s > tScale ? -1 : 1;
+        this.p.scale += sign*scalingStep;
+
+        if(Math.abs(this.p.scale - tScale)< 0.01){
+          this.p.scale = tScale;
+        }
+      }
+    });
+  }
+
+  var updateEleSelector = function(nextElement){
+
+    if(nextElement == undefined){
+      console.log("Invalid element during HUD next element toggling");
+      return;
+    }
+    
+    for(var eId in eleSelectors){
+      var eleId = Number(eId);
+      var isActive = eleId == nextElement;
+      var eleAngle = eleId * 90;
+      var scaling = isActive ? activeScale : inactiveScale;
+
+      var eS = eleSelectors[eId];
+      eS.p.targetScale = scaling;
+      eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
+      eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
+
+      if(isActive){
+        eS.add('animation');
+        eS.play('fire');
+      }else if(eS.has('animation')){
+        eS.del('animation');
+      }
+    }
+
+    var targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+    selector.p.targetAngle = targetAngle;
+    selector.p.angleStep = Math.abs(targetAngle - selector.p.angle)/0.3;
+    selector.p.activeElement = nextElement;
+  };
+
+  updateEleSelector(element);
+  
+
+  Q.input.on('hudNextElement', function(data){
+
+    var currentPlayer = getPlayerSprite(selfId);
+    if(!currentPlayer){
+      console.log("Cannot locate current player during HUD element selector update");
+      return;
+    }
+    var element = currentPlayer.p.element;
+
+    updateEleSelector(element);
+  });
+});
+
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var kType = stage.options.killerEntityType;
   var kId = stage.options.killerId;
@@ -385,11 +563,11 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 
     }else{
       // session side
-      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' \
-            is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
+      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
+            "is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
     }
   }else{
-    console.log("Insufficient killed info : "+getJSON(stage.options));
+    console.log("Insufficient killed info: "+getJSON(stage.options));
     return;
   }
 
@@ -439,6 +617,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 Q.scene(SCENE_SCORE, function(stage) {
   //every line takes about 30 pixels
   var offsetY = 30;
+  var scoreSize = (Q.width > 600) ? 24 : Math.ceil(Q.width / 30);
 
   /*
   ** Set up UI containers
@@ -489,18 +668,18 @@ Q.scene(SCENE_SCORE, function(stage) {
   var nameTitle = stage.insert(new Q.UI.Text({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), nameContainer);
 
   var killsTitle = stage.insert(new Q.UI.Text({ 
         label: "KILLS",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), killsContainer);
   
@@ -508,9 +687,9 @@ Q.scene(SCENE_SCORE, function(stage) {
   var deathsTitle = stage.insert(new Q.UI.Text({ 
         label: "DEATHS",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: 0,
+        size: scoreSize,
         align: "left"
       }), deathsContainer);
 
@@ -525,8 +704,8 @@ Q.scene(SCENE_SCORE, function(stage) {
   for (var name in kills) {
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
-        continue;
-      }
+      continue;
+    }
 
     stage.insert(new Q.UI.Text({
         //invisible placeholder
@@ -543,6 +722,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), nameContainer);
 
@@ -552,6 +732,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), killsContainer);
 
@@ -561,6 +742,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
+        size: scoreSize,
         align: "left"
       }), deathsContainer);
 
