@@ -1,6 +1,14 @@
 "use strict";
 
-require(['src/helper-functions']);
+require(['helper-functions']);
+
+// console.log("connecting");
+var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
+
+// Debugging purpose
+// App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
+
+//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var DEFAULT_GAMESTATE = {
   level: '',
@@ -536,9 +544,11 @@ var updateSessions = function(sessionsInfo){
     return;
   }
 
-  // refresh welcome screen
-  Q.clearStage(STAGE_WELCOME);
-  Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  if(_assetsLoaded){
+    // refresh welcome screen
+    Q.clearStage(STAGE_WELCOME);
+    Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+  }
 }
 
 var initialization = function(){
@@ -616,10 +626,8 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
+  Q.input.on('keydown', function(e){
 
-
-  Q.el.addEventListener('keydown', function(e) {
-    
     var actionName;
     var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
@@ -633,14 +641,16 @@ var initialization = function(){
 
     var player = getPlayerSprite(selfId);
     if(player){
+      player.inputs[actionName] = true;
       player.trigger(actionName, e);
     } else {
       console.log("Cannot locate current player to perform keydown");
     }
+
   });
 
-  Q.el.addEventListener('keyup', function(e) {
-    
+  Q.input.on('keyup', function(e){
+
     var actionName;
     var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
@@ -654,10 +664,20 @@ var initialization = function(){
 
     var player = getPlayerSprite(selfId);
     if(player){
+      player.inputs[actionName] = false;
       player.trigger(actionName+"Up", e);
     } else {
       console.log("Cannot locate current player to perform keyup");
     }
+
+  });
+
+  Q.el.addEventListener('keydown', function(e) {
+    Q.input.trigger('keydown',e);
+  });
+
+  Q.el.addEventListener('keyup', function(e) {
+    Q.input.trigger('keyup',e);    
   });  
 
   // Event listener for firing

@@ -19,7 +19,7 @@ var PLAYER_ANIMATION = "character";
 var PLAYER_FIRE_ANIMATION_TIME = 1; // seconds (NOT MILLISECONDS)
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
-var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.3;
+var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
 var time_fromFire;
 
@@ -74,7 +74,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
+    this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
 
@@ -286,9 +286,6 @@ Q.Sprite.extend("Player",{
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
 
-    //after eleball fired, decrease mana
-    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
-
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
     if (!this.p.isServerSide){
@@ -352,6 +349,9 @@ Q.Sprite.extend("Player",{
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
 
     this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
+
+    //after eleball fired, decrease mana
+    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
   },
 
   takeDamage: function(dmgAndShooter) {
