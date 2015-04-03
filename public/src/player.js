@@ -78,11 +78,6 @@ Q.Sprite.extend("Player",{
     this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
-    
-    // DEBUGGING
-    setInterval(function() {
-      console.log("Player cooldown: " + that.p.cooldown);
-    }, 100);
 
     this.addEventListeners();
 

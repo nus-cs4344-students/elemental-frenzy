@@ -408,11 +408,11 @@ var addSprite = function(entityType, id, properties) {
   if (eType == 'PLAYER') {
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
-      if (!sprite || sprite.p.isServerSide || sprite.p.isDead) {
+      if (!sprite || sprite.p.isServerSide || 
+          sprite.p.isDead || !_isSessionConnected) {
         // (Defensive) Remove interval because it is gone/not on the client side
         clearInterval(interval_updateServer);
       }
-      console.log("Sending authoritativeSpriteUpdate message: by " + sprite.p.entityType + " " + sprite.p.spriteId);
       Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
         entityType: 'PLAYER',
         spriteId: sprite.p.spriteId,
@@ -626,14 +626,13 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
-  Q.input.on('keydown', function(e){
-
+  Q.input.on('keydown', function(keyCode){
+    var e = {keyCode: keyCode};
     var actionName;
-    var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
       // unrecognized keyboard input
       // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keydown");
+      console.log("Unrecognized keydown: keycode is " + keyCode);
       return;
     }
 
@@ -649,14 +648,13 @@ var initialization = function(){
 
   });
 
-  Q.input.on('keyup', function(e){
-
+  Q.input.on('keyup', function(keyCode){
+    var e = {keyCode: keyCode};
     var actionName;
-    var keyCode = e.keyCode;
     if(!Q.input.keys[keyCode]) {
       // unrecognized keyboard input
       // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keyup");
+      console.log("Unrecognized keyup: keycode is " + keyCode);
       return;
     }
 
@@ -670,15 +668,7 @@ var initialization = function(){
       console.log("Cannot locate current player to perform keyup");
     }
 
-  });
-
-  Q.el.addEventListener('keydown', function(e) {
-    Q.input.trigger('keydown',e);
-  });
-
-  Q.el.addEventListener('keyup', function(e) {
-    Q.input.trigger('keyup',e);    
-  });  
+  }); 
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
@@ -921,7 +911,6 @@ socket.on('updateSprite', function(data){
   if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
     return;
   }
-  console.log("_clockSynchronized = " + _clockSynchronized);
 
   var props = data.p;
   if(!props){
