@@ -12,12 +12,17 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
 var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
-var PLAYER_DEFAULT_COOLDOWN = 1.0;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_CHARACTERID = 0; // fire
+// ## Animation
 var PLAYER_ANIMATION = "character";
-var PLAYER_FIRE_ANIMATION_TIME = 1; // seconds (NOT MILLISECONDS)
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
+var PLAYER_FIRE_ANIMATION_TIME = 0.5; // seconds (NOT MILLISECONDS)
+var PLAYER_STAND_ANIMATION_TIME = 0.5;
+var PLAYER_TAKEDAMAGE_ANIMATION_TIME = 0.5;
+var PLAYER_RUN_STILL_ANIMATION_TIME = 0.5;
+var PLAYER_RUN_ANIMATION_TIME = 0.5;
+
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
@@ -32,7 +37,7 @@ Q.Sprite.extend("Player",{
   init: function(p, defaultP) {
     
     var that = this;
-    p = mergeObjects(p, defaultP);
+    p = Q._defaults(p, defaultP);
 
     // You can call the parent's constructor with this._super(..)
     this._super(p, {
@@ -418,13 +423,12 @@ Q.Sprite.extend("Player",{
 
     console.log(this.p.name + " died to " + killerName);
   
-    Q.state.trigger("playerDied", {
-      victim: {entityType: vType, spriteId: vId}, 
-      killer: {entityType: killerEntityType, spriteId: killerId}
-    });
-    
     if (this.p.isServerSide) {
-      
+      Q.state.trigger("playerDied", {
+        victim: {entityType: vType, spriteId: vId}, 
+        killer: {entityType: killerEntityType, spriteId: killerId}
+      });
+    
       Q.input.trigger('broadcastAll', {eventName: 'spriteDied', eventData: {
         victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
@@ -516,23 +520,23 @@ Q.Sprite.extend("Player",{
 });
 
 Q.animations(PLAYER_ANIMATION, {
-  run_in: { frames: [7,8,9,10,11,12], rate: 1/6}, 
-  run_left: { frames: [20,21,22,23,24,25], rate:1/6 },
-  run_out: { frames: [33,34,35,36,37,38], rate:1/6 },
-  run_right: { frames: [46,47,48,49,50,51], rate: 1/6}, 
+  run_in: { frames: [7,8,9,10,11,12], rate: PLAYER_RUN_ANIMATION_TIME/6}, 
+  run_left: { frames: [20,21,22,23,24,25], rate:PLAYER_RUN_ANIMATION_TIME/6 },
+  run_out: { frames: [33,34,35,36,37,38], rate:PLAYER_RUN_ANIMATION_TIME/6 },
+  run_right: { frames: [46,47,48,49,50,51], rate: PLAYER_RUN_ANIMATION_TIME/6}, 
   
-  run_left_still: { frames: [22], rate:1/3 },
-  run_right_still: { frames: [47], rate: 1/3}, 
+  run_left_still: { frames: [22], rate: PLAYER_RUN_STILL_ANIMATION_TIME/3 },
+  run_right_still: { frames: [47], rate: PLAYER_RUN_STILL_ANIMATION_TIME/3}, 
 
   fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false},
   fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
   fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
   fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
 
-  take_damage: {frames: [104], rate:1/3, loop:false},
+  take_damage: {frames: [104], rate: PLAYER_TAKEDAMAGE_ANIMATION_TIME/3, loop:false},
 
-  stand_back: { frames: [7], rate: 1/3 },
-  stand_left: { frames: [20], rate: 1/3 },
-  stand_front: { frames: [33], rate: 1/3 },
-  stand_right: { frames: [46], rate: 1/3 }
+  stand_back: { frames: [7], rate: PLAYER_STAND_ANIMATION_TIME/3 },
+  stand_left: { frames: [20], rate: PLAYER_STAND_ANIMATION_TIME/3 },
+  stand_front: { frames: [33], rate: PLAYER_STAND_ANIMATION_TIME/3 },
+  stand_right: { frames: [46], rate: PLAYER_STAND_ANIMATION_TIME/3 }
 });

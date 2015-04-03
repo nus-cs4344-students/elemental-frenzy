@@ -16,7 +16,9 @@ var DEFAULT_GAMESTATE = {
             ACTOR: {},
             PLAYERELEBALL: {},
             ENEMYELEBALL: {},
-            ENEMY: {}}
+            ENEMY: {}},
+  kills: {},
+  deaths: {}
 };
 
 var DEFAULT_SPRITES = { PLAYER: {},
@@ -831,6 +833,20 @@ socket.on('updateSessions', function(data){
   updateSessions(s);
 });
 
+socket.on('gameStateChanged', function(data) {
+  console.log("Received event gameStateChanged");
+  if (typeof data.kills === 'undefined') {
+    console.log("Error in event gameStateChanged: data.kills is undefined");
+    return;
+  }
+  if (typeof data.deaths === 'undefined') {
+    console.log("Error in event gameStateChanged: data.deaths is undefined");
+    return;
+  }
+  
+  Q.state.set({kills: data.kills, deaths: data.deaths});
+});
+
 // player successfully joined a session and receive game state + session info 
 socket.on('joinSuccessful', function(data){
   console.log("Successfully joined session " + data.sessionId);
@@ -991,7 +1007,6 @@ socket.on('spriteTookDmg', function(data) {
 
 // sprite died
 socket.on('spriteDied', function(data) {
-  console.log("Event: spriteDied: data: " + getJSON(data));
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,

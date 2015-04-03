@@ -11,13 +11,6 @@ var makeScaledPoints = function (w, h, sf) {
   return points;
 }
 
-// Merges obj1 and obj2 together and returns it, but obj1 attributes will take priority over the same attributes of obj2. 
-// E.g. var obj1 = {food : 'pizza', drink : 'cola'}, obj2 = {food : 'lasagna', dessert : 'icecream'}
-//    returned object = {food : 'pizza', drink : 'cola', dessert : 'icecream'}
-var mergeObjects = function(obj1, obj2) {
-  return Q._defaults(obj1, obj2);
-}
-
 var insertAllActors = function(stage) {
   for (var attrName in actors) {
     stage.insert(actors[attrName].player);
