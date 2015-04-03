@@ -15,7 +15,10 @@ var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg
 var ELEBALL_DEFAULT_ELEMENT = 0; // fire
 var ELEBALL_FRAME = 0; // always take the first frame
 var ELEBALL_BOUNDINGBOX_SF = 0.5;
+// ## Animation
 var ELEBALL_ANIMATION = "eleball";
+var ELEBALL_FIRE_ANIMATION_TIME = 0.5;
+
 var ELEBALL_PLAYER_SF = 0.5;
 var ELEBALL_ENEMY_SF = 0.5;
 
@@ -29,7 +32,7 @@ Q.Sprite.extend("Eleball", {
   
   init: function(p, defaultP) {
     // merge p and defaultP, where attributes in p will override those in defaultP
-    p = mergeObjects(p, defaultP);
+    p = Q._defaults(p, defaultP);
     
     // console.log("Inside ELEBALL init: properties p passed in:");
     // console.log(getJSON(p));
@@ -87,7 +90,7 @@ Q.Eleball.extend("PlayerEleball", {
   
   init: function(p, defaultP) {
   
-    p = mergeObjects(p, defaultP);
+    p = Q._defaults(p, defaultP);
     
     this._super(p, {
       entityType: 'PLAYERELEBALL',
@@ -119,7 +122,7 @@ Q.Eleball.extend("EnemyEleball", {
   
   init: function(p, defaultP) {
   
-    p = mergeObjects(p, defaultP);
+    p = Q._defaults(p, defaultP);
     
     this._super(p, {
       entityType: 'ENEMYELEBALL',
@@ -146,5 +149,5 @@ Q.Eleball.extend("EnemyEleball", {
 });
 
 Q.animations(ELEBALL_ANIMATION, {
-  fire: { frames: [0,1,2,3,4,5], rate: 1/6}
+  fire: { frames: [0,1,2,3,4,5], rate: ELEBALL_FIRE_ANIMATION_TIME/6}
 });

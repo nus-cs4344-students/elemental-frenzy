@@ -26,7 +26,9 @@ var DEFAULT_GAMESTATE = {
             PLAYERELEBALL: {},
             ENEMYELEBALL: {},
             ENEMY: {}
-           } 
+           },
+  kills: {},
+  deaths: {}
 };
 
 var DEFAULT_SESSION = {
@@ -599,6 +601,21 @@ var loadGameSession = function(sessionId) {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+  
+  // On Q.state change, update local gameState and
+  // update players
+  Q.state.on('change', function() {
+    gameState.kills = Q.state.get('kills');
+    gameState.deaths = Q.state.get('deaths');
+    console.log("Broadcasting event gameStateChanged");
+    Q.input.trigger('broadcastAll', {
+      eventName: 'gameStateChanged', 
+      eventData: {
+        kills: gameState.kills,
+        deaths: gameState.deaths
+      }
+    });
+  });
 };
 
 var pressKey = function(player, e) {

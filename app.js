@@ -361,6 +361,7 @@ io.on('connection', function (socket) {
       case 'synchronizeClocks':
       case 'addSprite':
       case 'updateSprite':
+      case 'gameStateChanged':
       case 'removeSprite':{
         sendToPlayers(data.eventData.players, data.eventName, data.eventData);
         // console.log("Sending to multiple players from session "+sId+" -> "+getJSON(data));

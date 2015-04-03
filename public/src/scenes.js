@@ -704,8 +704,8 @@ Q.scene(SCENE_SCORE, function(stage) {
   for (var name in kills) {
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
-        continue;
-      }
+      continue;
+    }
 
     stage.insert(new Q.UI.Text({
         //invisible placeholder
