@@ -1,46 +1,7 @@
 "use strict";
 
 // ## Helper functions
-var cloneObject = function (obj){
-  var theClone = {};
-  for(var oKey in obj){
-    var item = obj[oKey];
-    if(item instanceof Array){
-      theClone[oKey] = cloneArray(item);
-    }else if(typeof item === 'object') {
-      theClone[oKey] = cloneObject(item);
-    }else{
-      theClone[oKey] = item;
-    }
-  }
 
-  return theClone;
-};
-
-var cloneArray = function (arr){
-  var theClone = [];
-  for(var i = 0; i<arr.length; i++){
-    var item = arr[i];
-    if(item instanceof Array){
-      theClone.push(cloneArray(item));
-    }else if(typeof item === 'object') {
-      theClone.push(cloneObject(item));
-    }else{
-      theClone.push(item);
-    }
-  }
-  return theClone;
-};
-
-var clone = function(item){
-  if(item instanceof Array){
-    return cloneArray(item);
-  }else if(typeof item === 'object') {
-    return cloneObject(item);
-  }else{
-    return item;
-  }
-};
 
 var makeScaledPoints = function (w, h, sf) {
   var points = [ [ -w/2 * sf, -h/2 * sf ], 
@@ -54,14 +15,7 @@ var makeScaledPoints = function (w, h, sf) {
 // E.g. var obj1 = {food : 'pizza', drink : 'cola'}, obj2 = {food : 'lasagna', dessert : 'icecream'}
 //    returned object = {food : 'pizza', drink : 'cola', dessert : 'icecream'}
 var mergeObjects = function(obj1, obj2) {
-  var ret = clone(obj2);
-  if (typeof ret === 'undefined') {
-    ret = {};
-  }
-  for (var attrName in obj1) {
-    ret[attrName] = clone(obj1[attrName]);
-  }
-  return ret;
+  return Q._defaults(obj1, obj2);
 }
 
 var insertAllActors = function(stage) {

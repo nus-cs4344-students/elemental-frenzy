@@ -12,13 +12,16 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
 var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
-var PLAYER_DEFAULT_COOLDOWN = 0.3;
+var PLAYER_DEFAULT_COOLDOWN = 1.0;
 var PLAYER_DEFAULT_DMG = 2;
 var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 var PLAYER_ANIMATION = "character";
+var PLAYER_FIRE_ANIMATION_TIME = 1; // seconds (NOT MILLISECONDS)
 var PLAYER_NO_FIRE_ANIMATION = "no_fire";
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
-var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.3;
+var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
+
+var time_fromFire;
 
 // ## Player Sprite
 // The very basic player sprite, this is just a normal sprite
@@ -40,6 +43,7 @@ Q.Sprite.extend("Player",{
       y: 90,            
       cooldown: 0,    // can fire immediately
       canFire: true,
+      isDead: false,
       maxHealth: PLAYER_DEFAULT_MAXHEALTH,
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
       maxMana: PLAYER_DEFAULT_MAX_MANA,
@@ -71,9 +75,14 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, nameBar, dmgDisplay, 2dLadder');
+    this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
+    
+    // DEBUGGING
+    setInterval(function() {
+      console.log("Player cooldown: " + that.p.cooldown);
+    }, 100);
 
     this.addEventListeners();
 
@@ -102,7 +111,7 @@ Q.Sprite.extend("Player",{
 
   move: function(e){
     
-    if(this.p.isServerSide || !isSessionConnected){
+    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
       // server side doesnt need to send key event
       // client side doesnt need to send key when it is not connected
       return;
@@ -123,7 +132,7 @@ Q.Sprite.extend("Player",{
 
   moveUp: function(e){
 
-    if(this.p.isServerSide || !isSessionConnected){
+    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
       // server side doesnt need to send key event
       // client side doesnt need to send key when it is not connected
       return;
@@ -145,7 +154,7 @@ Q.Sprite.extend("Player",{
 
   displayScoreScreen: function(){
 
-    if(!this.p.isServerSide && !isSessionConnected){
+    if(!this.p.isServerSide && !_isSessionConnected){
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -157,7 +166,7 @@ Q.Sprite.extend("Player",{
 
   hideScoreScreen: function(){
 
-    if(!this.p.isServerSide && !isSessionConnected){
+    if(!this.p.isServerSide && !_isSessionConnected){
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -176,7 +185,7 @@ Q.Sprite.extend("Player",{
     var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
     this.p.element = nextElement;
 
-    if(!this.p.isServerSide && isSessionConnected){
+    if(!this.p.isServerSide && _isSessionConnected){
       var createdEvt = {
         keyCode: e.keyCode
       };
@@ -196,10 +205,15 @@ Q.Sprite.extend("Player",{
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
    
-    if (this.p.cooldown > 0 || !this.p.canFire || 
+    //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
+    if (this.p.isDead || !this.p.canFire ||
         this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
       return;
     }
+    time_fromFire = getCurrentTime();
+    
+    // Will be set to true in the fired function
+    this.p.canFire = false;
 
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
@@ -245,14 +259,43 @@ Q.Sprite.extend("Player",{
     // console.log("At the END of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
   },
 
-  fired: function(){
+  fired: function(data){
+    console.log("fired event triggered " + (getCurrentTime() - time_fromFire) + "ms after fire event was triggered");
+    
+    // fired will be triggered after the animation is over, so this is the time that the player can fire again
+    this.p.canFire = true;
+    
+    if (typeof data === 'undefined') {
+      // This makes calling 'fired' after being done with the 'fire' animation NOT WORK!!!
+      // But necessary because server will calculate when to call this fired function anyway.
+      // And we don't want the 'fire' animation to ALWAYS fire an eleball because of our
+      // network architecture
+      return;
+    }
+    
+    if (this.p.isDead || this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
+      return;
+    }
+    
+    var e = data.e,
+        delayToInsert = data.delayToInsert;
+        
+    delayToInsert = delayToInsert || 0; // milliseconds
+    
+    
+    //console.log("cooldown is " + this.p.cooldown);
+
+    // when fire event is trigger, x & y in the event data are translate into game world coordinates
+    // during event handling in client socket
+    var mouseX = e.x;
+    var mouseY = e.y;
+    this.p.fireTargetX = mouseX;
+    this.p.fireTargetY = mouseY;
+    
     // reset fire animation
     this.p.fireAnimation = PLAYER_NO_FIRE_ANIMATION;
     //console.log("At the START of FIREDDDD function of PLAYER. properties of player: ");
     //console.log(getJSON(this.p));
-
-    //after eleball fired, decrease mana
-    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
 
     // Only on the server side do we insert this immediately.
     // On the client side we have to wait for the update message
@@ -287,7 +330,7 @@ Q.Sprite.extend("Player",{
                               vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
     };
 
-    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties);
+    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties, delayToInsert);
 
     // fire ball location offset from player
     var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
@@ -316,7 +359,8 @@ Q.Sprite.extend("Player",{
 
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
 
-    this.p.cooldown = PLAYER_DEFAULT_COOLDOWN;
+    //after eleball fired, decrease mana
+    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
   },
 
   takeDamage: function(dmgAndShooter) {
@@ -360,7 +404,7 @@ Q.Sprite.extend("Player",{
   },
   
   die: function(killerEntityType, killerId) {
-    this.p.canFire = false;
+    this.p.isDead = true;
 
     var killerName = getSprite(killerEntityType, killerId).p.name;
     
@@ -386,10 +430,10 @@ Q.Sprite.extend("Player",{
     
     if (this.p.isServerSide) {
       
-      sendToApp('spriteDied', {
+      Q.input.trigger('broadcastAll', {eventName: 'spriteDied', eventData: {
         victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
-      });
+      }});
 
     } else{
 
@@ -466,7 +510,6 @@ Q.Sprite.extend("Player",{
     
 
     this.p.onLadder = false;
-    this.p.cooldown = Math.max(this.p.cooldown - dt, 0);
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
     this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 
@@ -486,10 +529,10 @@ Q.animations(PLAYER_ANIMATION, {
   run_left_still: { frames: [22], rate:1/3 },
   run_right_still: { frames: [47], rate: 1/3}, 
 
-  fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: 1/13, trigger: "fired", loop: false},
-  fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: 1/13, trigger: "fired", loop: false}, 
-  fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: 1/13, trigger: "fired", loop: false}, 
-  fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103], rate: 1/13, trigger: "fired", loop: false}, 
+  fire_up: { frames: [51,52,53,54,55,56,57,58,59,60,61,62,63], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false},
+  fire_left: { frames: [64,65,66,67,68,69,70,71,72,73,74,75,76], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
+  fire_down: { frames: [77,78,79,80,81,82,83,84,85,86,87,88,89], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
+  fire_right: { frames: [90,91,92,93,94,95,96,97,98,99,100,101,102,103], rate: PLAYER_FIRE_ANIMATION_TIME/13, trigger: "fired", loop: false}, 
 
   take_damage: {frames: [104], rate:1/3, loop:false},
 
