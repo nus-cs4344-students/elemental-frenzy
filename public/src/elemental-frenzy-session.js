@@ -97,37 +97,24 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   
   // console.log('Asset loaded');
 
-  // ## Scenes for the game
-  require(['scenes']);
-  // ## Components to be used by eleballs/players/actors
-  require(['components']);
-  // ## Eleball sprites
-  require(['eleballs']);
-  // ## Player sprite
-  require(['player']);
-  // ## Actor sprite (other players)
-  require(['actor']);
-  // ## Enemy sprite
-  require(['enemy-ai']);
-  // ## Tower sprite
-  require(['tower']);
-  // ## Ladders
-  require(['ladder']);
-
-  // ## Helper functions
-  require(['helper-functions']);
-  // ## Set keyboard controls
-  require(['keyboard-controls'], function() {
+  require([ 'keyboard-controls',
+            'components', 
+            'eleballs', 
+            'player',
+            'actor',
+            'enemy-ai',
+            'tower',
+            'ladder',
+            'helper-functions',
+            'game-state',
+            'scenes'], function(){
+    
     Q.input.keyboardControls(KEYBOARD_CONTROLS_SESSION);
     Q.input.touchControls({controls: TOUCH_CONTROLS_SESSION});
+
+    _assetsLoaded = true;
   });
-
-  // ## Game state
-  require(['game-state']);
   
-  // console.log('required finished');
-
-  _assetsLoaded = true;
 });
 
 // ## Possible Experimentations:
