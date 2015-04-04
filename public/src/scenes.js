@@ -547,53 +547,51 @@ Q.scene(SCENE_HUD, function(stage) {
     /* 
     ** HP CIRCLE
     */
-    var hp = currentPlayer.p.currentHealth;
-    var scaledHp = hp / currentPlayer.p.maxHealth;
+    ctx.lineWidth = 10.0;
+
+    var radius = 30;
+
+    var currentHp = currentPlayer.p.currentHealth;
+    var maxHp = currentPlayer.p.maxHealth;
+    var scaledHp = currentHp / maxHp;
 
     //green -> yellow -> red
     var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     
-    //center coordinates relative to HUD container
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     var centerX = -this.p.w/10;
     var centerY = 0;
-    var radius = 30;
-    var end = Math.PI * 2.0;
-    var start = Math.PI / 2.0;
     
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 10.0;
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledHp) - start, false);
-    ctx.stroke();
-
-    ctx.font = "Bold "+(radius-5)+"px Arial";
-    ctx.fillStyle = color;
-    ctx.fillText(hp, centerX, centerY - radius/2);
+    drawCircleWithText(currentHp, maxHp, centerX, centerY, radius, ctx);
 
     /* 
     ** MANA CIRCLE
     */
-    var mana = Math.round(currentPlayer.p.currentMana);
-    var scaledMana = mana / currentPlayer.p.maxMana;
+    var currentMana = Math.round(currentPlayer.p.currentMana);
+    var maxMana =currentPlayer.p.maxMana;
 
-    //blue
-    color = '#0000FF';
-    
-    //center coordinates relative to HUD container
+    color = '#0000FF'; //blue
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     centerX = this.p.w/10;
     centerY = 0;
-    
-    ctx.strokeStyle = color;
+
+    drawCircleWithText(currentMana, maxMana, centerX, centerY, radius, ctx);
+  });
+
+  var drawCircleWithText = function (value, maxValue, centerX, centerY, radius, ctx) {
+    var scaledValue = value / maxValue;
+    var end = Math.PI * 2.0;
+    var start = Math.PI / 2.0;
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledMana) - start, false);
+    ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledValue) - start, false);
     ctx.stroke();
 
     ctx.font = "Bold "+(radius-5)+"px Arial";
-    ctx.fillStyle = color;
-    ctx.fillText(mana, centerX, centerY - radius/2);
-  });
+    ctx.fillText(value, centerX, centerY - radius/2);
+  };
 
 });
 
