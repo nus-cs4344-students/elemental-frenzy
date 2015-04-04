@@ -55,8 +55,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var normalFont = normalWeight+' '+normalSize+'px Arial';
  
 
-  console.log(boldFont);
-  console.log(normalFont);
+  // console.log(boldFont);
+  // console.log(normalFont);
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
@@ -592,7 +592,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
         // No need to display anymore, so remove it
         killedInfoTimeLeft.splice(i, 1);
         killedInfo.splice(i, 1);
-        killedInfoPosition.splice(i, 1);console.log("remove kinfo");
+        killedInfoPosition.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
         killedInfoPosition[i][0] += this.p.vx;

@@ -605,6 +605,11 @@ var initialization = function(){
 
     var sId = data.eventData.sessionId;
     sId = sId ? sId : sessionId; 
+
+    if(!_isSessionConnected){
+      console.log("Session disconnected, the following event is not sent to session: "+getJSON(data.eventName));
+    }
+
     if(!sId){
       console.log("SessionCast without sessionId");
       return;
@@ -1032,9 +1037,11 @@ socket.on('spriteDied', function(data) {
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
-    // clear other screens
-  Q.clearStage(STAGE_LEVEL);
-  Q.clearStage(STAGE_HUD);
+  // clear all screens
+  Q.clearStages();
+
+  // ask player to join a session again
+  loadWelcomeScreen();
 
   _isSessionConnected = false;
 });

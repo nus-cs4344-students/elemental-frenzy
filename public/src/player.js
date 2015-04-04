@@ -389,10 +389,12 @@ Q.Sprite.extend("Player",{
                   " " + shooterId + ". currentHealth = " + this.p.currentHealth);
 
   
-      sendToApp('spriteTookDmg', {
-        dmg: dmg,
-        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
-        shooter: {entityType: shooterEntityType, spriteId: shooterId}
+      Q.input.trigger('broadcastAll', {
+        eventName: 'spriteTookDmg',
+        eventData: {dmg: dmg,
+                    victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
+                    shooter: {entityType: shooterEntityType, spriteId: shooterId}
+                  }
       });
 
 
