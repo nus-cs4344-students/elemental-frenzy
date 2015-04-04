@@ -548,8 +548,11 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   if(kType && kId && vType && vId){
     if(!isSession){
       // client side
-      msg = "You are killed by "+getSprite(kType,kId).p.name;
-
+      if(kId == selfId){
+        msg = "You have killed "+getSprite(vType,vId).p.name;
+      }else{
+        msg = "You are killed by "+getSprite(kType,kId).p.name;
+      }
     }else{
       // session side
       msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
@@ -566,12 +569,16 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   killedInfoPosition.push([0, -40]);
 
   kInfo.on('step', kInfo, function(dt){
-    this.p.label = "Respawning in " + Math.floor(this.p.countDown);
 
-    this.p.countDown -= dt;
-    if(this.p.countDown < 0){
-      this.destroy();
-      return;
+    // do not need to show respawn count down in session and killer player
+    if(!isSession && !getPlayerSprite(selfId)){
+      this.p.label = "Respawning in " + Math.floor(this.p.countDown);
+
+      this.p.countDown -= dt;
+      if(this.p.countDown < 0){
+        this.destroy();
+        return;
+      }
     }
 
     for (var i = 0; i < killedInfoTimeLeft.length; i++) {
