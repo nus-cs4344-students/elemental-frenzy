@@ -547,9 +547,18 @@ Q.scene(SCENE_HUD, function(stage) {
     /* 
     ** HP CIRCLE
     */
-    ctx.lineWidth = 10.0;
 
-    var radius = 30;
+    //var radius = Math.min(Q.height, Q.width) / 25;
+    var radius = Q.height / 25;
+    var lineWidth = radius / 2;
+    ctx.lineWidth = lineWidth;
+
+    //if circles will overlap each other, then adjust based on width instead
+    if (radius + lineWidth > Q.width/15) {
+      radius = Q.width / 20;
+      lineWidth = radius / 2;
+      ctx.lineWidth = lineWidth;
+    }
 
     var currentHp = currentPlayer.p.currentHealth;
     var maxHp = currentPlayer.p.maxHealth;
@@ -557,13 +566,13 @@ Q.scene(SCENE_HUD, function(stage) {
 
     //green -> yellow -> red
     var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
-    
+
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    var centerX = -this.p.w/10;
+    var centerX = 3*Q.width/15;
     var centerY = 0;
     
-    drawCircleWithText(currentHp, maxHp, centerX, centerY, radius, ctx);
+    drawHollowCircleWithText(currentHp, maxHp, centerX, centerY, radius, ctx);
 
     /* 
     ** MANA CIRCLE
@@ -574,13 +583,13 @@ Q.scene(SCENE_HUD, function(stage) {
     color = '#0000FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    centerX = this.p.w/10;
+    centerX = 5*Q.width/15;
     centerY = 0;
 
-    drawCircleWithText(currentMana, maxMana, centerX, centerY, radius, ctx);
+    drawHollowCircleWithText(currentMana, maxMana, centerX, centerY, radius, ctx);
   });
 
-  var drawCircleWithText = function (value, maxValue, centerX, centerY, radius, ctx) {
+  var drawHollowCircleWithText = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
     var end = Math.PI * 2.0;
     var start = Math.PI / 2.0;
@@ -589,7 +598,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledValue) - start, false);
     ctx.stroke();
 
-    ctx.font = "Bold "+(radius-5)+"px Arial";
+    ctx.font = "Bold "+(radius*0.8)+"px Arial";
     ctx.fillText(value, centerX, centerY - radius/2);
   };
 
