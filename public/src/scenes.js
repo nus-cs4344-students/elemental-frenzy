@@ -536,6 +536,65 @@ Q.scene(SCENE_HUD, function(stage) {
 
     updateEleSelector(element);
   });
+
+  hudContainer.on('draw', hudContainer, function(ctx) {
+    var currentPlayer = getPlayerSprite(selfId);
+    if(!currentPlayer) {
+      console.log("Cannot locate current player during HUD element selector update");
+      return;
+    }
+    
+    /* 
+    ** HP CIRCLE
+    */
+    var hp = currentPlayer.p.currentHealth;
+    var scaledHp = hp / currentPlayer.p.maxHealth;
+
+    //green -> yellow -> red
+    var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
+    
+    //center coordinates relative to HUD container
+    var centerX = -this.p.w/10;
+    var centerY = 0;
+    var radius = 30;
+    var end = Math.PI * 2.0;
+    var start = Math.PI / 2.0;
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10.0;
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledHp) - start, false);
+    ctx.stroke();
+
+    ctx.font = "Bold "+(radius-5)+"px Arial";
+    ctx.fillStyle = color;
+    ctx.fillText(hp, centerX, centerY - radius/2);
+
+    /* 
+    ** MANA CIRCLE
+    */
+    var mana = Math.round(currentPlayer.p.currentMana);
+    var scaledMana = mana / currentPlayer.p.maxMana;
+
+    //blue
+    color = '#0000FF';
+    
+    //center coordinates relative to HUD container
+    centerX = this.p.w/10;
+    centerY = 0;
+    
+    ctx.strokeStyle = color;
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledMana) - start, false);
+    ctx.stroke();
+
+    ctx.font = "Bold "+(radius-5)+"px Arial";
+    ctx.fillStyle = color;
+    ctx.fillText(mana, centerX, centerY - radius/2);
+  });
+
 });
 
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
@@ -600,7 +659,6 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
       }
     }
   });
-
   kInfo.on('draw', kInfo, function(ctx) {
     ctx.font = this.p.font || "20px Arial";
     ctx.textAlign = this.p.align || "center";
