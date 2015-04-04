@@ -364,16 +364,16 @@ Q.component("serverPlatformerControls", {
         }
       }
 
-      if(p.landed > 0 && (this.entity.inputs['up'] || this.entity.inputs['action']) && !p.jumping) {
+      if(p.landed > 0 && (this.entity.inputs['up']) && !p.jumping) {
         p.vy = p.jumpSpeed;
         p.landed = -dt;
         p.jumping = true;
-      } else if(this.entity.inputs['up'] || this.entity.inputs['action']) {
+      } else if(this.entity.inputs['up']) {
         this.entity.trigger('jump', this.entity);
         p.jumping = true;
       }
 
-      if(p.jumping && !(this.entity.inputs['up'] || this.entity.inputs['action'])) {
+      if(p.jumping && !(this.entity.inputs['up'])) {
         p.jumping = false;
         this.entity.trigger('jumped', this.entity);
         if(p.vy < p.jumpSpeed / 3) {
