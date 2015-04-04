@@ -925,23 +925,22 @@ socket.on('mouseup', function(data) {
   // console.log("Player firing, properties are: " + getJSON(player.p));
 });
 
-
 each(['left','right','up', 'down'], function(actionName) {
   
   socket.on(actionName, function(data){
-    var pId = data.spriteId;
-    if(!pId){
+    var sId = data.spriteId;
+    if(!sId){
       console.log("Player without id sent ["+actionName+"]");
       return;
     }
 
     var sessionId = data.sessionId;
     if(!sessionId){
-      console.log("Player "+pId+" from unknown session sent ["+actionName+"]");
+      console.log("Player "+sId+" from unknown session sent ["+actionName+"]");
       return;
     }
 
-    var player = getPlayerSprite(pId);
+    var player = getPlayerSprite(sId);
 
     // Simulate player releasing the key
     if(!player){
@@ -957,19 +956,19 @@ each(['left','right','up', 'down'], function(actionName) {
 each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
   
   socket.on(actionName, function(data){
-    var pId = data.spriteId;
-    if(!pId){
+    var sId = data.spriteId;
+    if(!sId){
       console.log("Player without id sent ["+actionName+"]");
       return;
     }
 
     var sessionId = data.sessionId;
     if(!sessionId){
-      console.log("Player "+pId+" from unknown session sent ["+actionName+"]");
+      console.log("Player "+sId+" from unknown session sent ["+actionName+"]");
       return;
     }
  
-    var player = getPlayerSprite(pId);
+    var player = getPlayerSprite(sId);
 
     // Simulate player releasing the key
     if(!player){
@@ -982,3 +981,25 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
   });
 
 },this);
+
+socket.on('toggleNextElementUp', function(data){
+
+    var sId = data.spriteId;
+    var eType = data.entityType;
+
+    if(!checkGoodSprite(eType, sId, "toggleNextElementUp")){
+      return;
+    }
+
+    var player = getPlayerSprite(sId);
+    if(!player || player.p.toggleElementCooldown > 0){
+      // player is died or cannot located current player sprite
+      // player toggleElement is in cooldown
+      return;
+    }
+
+    player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
+    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;console.log("current "+player.p.element+" received "+nextElement);
+    player.p.element = nextElement;
+  });
