@@ -32,6 +32,8 @@ var killedInfo = [];
 var killedInfoTimeLeft= [];
 var killedInfoPosition = [];
 
+var FONT_FAMILY = "Trebuchet MS";
+
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
 
@@ -40,23 +42,23 @@ Q.scene(SCENE_WELCOME,function(stage) {
     welcomeSessionSelected = undefined;
   }
 
-  var titleSize = Math.ceil(Q.height/20);
+  var titleSize = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
   titleSize -= titleSize%2;
-  var boldSize = Math.ceil(Q.height/40);
+  var boldSize = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
   boldSize -= boldSize%2;
-  var normalSize = Math.ceil(Q.height/50);
+  var normalSize = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
   normalSize -= normalSize%2;
 
   var titleWeight = 800;
   var boldWeight = 600;
   var normalWeight =  200;
 
-  var boldFont = boldWeight +' '+boldSize+'px Arial';
-  var normalFont = normalWeight+' '+normalSize+'px Arial';
+  var boldFont = boldWeight +' '+boldSize+'px '+FONT_FAMILY;
+  var normalFont = normalWeight+' '+normalSize+'px '+FONT_FAMILY;
  
 
-  // console.log(boldFont);
-  // console.log(normalFont);
+  console.log(boldFont);
+  console.log(normalFont);
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
@@ -598,7 +600,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   });
 
   kInfo.on('draw', kInfo, function(ctx) {
-    ctx.font = this.p.font || "20px Arial";
+    ctx.font = this.p.font || "20px "+FONT_FAMILY;
     ctx.textAlign = this.p.align || "center";
     ctx.fillStyle = this.p.color || 'red';
 

@@ -74,7 +74,7 @@ Q.component("nameBar", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px Arial";
+    ctx.font = "15px "+FONT_FAMILY;
     ctx.textAlign = "center";
     ctx.fillStyle = "black";
     ctx.textBaseline = "alphabetic";
@@ -130,7 +130,7 @@ Q.component("dmgDisplay", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px Arial";
+    ctx.font = "15px "+FONT_FAMILY;
     ctx.textAlign = "left";
     ctx.fillStyle = 'red';
     for (var i = 0; i < this.entity.p.dmgDisplayDmgList.length; i++) {
