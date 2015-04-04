@@ -3,6 +3,11 @@
 require(['helper-functions']);
 
 // console.log("connecting");
+
+// ## Connect to the server
+var HOSTNAME = "localhost";
+var PORT = 4344;
+var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 // Debugging purpose
@@ -408,18 +413,22 @@ var addSprite = function(entityType, id, properties) {
   }
 
   if (eType == 'PLAYER') {
+    
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
+      
       if (!sprite || sprite.p.isServerSide || 
           sprite.p.isDead || !_isSessionConnected) {
         // (Defensive) Remove interval because it is gone/not on the client side
         clearInterval(interval_updateServer);
       }
+
       Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
         entityType: 'PLAYER',
         spriteId: sprite.p.spriteId,
         p: sprite.p
       }});
+
     }, interval_updateServer_timeInterval);
   }
   // store sprite reference
@@ -553,7 +562,7 @@ var updateSessions = function(sessionsInfo){
   }
 }
 
-var initialization = function(){
+var setupEventListeners = function(){
 
   Q.input.on('join', function(data){
     console.log("join "+getJSON(data));
@@ -574,7 +583,7 @@ var initialization = function(){
     Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
 
-   Q.input.on('respawn', function(data){
+  Q.input.on('respawn', function(data){
     console.log("respawn "+getJSON(data));
 
     var sId = data.sessionId;
@@ -606,10 +615,6 @@ var initialization = function(){
     var sId = data.eventData.sessionId;
     sId = sId ? sId : sessionId; 
 
-    if(!_isSessionConnected){
-      console.log("Session disconnected, the following event is not sent to session: "+getJSON(data.eventName));
-    }
-
     if(!sId){
       console.log("SessionCast without sessionId");
       return;
@@ -625,6 +630,11 @@ var initialization = function(){
       return;
     }
 
+    if(!_isSessionConnected && data.eventName != 'join'){
+      console.log("Session disconnected, event ["+getJSON(data.eventName)+"] is not sent to session");
+      return;
+    }
+
     data.eventData['sessionId'] = sId;
     sendToApp(data.eventName, data.eventData);
   });
@@ -633,55 +643,37 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
-  Q.input.on('keydown', function(keyCode){
-    var e = {keyCode: keyCode};
-    var actionName;
-    if(!Q.input.keys[keyCode]) {
-      // unrecognized keyboard input
-      // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keydown: keycode is " + keyCode);
-      return;
-    }
 
-    actionName = Q.input.keys[keyCode];
+  // Player inputs event listeners 
+  var actionDispatch = function(actionName) {
+    Q.input.on(actionName, function(){
 
-    var player = getPlayerSprite(selfId);
-    if(player){
-      player.inputs[actionName] = true;
-      player.trigger(actionName, e);
-    } else {
-      console.log("Cannot locate current player to perform keydown");
-    }
+      if(!_isSessionConnected){
+        return;
+      }
 
-  });
+      var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER'
+      };
 
-  Q.input.on('keyup', function(keyCode){
-    var e = {keyCode: keyCode};
-    var actionName;
-    if(!Q.input.keys[keyCode]) {
-      // unrecognized keyboard input
-      // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keyup: keycode is " + keyCode);
-      return;
-    }
+      Q.input.trigger('sessionCast', {eventName:actionName, eventData: eData});
+    
+    });
+  };
 
-    actionName = Q.input.keys[keyCode];
-
-    var player = getPlayerSprite(selfId);
-    if(player){
-      player.inputs[actionName] = false;
-      player.trigger(actionName+"Up", e);
-    } else {
-      console.log("Cannot locate current player to perform keyup");
-    }
-
-  }); 
+  each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
+
+    if(!_isSessionConnected){
+      return;
+    }
+
     var player = getPlayerSprite(selfId);
-    if(!_isSessionConnected || !player.p.canFire || player.p.isDead
-        || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
+    if(!player || !player.p.canFire || player.p.isDead
+      || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
       return;
     }
 
@@ -722,11 +714,15 @@ var initialization = function(){
   });
 };
 
+var resetDisplayScreen = function(){
+  // clear all screens
+  Q.clearStages();
+  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+}
+
 // ## Loads welcome screen
 var loadWelcomeScreen = function(){
-
-  // background
-  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+  resetDisplayScreen();
 
   // character selection
   Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
@@ -737,15 +733,16 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
-  //console.log("Cloning gamestate");
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
-  //console.log("Done cloning gamestate");
+  allSprites = clone(DEFAULT_SPRITES);
 
-  // clear welcome screen
-  Q.clearStage(STAGE_WELCOME);
-  
+  resetDisplayScreen();
   // Load the level
   Q.stageScene(gameState.level, STAGE_LEVEL);
+  // load element selector
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+  // Viewport
+  Q.stage(STAGE_LEVEL).add("viewport");
   
   // Create and load all sprites
   var spritesToAdd = [];
@@ -772,12 +769,6 @@ var loadGameSession = function() {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
-
-  // load element selector
-  Q.stageScene(SCENE_HUD, STAGE_HUD);
-
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
   
   _gameLoaded = true;
 }
@@ -807,12 +798,9 @@ socket.on('connected', function(data) {
   console.log("Connected as PLAYER "+selfId);
 
   updateSessions(s);
-  //console.log("Cloning defaultsprites");
-  allSprites = clone(DEFAULT_SPRITES);
-  //console.log("Done cloning defaultsprites");
 
   // setup Quintus event listeners
-  initialization();
+  setupEventListeners();
 
   var interval_loadWelcomeScreen = setInterval(function() {
     if (_assetsLoaded) {
@@ -870,8 +858,10 @@ socket.on('joinSuccessful', function(data){
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
   var interval_loadGameSession = setInterval(function() {
+    
     // Only load the game after the clock is synchronized
     if (_clockSynchronized) {
+
       console.log("Clock synchronized with timestampOffset = " + timestampOffset);
       loadGameSession();
       clearInterval(interval_loadGameSession);
@@ -887,6 +877,7 @@ socket.on('synchronizeClocks', function(data) {
   var clientSendTime = data.clientSendTime;         // t0
   
   timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  
   _clockSynchronized = true;
 });
 
@@ -990,18 +981,17 @@ socket.on('removeSprite', function(data){
 
 // sprite took damage
 socket.on('spriteTookDmg', function(data) {
+  
   console.log("Event: spriteTookDmg: data: " + getJSON(data));
+
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       shooterEntityType = data.shooter.entityType,
       shooterId = data.shooter.spriteId;
-      
-  if (victimEntityType == 'PLAYER' && victimId != selfId) {
-    // Not myself, so this is an ACTOR
-    victimEntityType = 'ACTOR';
-  }
-      
+
+  // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
   var sprite = getSprite(victimEntityType, victimId);
+
   if (typeof sprite === 'undefined') {
     console.log("Error in spriteTookDmg socket event: " + victimEntityType + " " + victimId + " does not exist");
     return;
@@ -1017,12 +1007,7 @@ socket.on('spriteDied', function(data) {
       killerEntityType = data.killer.entityType,
       killerId = data.killer.spriteId;
   
-  // getSprite will convert it
-  // if (victimEntityType == 'PLAYER' && victimId != selfId) {
-  //   // Not myself, so this is an ACTOR
-  //   victimEntityType = 'ACTOR';
-  // }
-  
+  // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
   var sprite = getSprite(victimEntityType, victimId);
   if (!sprite) {
     console.log("Error in spriteDied socket event: " + victimEntityType + " " + victimId + " does not exist");
@@ -1036,9 +1021,6 @@ socket.on('spriteDied', function(data) {
 // when session is disconnected
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
-
-  // clear all screens
-  Q.clearStages();
 
   // ask player to join a session again
   loadWelcomeScreen();
@@ -1057,6 +1039,7 @@ socket.on('playerDisconnected', function(data) {
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
+
   _isSessionConnected = false;
   Q.pauseGame();
 });

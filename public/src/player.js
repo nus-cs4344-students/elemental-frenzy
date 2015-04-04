@@ -80,7 +80,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
 
@@ -100,57 +100,12 @@ Q.Sprite.extend("Player",{
       this.on('displayScoreScreen', this, 'displayScoreScreen');
     }
 
-    this.on('left, right, up, down,', this, 'move');
-    this.on('leftUp, rightUp, upUp, downUp', this, 'moveUp');
     this.on('toggleNextElementUp', this, 'toggleNextElement');
     this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
   },
-
-  move: function(e){
-    
-    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
-      // server side doesnt need to send key event
-      // client side doesnt need to send key when it is not connected
-      return;
-    }
-
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-    
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
-  },
-
-  moveUp: function(e){
-
-    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
-      // server side doesnt need to send key event
-      // client side doesnt need to send key when it is not connected
-      return;
-    }
-
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-    
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
-  },
-
 
   displayScoreScreen: function(){
 

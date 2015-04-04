@@ -3,6 +3,11 @@
 require(['helper-functions']);
 
 // console.log("connecting");
+
+// ## Connect to the server
+var HOSTNAME = "localhost";
+var PORT = 4343;
+var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 // Debugging purpose
@@ -639,7 +644,7 @@ var pressKey = function(player, e) {
     }
     
     player.inputs[actionName] = true;
-    player.trigger(actionName, e);
+    // player.trigger(actionName, e);
   }
 };
 
@@ -906,84 +911,22 @@ socket.on('authoritativeSpriteUpdate', function(data) {
   updateSprite(data.entityType, data.spriteId, data.p);
 });
 
-socket.on('keydown', function(data) {
-  var pId = data.spriteId;
-  if(!pId){
-    console.log("Player without id sent keyDown");
-    return;
-  }
-
-  var sessionId = data.sessionId;
-  if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent keyDown");
-    return;
-  }
-
-  var e = data.e;
-  if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without event data");
-    return;
-  }
-
-  var kCode = e.keyCode;
-  if(!kCode){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without keyCode in event data");
-    return;
-  }
-
-  var player = getPlayerSprite(pId);
-  
-  // Simulate player pressing the key
-  pressKey(player, e);
-});
-
-socket.on('keyup', function(data) {
-  var pId = data.spriteId;
-  if(!pId){
-    console.log("Player without id sent keyUp");
-    return;
-  }
-
-  var sessionId = data.sessionId;
-  if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent keyUp");
-    return;
-  }
-
-  var e = data.e;
-  if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without event data");
-    return;
-  }
-
-  var kCode = e.keyCode;
-  if(!kCode){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without keyCode in event data");
-    return;
-  }
-  
-  var player = getPlayerSprite(pId);
-
-  // Simulate player releasing the key
-  releaseKey(player, e);
-});
-
 socket.on('mouseup', function(data) {
   var pId = data.spriteId;
   if(!pId){
-    console.log("Player without id sent moseUp");
+    console.log("Player without id sent mouseUp");
     return;
   }
 
   var sessionId = data.sessionId;
   if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent moseUp");
+    console.log("Player "+pId+" from unknown session sent mouseUp");
     return;
   }
 
   var e = data.e;
   if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent moseUp without event data");
+    console.log("Player "+pId+" from session "+sessionId+" sent mouseUp without event data");
     return;
   }
   
@@ -1003,3 +946,61 @@ socket.on('mouseup', function(data) {
   
   // console.log("Player firing, properties are: " + getJSON(player.p));
 });
+
+
+each(['left','right','up', 'down'], function(actionName) {
+  
+  socket.on(actionName, function(data){
+    var pId = data.spriteId;
+    if(!pId){
+      console.log("Player without id sent ["+actionName+"]");
+      return;
+    }
+
+    var sessionId = data.sessionId;
+    if(!sessionId){
+      console.log("Player "+pId+" from unknown session sent ["+actionName+"]");
+      return;
+    }
+
+    var player = getPlayerSprite(pId);
+
+    // Simulate player releasing the key
+    if(!player){
+      console.log("Player without sprite pressed the key");
+      return;
+    }
+    console.log("session received "+actionName);
+    player.inputs[actionName] = true;
+  });
+
+},this);
+
+each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
+  
+  socket.on(actionName, function(data){
+    var pId = data.spriteId;
+    if(!pId){
+      console.log("Player without id sent ["+actionName+"]");
+      return;
+    }
+
+    var sessionId = data.sessionId;
+    if(!sessionId){
+      console.log("Player "+pId+" from unknown session sent ["+actionName+"]");
+      return;
+    }
+ 
+    var player = getPlayerSprite(pId);
+
+    // Simulate player releasing the key
+    if(!player){
+      console.log("Player without sprite released the key");
+      return;
+    }
+
+    var action = actionName.substring(0, actionName.length - "Up".length);console.log(action);
+    player.inputs[action] = false;
+  });
+
+},this);
