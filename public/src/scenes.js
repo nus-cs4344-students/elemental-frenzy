@@ -546,9 +546,8 @@ Q.scene(SCENE_HUD, function(stage) {
     
     /* 
     ** HP CIRCLE
+    ** represented by a hollow circle with text inside
     */
-
-    //var radius = Math.min(Q.height, Q.width) / 25;
     var radius = Q.height / 25;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
@@ -566,30 +565,46 @@ Q.scene(SCENE_HUD, function(stage) {
 
     //green -> yellow -> red
     var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
-
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     var centerX = 3*Q.width/15;
     var centerY = 0;
     
-    drawHollowCircleWithText(currentHp, maxHp, centerX, centerY, radius, ctx);
+    drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
 
     /* 
     ** MANA CIRCLE
+    ** represented by a hollow circle with text inside
     */
     var currentMana = Math.round(currentPlayer.p.currentMana);
     var maxMana =currentPlayer.p.maxMana;
 
-    color = '#0000FF'; //blue
+    color = '#0000AA'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     centerX = 5*Q.width/15;
     centerY = 0;
 
-    drawHollowCircleWithText(currentMana, maxMana, centerX, centerY, radius, ctx);
+    drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
+
+    /*
+    ** Mana cost per shot
+    ** represented by a solid circle with text below
+    */
+
+    //("inherits" blue color from above, since this is right after drawing mana circle)
+    centerX = -6*Q.width/15;
+    centerY = 0;
+    var manaPerShot = currentPlayer.p.manaPerShot;
+    ctx.font = "Bold " + "" + "12px Arial";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY - radius/4, radius/4, 0, Math.PI * 2, false);
+    ctx.fill();
+
+    ctx.fillText(manaPerShot, centerX, centerY + 4);
   });
 
-  var drawHollowCircleWithText = function (value, maxValue, centerX, centerY, radius, ctx) {
+  var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
     var end = Math.PI * 2.0;
     var start = Math.PI / 2.0;

@@ -53,6 +53,7 @@ Q.Sprite.extend("Player",{
       currentHealth: PLAYER_DEFAULT_MAXHEALTH,
       maxMana: PLAYER_DEFAULT_MAX_MANA,
       currentMana: PLAYER_DEFAULT_MAX_MANA,
+      manaPerShot: PLAYER_DEFAULT_MANA_PER_SHOT,
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
       characterId: PLAYER_DEFAULT_CHARACTERID,
@@ -207,7 +208,7 @@ Q.Sprite.extend("Player",{
    
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
     if (this.p.isDead || !this.p.canFire ||
-        this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
+        this.p.currentMana < this.p.manaPerShot) {
       return;
     }
     time_fromFire = getCurrentTime();
