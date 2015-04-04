@@ -664,16 +664,6 @@ var setupEventListeners = function(){
 
   each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
-
-  var displayScoreScreen = function(){
-    hideScoreScreen();
-    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
-  };
-
-  var hideScoreScreen = function(){
-    Q.clearStage(STAGE_SCORE);
-  };
-
   Q.input.on('displayScoreScreen', function(){
     
     if(!_isSessionConnected){
@@ -694,10 +684,39 @@ var setupEventListeners = function(){
     hideScoreScreen();
   });
 
+  Q.input.on('toggleNextElementUp', function(){
+
+    if(!_gameLoaded){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+
+    var player = getPlayerSprite(selfId);
+    if(!player || player.p.toggleElementCooldown > 0){
+      // player is died or cannot located current player sprite
+      // player toggleElement is in cooldown
+      return;
+    }
+
+    player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
+    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
+    player.p.element = nextElement;
+
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER'
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'toggleNextElementUp', eventData: eData});
+  });
+
+
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
 
-    if(!_isSessionConnected){
+    if(!_gameLoaded){
       return;
     }
 
@@ -750,12 +769,30 @@ var resetDisplayScreen = function(){
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 }
 
+var displayScoreScreen = function(){
+  hideScoreScreen();
+  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+};
+
+var hideScoreScreen = function(){
+  Q.clearStage(STAGE_SCORE);
+};
+
 // ## Loads welcome screen
-var loadWelcomeScreen = function(){
+var displayWelcomeScreen = function(){
   resetDisplayScreen();
 
   // character selection
   Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+};
+
+var displayGameScreen = function(level){
+  resetDisplayScreen();
+
+  // Load the level
+  Q.stageScene(level, STAGE_LEVEL);
+  // Viewport
+  Q.stage(STAGE_LEVEL).add("viewport");
 };
 
 // ## Loads the game state.
@@ -766,13 +803,7 @@ var loadGameSession = function() {
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
   allSprites = clone(DEFAULT_SPRITES);
 
-  resetDisplayScreen();
-  // Load the level
-  Q.stageScene(gameState.level, STAGE_LEVEL);
-  // load element selector
-  Q.stageScene(SCENE_HUD, STAGE_HUD);
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  displayGameScreen(gameState.level);
   
   // Create and load all sprites
   var spritesToAdd = [];
@@ -799,6 +830,9 @@ var loadGameSession = function() {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+
+  // load element selector
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
   
   _gameLoaded = true;
 }
@@ -832,15 +866,15 @@ socket.on('connected', function(data) {
   // setup Quintus event listeners
   setupEventListeners();
 
-  var interval_loadWelcomeScreen = setInterval(function() {
+  var interval_displayWelcomeScreen = setInterval(function() {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the welcome screen. This flag will will be set once assets have been loaded.
       
       // load welcome screen
-      loadWelcomeScreen();
+      displayWelcomeScreen();
 
       // Don't load a second time
-      clearInterval(interval_loadWelcomeScreen);
+      clearInterval(interval_displayWelcomeScreen);
     }
   }, 100);
 });
@@ -1053,7 +1087,7 @@ socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
   // ask player to join a session again
-  loadWelcomeScreen();
+  displayWelcomeScreen();
 
   _isSessionConnected = false;
 });

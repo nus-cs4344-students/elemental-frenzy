@@ -100,33 +100,6 @@ Q.Sprite.extend("Player",{
     this.on("onLadder", this, 'climbLadder');
   },
 
-  toggleNextElement: function(e){
-    if(this.p.toggleElementCooldown > 0){
-      return;
-    }
-
-    this.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
-
-    var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
-    this.p.element = nextElement;
-
-    if(!this.p.isServerSide && _isSessionConnected){
-      var createdEvt = {
-        keyCode: e.keyCode
-      };
-      
-      var eData = { sessionId: sessionId,
-                    spriteId: selfId,
-                    entityType: 'PLAYER',
-                    e: createdEvt
-      };
-
-      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
-
-      Q.input.trigger('hudNextElement');
-    }
-  },
-
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
    

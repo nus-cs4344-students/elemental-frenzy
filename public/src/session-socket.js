@@ -559,22 +559,39 @@ var initialization = function(){
     Q.stage(STAGE_LEVEL).unfollow();
   });
 
-  var displayScoreScreen = function(){
-    hideScoreScreen();
-    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
-  };
-
-  var hideScoreScreen = function(){
-    Q.clearStage(STAGE_SCORE);
-  };
-
   Q.input.on('displayScoreScreen', function(){
     displayScoreScreen();
   });
-  
+
   Q.input.on('displayScoreScreenUp', function(){
     hideScoreScreen();
   });
+};
+
+var resetDisplayScreen = function(){
+  // clear all screens
+  Q.clearStages();
+  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+}
+
+var displayScoreScreen = function(){
+  hideScoreScreen();
+  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+};
+
+var hideScoreScreen = function(){
+  Q.clearStage(STAGE_SCORE);
+};
+
+var displayGameScreen = function(level){
+  resetDisplayScreen();
+
+  // Load the level
+  Q.stageScene(level, STAGE_LEVEL);
+  // load element selector
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+  // Viewport
+  Q.stage(STAGE_LEVEL).add("viewport");
 };
 
 var loadGameSession = function(sessionId) {
@@ -591,14 +608,7 @@ var loadGameSession = function(sessionId) {
   session.sessionId = sessionId;
   allSprites = clone(DEFAULT_SPRITES);
 
-  // Load background
-  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
-  
-  // Load gameState default level
-  Q.stageScene(gameState.level, STAGE_LEVEL);
-
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  displayGameScreen(gameState.level);
 
   // Create and load all sprites
   var spritesToAdd = [];

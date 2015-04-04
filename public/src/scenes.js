@@ -441,7 +441,9 @@ Q.scene(SCENE_HUD, function(stage) {
 
     var player = getPlayerSprite(selfId);
     if(player && this.p.activeElement != player.p.element){
-      console.log("Element selector out of sync: player-"+player.p.element+" selector-"+this.p.activeElement);
+      
+      console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
+      
       updateEleSelector(player.p.element);
     }
 
@@ -523,19 +525,6 @@ Q.scene(SCENE_HUD, function(stage) {
   };
 
   updateEleSelector(element);
-  
-
-  Q.input.on('hudNextElement', function(data){
-
-    var currentPlayer = getPlayerSprite(selfId);
-    if(!currentPlayer){
-      console.log("Cannot locate current player during HUD element selector update");
-      return;
-    }
-    var element = currentPlayer.p.element;
-
-    updateEleSelector(element);
-  });
 });
 
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
