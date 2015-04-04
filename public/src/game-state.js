@@ -21,8 +21,10 @@ Q.state.on("playerDied", function(data) {
   var victimName = getSprite(victimEntityType, victimId).p.name,
       killerName = getSprite(killerEntityType, killerId).p.name;
   console.log("State log: victim " + victimName + " killer " + killerName);
+  
   var kills = Q.state.get('kills');
   var deaths = Q.state.get('deaths');
+  
   if (typeof kills[killerName] === 'undefined') {
     kills[killerName] = 0;
     Q.state.set('kills', kills);
@@ -37,11 +39,11 @@ Q.state.on("playerDied", function(data) {
     deaths[victimName] = 0;
     Q.state.set('deaths', deaths);
   }
+  
   kills[killerName]++;
   deaths[victimName]++;
   Q.state.set({kills: kills, deaths: deaths});
-  //Q.state.p.kills[killerName]++;
-  //Q.state.p.deaths[victimName]++;
+
   console.log("Kills for player " + killerName + " is " + Q.state.get('kills')[killerName]);
   console.log("Deaths for player " + victimName + " is " + Q.state.get('deaths')[victimName]);
 
@@ -53,6 +55,7 @@ Q.state.on("playerDied", function(data) {
   }
   
 });
+
 // # When enemy dies, update the kills of the killer only
 Q.state.on("enemyDied", function(killer) {
   if (typeof killer === 'undefined') {

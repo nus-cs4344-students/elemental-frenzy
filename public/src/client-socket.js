@@ -664,6 +664,36 @@ var setupEventListeners = function(){
 
   each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
+
+  var displayScoreScreen = function(){
+    hideScoreScreen();
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  };
+
+  var hideScoreScreen = function(){
+    Q.clearStage(STAGE_SCORE);
+  };
+
+  Q.input.on('displayScoreScreen', function(){
+    
+    if(!_isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+    displayScoreScreen();
+  });
+
+  Q.input.on('displayScoreScreenUp', function(){
+    
+    if(!_isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+    hideScoreScreen();
+  });
+
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
 

@@ -94,40 +94,10 @@ Q.Sprite.extend("Player",{
   },
   
   addEventListeners: function() { 
-
-    if(!this.p.isServerSide){
-      this.on('displayScoreScreenUp', this, 'hideScoreScreen');
-      this.on('displayScoreScreen', this, 'displayScoreScreen');
-    }
-
-    this.on('toggleNextElementUp', this, 'toggleNextElement');
     this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
-  },
-
-  displayScoreScreen: function(){
-
-    if(!this.p.isServerSide && !_isSessionConnected){
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
-
-    this.hideScoreScreen();
-    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
-  },
-
-  hideScoreScreen: function(){
-
-    if(!this.p.isServerSide && !_isSessionConnected){
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
-
-    Q.clearStage(STAGE_SCORE);
   },
 
   toggleNextElement: function(e){

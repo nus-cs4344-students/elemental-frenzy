@@ -541,6 +541,7 @@ var initialization = function(){
   // Allow the session to follow different players
   Q.input.on("toggleFollow", function() {
     console.log("Toggle follow");
+
     var playerToFollow = getNextPlayerSprite(_playerToFollowId);
     if (typeof playerToFollow === 'undefined') {
       console.log("Player to follow is undefined: no players?");
@@ -554,7 +555,25 @@ var initialization = function(){
   // Allow the session to stop following players
   Q.input.on("stopFollow", function() {
     console.log("Stop follow");
+    
     Q.stage(STAGE_LEVEL).unfollow();
+  });
+
+  var displayScoreScreen = function(){
+    hideScoreScreen();
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  };
+
+  var hideScoreScreen = function(){
+    Q.clearStage(STAGE_SCORE);
+  };
+
+  Q.input.on('displayScoreScreen', function(){
+    displayScoreScreen();
+  });
+  
+  Q.input.on('displayScoreScreenUp', function(){
+    hideScoreScreen();
   });
 };
 
@@ -612,7 +631,7 @@ var loadGameSession = function(sessionId) {
   Q.state.on('change', function() {
     gameState.kills = Q.state.get('kills');
     gameState.deaths = Q.state.get('deaths');
-    console.log("Broadcasting event gameStateChanged");
+
     Q.input.trigger('broadcastAll', {
       eventName: 'gameStateChanged', 
       eventData: {
@@ -621,57 +640,6 @@ var loadGameSession = function(sessionId) {
       }
     });
   });
-};
-
-var pressKey = function(player, e) {
-  if(!player){
-    console.log("Player without sprite pressed the key");
-    return;
-  }
-
-  var keyCode = e.keyCode;
-  if(!keyCode){
-    console.log("Player pressed unknown key");
-    return;
-  }
-
-  if(Q.input.keys[keyCode]) {
-    var actionName = Q.input.keys[keyCode];
-    
-    // Don't allow the player to use server side controls
-    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
-      return;
-    }
-    
-    player.inputs[actionName] = true;
-    // player.trigger(actionName, e);
-  }
-};
-
-var releaseKey = function(player, e) {
-  if(!player){
-    console.log("Player without sprite released the key");
-    return;
-  }
-
-  var keyCode = e.keyCode;
-  if(!keyCode){
-    console.log("Player released unknown key");
-    return;
-  }
-
-
-  if(Q.input.keys[keyCode]) {
-    var actionName = Q.input.keys[keyCode];
-
-     // Don't allow the player to use server side controls
-    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
-      return;
-    }
-    
-    player.inputs[actionName] = false;
-    player.trigger(actionName+"Up", e);
-  }
 };
 
 var joinSession = function(playerId, characterId) {
