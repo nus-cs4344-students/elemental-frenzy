@@ -551,7 +551,8 @@ Q.scene(SCENE_HUD, function(stage) {
   };
 
   updateEleSelector(element);
-});
+
+
 
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
@@ -632,6 +633,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.font = "Bold "+(radius*0.8)+"px Arial";
     ctx.fillText(value, centerX, centerY - radius/2);
   };
+});
 
 
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
