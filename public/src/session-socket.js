@@ -3,6 +3,11 @@
 require(['helper-functions']);
 
 // console.log("connecting");
+
+// ## Connect to the server
+var HOSTNAME = "localhost";
+var PORT = 4343;
+var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 // Debugging purpose
@@ -536,6 +541,7 @@ var initialization = function(){
   // Allow the session to follow different players
   Q.input.on("toggleFollow", function() {
     console.log("Toggle follow");
+
     var playerToFollow = getNextPlayerSprite(_playerToFollowId);
     if (typeof playerToFollow === 'undefined') {
       console.log("Player to follow is undefined: no players?");
@@ -549,8 +555,43 @@ var initialization = function(){
   // Allow the session to stop following players
   Q.input.on("stopFollow", function() {
     console.log("Stop follow");
+    
     Q.stage(STAGE_LEVEL).unfollow();
   });
+
+  Q.input.on('displayScoreScreen', function(){
+    displayScoreScreen();
+  });
+
+  Q.input.on('displayScoreScreenUp', function(){
+    hideScoreScreen();
+  });
+};
+
+var resetDisplayScreen = function(){
+  // clear all screens
+  Q.clearStages();
+  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+}
+
+var displayScoreScreen = function(){
+  hideScoreScreen();
+  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+};
+
+var hideScoreScreen = function(){
+  Q.clearStage(STAGE_SCORE);
+};
+
+var displayGameScreen = function(level){
+  resetDisplayScreen();
+
+  // Load the level
+  Q.stageScene(level, STAGE_LEVEL);
+  // load element selector
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+  // Viewport
+  Q.stage(STAGE_LEVEL).add("viewport");
 };
 
 var loadGameSession = function(sessionId) {
@@ -567,14 +608,7 @@ var loadGameSession = function(sessionId) {
   session.sessionId = sessionId;
   allSprites = clone(DEFAULT_SPRITES);
 
-  // Load background
-  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
-  
-  // Load gameState default level
-  Q.stageScene(gameState.level, STAGE_LEVEL);
-
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  displayGameScreen(gameState.level);
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -607,7 +641,7 @@ var loadGameSession = function(sessionId) {
   Q.state.on('change', function() {
     gameState.kills = Q.state.get('kills');
     gameState.deaths = Q.state.get('deaths');
-    console.log("Broadcasting event gameStateChanged");
+
     Q.input.trigger('broadcastAll', {
       eventName: 'gameStateChanged', 
       eventData: {
@@ -616,57 +650,6 @@ var loadGameSession = function(sessionId) {
       }
     });
   });
-};
-
-var pressKey = function(player, e) {
-  if(!player){
-    console.log("Player without sprite pressed the key");
-    return;
-  }
-
-  var keyCode = e.keyCode;
-  if(!keyCode){
-    console.log("Player pressed unknown key");
-    return;
-  }
-
-  if(Q.input.keys[keyCode]) {
-    var actionName = Q.input.keys[keyCode];
-    
-    // Don't allow the player to use server side controls
-    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
-      return;
-    }
-    
-    player.inputs[actionName] = true;
-    player.trigger(actionName, e);
-  }
-};
-
-var releaseKey = function(player, e) {
-  if(!player){
-    console.log("Player without sprite released the key");
-    return;
-  }
-
-  var keyCode = e.keyCode;
-  if(!keyCode){
-    console.log("Player released unknown key");
-    return;
-  }
-
-
-  if(Q.input.keys[keyCode]) {
-    var actionName = Q.input.keys[keyCode];
-
-     // Don't allow the player to use server side controls
-    if (KEYBOARD_CONTROLS_SESSION_ONLY[actionName]) {
-      return;
-    }
-    
-    player.inputs[actionName] = false;
-    player.trigger(actionName+"Up", e);
-  }
 };
 
 var joinSession = function(playerId, characterId) {
@@ -906,84 +889,22 @@ socket.on('authoritativeSpriteUpdate', function(data) {
   updateSprite(data.entityType, data.spriteId, data.p);
 });
 
-socket.on('keydown', function(data) {
-  var pId = data.spriteId;
-  if(!pId){
-    console.log("Player without id sent keyDown");
-    return;
-  }
-
-  var sessionId = data.sessionId;
-  if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent keyDown");
-    return;
-  }
-
-  var e = data.e;
-  if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without event data");
-    return;
-  }
-
-  var kCode = e.keyCode;
-  if(!kCode){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyDown without keyCode in event data");
-    return;
-  }
-
-  var player = getPlayerSprite(pId);
-  
-  // Simulate player pressing the key
-  pressKey(player, e);
-});
-
-socket.on('keyup', function(data) {
-  var pId = data.spriteId;
-  if(!pId){
-    console.log("Player without id sent keyUp");
-    return;
-  }
-
-  var sessionId = data.sessionId;
-  if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent keyUp");
-    return;
-  }
-
-  var e = data.e;
-  if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without event data");
-    return;
-  }
-
-  var kCode = e.keyCode;
-  if(!kCode){
-    console.log("Player "+pId+" from session "+sessionId+" sent keyUp without keyCode in event data");
-    return;
-  }
-  
-  var player = getPlayerSprite(pId);
-
-  // Simulate player releasing the key
-  releaseKey(player, e);
-});
-
 socket.on('mouseup', function(data) {
   var pId = data.spriteId;
   if(!pId){
-    console.log("Player without id sent moseUp");
+    console.log("Player without id sent mouseUp");
     return;
   }
 
   var sessionId = data.sessionId;
   if(!sessionId){
-    console.log("Player "+pId+" from unknown session sent moseUp");
+    console.log("Player "+pId+" from unknown session sent mouseUp");
     return;
   }
 
   var e = data.e;
   if(!e){
-    console.log("Player "+pId+" from session "+sessionId+" sent moseUp without event data");
+    console.log("Player "+pId+" from session "+sessionId+" sent mouseUp without event data");
     return;
   }
   
@@ -1003,3 +924,82 @@ socket.on('mouseup', function(data) {
   
   // console.log("Player firing, properties are: " + getJSON(player.p));
 });
+
+each(['left','right','up', 'down'], function(actionName) {
+  
+  socket.on(actionName, function(data){
+    var sId = data.spriteId;
+    if(!sId){
+      console.log("Player without id sent ["+actionName+"]");
+      return;
+    }
+
+    var sessionId = data.sessionId;
+    if(!sessionId){
+      console.log("Player "+sId+" from unknown session sent ["+actionName+"]");
+      return;
+    }
+
+    var player = getPlayerSprite(sId);
+
+    // Simulate player releasing the key
+    if(!player){
+      console.log("Player without sprite pressed the key");
+      return;
+    }
+    console.log("session received "+actionName);
+    player.inputs[actionName] = true;
+  });
+
+},this);
+
+each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
+  
+  socket.on(actionName, function(data){
+    var sId = data.spriteId;
+    if(!sId){
+      console.log("Player without id sent ["+actionName+"]");
+      return;
+    }
+
+    var sessionId = data.sessionId;
+    if(!sessionId){
+      console.log("Player "+sId+" from unknown session sent ["+actionName+"]");
+      return;
+    }
+ 
+    var player = getPlayerSprite(sId);
+
+    // Simulate player releasing the key
+    if(!player){
+      console.log("Player without sprite released the key");
+      return;
+    }
+
+    var action = actionName.substring(0, actionName.length - "Up".length);console.log(action);
+    player.inputs[action] = false;
+  });
+
+},this);
+
+socket.on('toggleNextElementUp', function(data){
+
+    var sId = data.spriteId;
+    var eType = data.entityType;
+
+    if(!checkGoodSprite(eType, sId, "toggleNextElementUp")){
+      return;
+    }
+
+    var player = getPlayerSprite(sId);
+    if(!player || player.p.toggleElementCooldown > 0){
+      // player is died or cannot located current player sprite
+      // player toggleElement is in cooldown
+      return;
+    }
+
+    player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
+    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;console.log("current "+player.p.element+" received "+nextElement);
+    player.p.element = nextElement;
+  });

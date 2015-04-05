@@ -1,17 +1,5 @@
 "use strict";
 
-// ## Connect to the server
-var HOSTNAME = "localhost";
-var PORT = 4343;
-var io = io();
-
-// ## Set socket event listeners
-// require(['session-socket'], function(){console.log('session-socket loaded');});
-require(['session-socket']);
-
-var _assetsLoaded = false; // Global variable to be checked before trying to load game
-
-
 requirejs.config({
     //Remember: only use shim config for non-AMD scripts,
     //scripts that do not already call define(). The shim
@@ -32,9 +20,19 @@ requirejs.config({
             //module value.
             
             // exports: 'Scenes'
+        },
+        'session-socket':{
+          deps: ['helper-functions']
         }
     }
 });
+
+
+// ## Set socket event listeners
+// require(['session-socket'], function(){console.log('session-socket loaded');});
+require(['session-socket']);
+
+var _assetsLoaded = false; // Global variable to be checked before trying to load game
 
 // To find out why DomReady is used
 // Refer to http://requirejs.org/docs/api.html#pageload

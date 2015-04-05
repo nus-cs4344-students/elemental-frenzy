@@ -32,6 +32,8 @@ var killedInfo = [];
 var killedInfoTimeLeft= [];
 var killedInfoPosition = [];
 
+var FONT_FAMILY = "Trebuchet MS";
+
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
 
@@ -40,19 +42,19 @@ Q.scene(SCENE_WELCOME,function(stage) {
     welcomeSessionSelected = undefined;
   }
 
-  var titleSize = Math.ceil(Q.height/20);
+  var titleSize = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
   titleSize -= titleSize%2;
-  var boldSize = Math.ceil(Q.height/40);
+  var boldSize = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
   boldSize -= boldSize%2;
-  var normalSize = Math.ceil(Q.height/50);
+  var normalSize = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
   normalSize -= normalSize%2;
 
   var titleWeight = 800;
   var boldWeight = 600;
   var normalWeight =  200;
 
-  var boldFont = boldWeight +' '+boldSize+'px Arial';
-  var normalFont = normalWeight+' '+normalSize+'px Arial';
+  var boldFont = boldWeight +' '+boldSize+'px '+FONT_FAMILY;
+  var normalFont = normalWeight+' '+normalSize+'px '+FONT_FAMILY;
  
 
   console.log(boldFont);
@@ -432,34 +434,50 @@ Q.scene(SCENE_HUD, function(stage) {
   var scalingStep = 0.1;
   var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
                                                          y: 0,
-                                                         angleStep: 0,
                                                          activeElement: element,
-                                                         targetAngle: 0
+                                                         targetAngle: 0,
+                                                         angleStep: 0,
+                                                         angleShifted: 0,
+                                                         angleNeeded: 0
                                                         }));
 
   selector.on('step', function(dt){
 
     var player = getPlayerSprite(selfId);
     if(player && this.p.activeElement != player.p.element){
-      console.log("Element selector out of sync: player-"+player.p.element+" selector-"+this.p.activeElement);
+      
+      console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
+      
       updateEleSelector(player.p.element);
     }
 
     var a = this.p.angle;
-    var aStep = this.p.angleStep;
     var tAngle = this.p.targetAngle;
+    var aNeeded = this.p.angleNeeded;
+    var aShifted = this.p.angleShifted;
 
-     if(aStep > 0 && Math.abs(a - tAngle) > 5){
+    var aStep = this.p.angleStep;
+    
+    if(aNeeded >= aShifted){
 
-        var aS = aStep * dt;
-        var nextAngle = a - aS;
-
-        if(nextAngle<0){
-          nextAngle = 360 + nextAngle;
-        }
-
-        this.p.angle = Math.max(nextAngle % 360, 0);
+      // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
+      
+      var aS = aStep * dt;
+      this.p.angleShifted += aS;
+      if(this.p.angleShifted > this.p.angleNeeded){
+        aS = this.p.angleNeeded - (this.p.angleShifted - aS);
+        this.p.angleShifted = this.p.angleNeeded;
       }
+      var nextAngle = a - aS;
+
+      if(nextAngle<0){
+        nextAngle = 360 + nextAngle;
+      }
+
+      // console.log('next angle '+nextAngle);
+      var nAngle = Math.max(nextAngle % 360, 0);
+      this.p.angle = nAngle;
+    }
   });
 
   for(var eId in ELEBALL_ELEMENTNAMES){
@@ -516,26 +534,24 @@ Q.scene(SCENE_HUD, function(stage) {
       }
     }
 
-    var targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+    var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
+    var angleNeeded = selector.p.angle - targetAngle;
+    
+    if(angleNeeded < 0){
+      angleNeeded = 360 + angleNeeded;
+    }
+
     selector.p.targetAngle = targetAngle;
-    selector.p.angleStep = Math.abs(targetAngle - selector.p.angle)/0.3;
+    selector.p.angleNeeded = angleNeeded;
+    selector.p.angleStep = angleNeeded/0.3;
+    selector.p.angleShifted = 0;
     selector.p.activeElement = nextElement;
+
+    // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
   };
 
   updateEleSelector(element);
-  
-
-  Q.input.on('hudNextElement', function(data){
-
-    var currentPlayer = getPlayerSprite(selfId);
-    if(!currentPlayer){
-      console.log("Cannot locate current player during HUD element selector update");
-      return;
-    }
-    var element = currentPlayer.p.element;
-
-    updateEleSelector(element);
-  });
+});
 
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
@@ -617,7 +633,6 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillText(value, centerX, centerY - radius/2);
   };
 
-});
 
 Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var kType = stage.options.killerEntityType;
@@ -640,8 +655,11 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   if(kType && kId && vType && vId){
     if(!isSession){
       // client side
-      msg = "You are killed by "+getSprite(kType,kId).p.name;
-
+      if(kId == selfId){
+        msg = "You have killed "+getSprite(vType,vId).p.name;
+      }else{
+        msg = "You are killed by "+getSprite(kType,kId).p.name;
+      }
     }else{
       // session side
       msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
@@ -658,12 +676,16 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   killedInfoPosition.push([0, -40]);
 
   kInfo.on('step', kInfo, function(dt){
-    this.p.label = "Respawning in " + Math.floor(this.p.countDown);
 
-    this.p.countDown -= dt;
-    if(this.p.countDown < 0){
-      this.destroy();
-      return;
+    // do not need to show respawn count down in session and killer player
+    if(!isSession && !getPlayerSprite(selfId)){
+      this.p.label = "Respawning in " + Math.floor(this.p.countDown);
+
+      this.p.countDown -= dt;
+      if(this.p.countDown < 0){
+        this.destroy();
+        return;
+      }
     }
 
     for (var i = 0; i < killedInfoTimeLeft.length; i++) {
@@ -673,7 +695,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
         // No need to display anymore, so remove it
         killedInfoTimeLeft.splice(i, 1);
         killedInfo.splice(i, 1);
-        killedInfoPosition.splice(i, 1);console.log("remove kinfo");
+        killedInfoPosition.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
         killedInfoPosition[i][0] += this.p.vx;
@@ -682,7 +704,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
     }
   });
   kInfo.on('draw', kInfo, function(ctx) {
-    ctx.font = this.p.font || "20px Arial";
+    ctx.font = this.p.font || "20px "+FONT_FAMILY;
     ctx.textAlign = this.p.align || "center";
     ctx.fillStyle = this.p.color || 'red';
 

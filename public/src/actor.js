@@ -68,10 +68,22 @@ Q.Sprite.extend("Actor", {
   },
   
   die: function(killerEntityType, killerId) {
-    var killerName = getSprite(killerEntityType, killerId).p.name;
+
+    var killerName = getSprite(killerEntityType, killerId).p.name;    
+    var vType = this.p.entityType;
+    var vId = this.p.spriteId;
+    var vCharId = this.p.characterId;
+    var vSessionId = this.p.sessionId;
+
+    var killedData = {killerEntityType: killerEntityType, 
+                      killerId: killerId,
+                      victimEntityType: vType,
+                      victimId: vId};
 
     console.log(this.p.name + " died to " + killerName);
-    
+
+    Q.stageScene(SCENE_KILLED_INFO, STAGE_KILLED_INFO, killedData);
+
     removeActorSprite(this.p.spriteId);
   },
 

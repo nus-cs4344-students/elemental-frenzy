@@ -74,7 +74,7 @@ Q.component("nameBar", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px Arial";
+    ctx.font = "15px "+FONT_FAMILY;
     ctx.textAlign = "center";
     ctx.fillStyle = "black";
     ctx.textBaseline = "alphabetic";
@@ -130,7 +130,7 @@ Q.component("dmgDisplay", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px Arial";
+    ctx.font = "15px "+FONT_FAMILY;
     ctx.textAlign = "left";
     ctx.fillStyle = 'red';
     for (var i = 0; i < this.entity.p.dmgDisplayDmgList.length; i++) {
@@ -364,16 +364,16 @@ Q.component("serverPlatformerControls", {
         }
       }
 
-      if(p.landed > 0 && (this.entity.inputs['up'] || this.entity.inputs['action']) && !p.jumping) {
+      if(p.landed > 0 && (this.entity.inputs['up']) && !p.jumping) {
         p.vy = p.jumpSpeed;
         p.landed = -dt;
         p.jumping = true;
-      } else if(this.entity.inputs['up'] || this.entity.inputs['action']) {
+      } else if(this.entity.inputs['up']) {
         this.entity.trigger('jump', this.entity);
         p.jumping = true;
       }
 
-      if(p.jumping && !(this.entity.inputs['up'] || this.entity.inputs['action'])) {
+      if(p.jumping && !(this.entity.inputs['up'])) {
         p.jumping = false;
         this.entity.trigger('jumped', this.entity);
         if(p.vy < p.jumpSpeed / 3) {
