@@ -807,9 +807,6 @@ socket.on('join', function(data) {
     // add player and creates sprite for it
     addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
     
-    // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
-    
     // update the new player
     var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
@@ -817,6 +814,9 @@ socket.on('join', function(data) {
     // update other players
     var otherPlayersData = {p: getPlayerProperties(pId)};
     Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'addSprite', eventData: otherPlayersData});
+
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
 
   }else{
     // update app.js regarding joinSession failed
