@@ -1,16 +1,5 @@
 "use strict";
 
-// ## Connect to the server
-var HOSTNAME = "localhost";
-var PORT = 4344;
-var io = io();
-
-// ## Set socket event listeners
-// require(['client-socket'], function(){console.log('client-socket loaded');});
-require(['client-socket']);
-
-var _assetsLoaded = false; // Global variable to be checked before trying to load game
-
 requirejs.config({
     //Remember: only use shim config for non-AMD scripts,
     //scripts that do not already call define(). The shim
@@ -20,20 +9,29 @@ requirejs.config({
     //for those cases.
     shim: {
         'scenes': {
-            //These script dependencies should be loaded before loading
-            //scenes.js
-            deps: ['helper-functions', 'keyboard-controls',
-                  'game-state', 'components',
-                  'eleballs', 'player', 'actor', 'enemy-ai',
-                  'tower', 'ladder']//,
-            
-            //Once loaded, use the global 'Scenes' as the
-            //module value.
-            
-            // exports: 'Scenes'
+          //These script dependencies should be loaded before loading
+          //scenes.js
+          deps: ['helper-functions', 'keyboard-controls',
+                'game-state', 'components',
+                'eleballs', 'player', 'actor', 'enemy-ai',
+                'tower', 'ladder']//,
+          
+          //Once loaded, use the global 'Scenes' as the
+          //module value.
+          
+          // exports: 'Scenes'
+        },
+        'client-socket': {
+          deps: ['helper-functions']
         }
     }
 });
+
+// ## Set socket event listeners
+// require(['client-socket'], function(){console.log('client-socket loaded');});
+require(['client-socket']);
+
+var _assetsLoaded = false; // Global variable to be checked before trying to load game
 
 // To find out why DomReady is used
 // Refer to http://requirejs.org/docs/api.html#pageload

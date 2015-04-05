@@ -27,3 +27,18 @@ var sizeOfObject = function(obj) {
   }
   return size;
 }
+
+var each = function(obj,iterator,context) {
+    if (obj == null) { return; }
+    if (obj.forEach) {
+      obj.forEach(iterator,context);
+    } else if (obj.length === +obj.length) {
+      for (var i = 0, l = obj.length; i < l; i++) {
+        iterator.call(context, obj[i], i, obj);
+      }
+    } else {
+      for (var key in obj) {
+        iterator.call(context, obj[key], key, obj);
+      }
+    }
+  };

@@ -81,7 +81,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, serverPlatformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder');
     
     this.takeDamageIntervalId = -1;
 
@@ -95,112 +95,10 @@ Q.Sprite.extend("Player",{
   },
   
   addEventListeners: function() { 
-
-    if(!this.p.isServerSide){
-      this.on('displayScoreScreenUp', this, 'hideScoreScreen');
-      this.on('displayScoreScreen', this, 'displayScoreScreen');
-    }
-
-    this.on('left, right, up, down,', this, 'move');
-    this.on('leftUp, rightUp, upUp, downUp', this, 'moveUp');
-    this.on('toggleNextElementUp', this, 'toggleNextElement');
     this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
-  },
-
-  move: function(e){
-    
-    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
-      // server side doesnt need to send key event
-      // client side doesnt need to send key when it is not connected
-      return;
-    }
-
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-    
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keydown', eventData: eData});
-  },
-
-  moveUp: function(e){
-
-    if(this.p.isServerSide || typeof _isSessionConnected == 'undefined'){
-      // server side doesnt need to send key event
-      // client side doesnt need to send key when it is not connected
-      return;
-    }
-
-    var createdEvt = {
-      keyCode: e.keyCode
-    };
-    
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
-  },
-
-
-  displayScoreScreen: function(){
-
-    if(!this.p.isServerSide && !_isSessionConnected){
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
-
-    this.hideScoreScreen();
-    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
-  },
-
-  hideScoreScreen: function(){
-
-    if(!this.p.isServerSide && !_isSessionConnected){
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
-
-    Q.clearStage(STAGE_SCORE);
-  },
-
-  toggleNextElement: function(e){
-    if(this.p.toggleElementCooldown > 0){
-      return;
-    }
-
-    this.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
-
-    var nextElement = (Number(this.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
-    this.p.element = nextElement;
-
-    if(!this.p.isServerSide && _isSessionConnected){
-      var createdEvt = {
-        keyCode: e.keyCode
-      };
-      
-      var eData = { sessionId: sessionId,
-                    spriteId: selfId,
-                    entityType: 'PLAYER',
-                    e: createdEvt
-      };
-
-      Q.input.trigger('sessionCast', {eventName:'keyup', eventData: eData});
-
-      Q.input.trigger('hudNextElement');
-    }
   },
 
   fire: function(e){
@@ -390,10 +288,12 @@ Q.Sprite.extend("Player",{
                   " " + shooterId + ". currentHealth = " + this.p.currentHealth);
 
   
-      sendToApp('spriteTookDmg', {
-        dmg: dmg,
-        victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
-        shooter: {entityType: shooterEntityType, spriteId: shooterId}
+      Q.input.trigger('broadcastAll', {
+        eventName: 'spriteTookDmg',
+        eventData: {dmg: dmg,
+                    victim: {entityType: this.p.entityType, spriteId: this.p.spriteId},
+                    shooter: {entityType: shooterEntityType, spriteId: shooterId}
+                  }
       });
 
 

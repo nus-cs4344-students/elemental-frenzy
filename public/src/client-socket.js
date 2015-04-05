@@ -3,6 +3,11 @@
 require(['helper-functions']);
 
 // console.log("connecting");
+
+// ## Connect to the server
+var HOSTNAME = "localhost";
+var PORT = 4344;
+var io = io();
 var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 // Debugging purpose
@@ -408,18 +413,22 @@ var addSprite = function(entityType, id, properties) {
   }
 
   if (eType == 'PLAYER') {
+    
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
+      
       if (!sprite || sprite.p.isServerSide || 
           sprite.p.isDead || !_isSessionConnected) {
         // (Defensive) Remove interval because it is gone/not on the client side
         clearInterval(interval_updateServer);
       }
+
       Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
         entityType: 'PLAYER',
         spriteId: sprite.p.spriteId,
         p: sprite.p
       }});
+
     }, interval_updateServer_timeInterval);
   }
   // store sprite reference
@@ -553,7 +562,7 @@ var updateSessions = function(sessionsInfo){
   }
 }
 
-var initialization = function(){
+var setupEventListeners = function(){
 
   Q.input.on('join', function(data){
     console.log("join "+getJSON(data));
@@ -574,7 +583,7 @@ var initialization = function(){
     Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
 
-   Q.input.on('respawn', function(data){
+  Q.input.on('respawn', function(data){
     console.log("respawn "+getJSON(data));
 
     var sId = data.sessionId;
@@ -605,6 +614,7 @@ var initialization = function(){
 
     var sId = data.eventData.sessionId;
     sId = sId ? sId : sessionId; 
+
     if(!sId){
       console.log("SessionCast without sessionId");
       return;
@@ -620,6 +630,11 @@ var initialization = function(){
       return;
     }
 
+    if(!_isSessionConnected && data.eventName != 'join'){
+      console.log("Session disconnected, event ["+getJSON(data.eventName)+"] is not sent to session");
+      return;
+    }
+
     data.eventData['sessionId'] = sId;
     sendToApp(data.eventName, data.eventData);
   });
@@ -628,55 +643,86 @@ var initialization = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
-  Q.input.on('keydown', function(keyCode){
-    var e = {keyCode: keyCode};
-    var actionName;
-    if(!Q.input.keys[keyCode]) {
-      // unrecognized keyboard input
-      // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keydown: keycode is " + keyCode);
+
+  // Player inputs event listeners 
+  var actionDispatch = function(actionName) {
+    Q.input.on(actionName, function(){
+
+      if(!_isSessionConnected){
+        return;
+      }
+
+      var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER'
+      };
+
+      Q.input.trigger('sessionCast', {eventName:actionName, eventData: eData});
+    
+    });
+  };
+
+  each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
+
+  Q.input.on('displayScoreScreen', function(){
+    
+    if(!_isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
       return;
     }
-
-    actionName = Q.input.keys[keyCode];
-
-    var player = getPlayerSprite(selfId);
-    if(player){
-      player.inputs[actionName] = true;
-      player.trigger(actionName, e);
-    } else {
-      console.log("Cannot locate current player to perform keydown");
-    }
-
+    displayScoreScreen();
   });
 
-  Q.input.on('keyup', function(keyCode){
-    var e = {keyCode: keyCode};
-    var actionName;
-    if(!Q.input.keys[keyCode]) {
-      // unrecognized keyboard input
-      // refer to KEYBOARD_CONTROLS_PLAYER
-      console.log("Unrecognized keyup: keycode is " + keyCode);
+  Q.input.on('displayScoreScreenUp', function(){
+    
+    if(!_isSessionConnected){
+      // client side need to be connected to the server in order
+      // to show score screen
+      return;
+    }
+    hideScoreScreen();
+  });
+
+  Q.input.on('toggleNextElementUp', function(){
+
+    if(!_gameLoaded){
+      // client side need to be connected to the server in order
+      // to show score screen
       return;
     }
 
-    actionName = Q.input.keys[keyCode];
-
     var player = getPlayerSprite(selfId);
-    if(player){
-      player.inputs[actionName] = false;
-      player.trigger(actionName+"Up", e);
-    } else {
-      console.log("Cannot locate current player to perform keyup");
+    if(!player || player.p.toggleElementCooldown > 0){
+      // player is died or cannot located current player sprite
+      // player toggleElement is in cooldown
+      return;
     }
 
-  }); 
+    player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
+    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
+    player.p.element = nextElement;
+
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER'
+    };
+
+    Q.input.trigger('sessionCast', {eventName:'toggleNextElementUp', eventData: eData});
+  });
+
 
   // Event listener for firing
   Q.el.addEventListener('mouseup', function(e){
+
+    if(!_gameLoaded){
+      return;
+    }
+
     var player = getPlayerSprite(selfId);
-    if(!_isSessionConnected || !player.p.canFire || player.p.isDead
-        || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
+    if(!player || !player.p.canFire || player.p.isDead
+      || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
       return;
     }
 
@@ -717,14 +763,36 @@ var initialization = function(){
   });
 };
 
-// ## Loads welcome screen
-var loadWelcomeScreen = function(){
-
-  // background
+var resetDisplayScreen = function(){
+  // clear all screens
+  Q.clearStages();
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
+}
+
+var displayScoreScreen = function(){
+  hideScoreScreen();
+  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+};
+
+var hideScoreScreen = function(){
+  Q.clearStage(STAGE_SCORE);
+};
+
+// ## Loads welcome screen
+var displayWelcomeScreen = function(){
+  resetDisplayScreen();
 
   // character selection
   Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+};
+
+var displayGameScreen = function(level){
+  resetDisplayScreen();
+
+  // Load the level
+  Q.stageScene(level, STAGE_LEVEL);
+  // Viewport
+  Q.stage(STAGE_LEVEL).add("viewport");
 };
 
 // ## Loads the game state.
@@ -732,15 +800,10 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
-  //console.log("Cloning gamestate");
   gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
-  //console.log("Done cloning gamestate");
+  allSprites = clone(DEFAULT_SPRITES);
 
-  // clear welcome screen
-  Q.clearStage(STAGE_WELCOME);
-  
-  // Load the level
-  Q.stageScene(gameState.level, STAGE_LEVEL);
+  displayGameScreen(gameState.level);
   
   // Create and load all sprites
   var spritesToAdd = [];
@@ -770,9 +833,6 @@ var loadGameSession = function() {
 
   // load element selector
   Q.stageScene(SCENE_HUD, STAGE_HUD);
-
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
   
   _gameLoaded = true;
 }
@@ -802,22 +862,19 @@ socket.on('connected', function(data) {
   console.log("Connected as PLAYER "+selfId);
 
   updateSessions(s);
-  //console.log("Cloning defaultsprites");
-  allSprites = clone(DEFAULT_SPRITES);
-  //console.log("Done cloning defaultsprites");
 
   // setup Quintus event listeners
-  initialization();
+  setupEventListeners();
 
-  var interval_loadWelcomeScreen = setInterval(function() {
+  var interval_displayWelcomeScreen = setInterval(function() {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the welcome screen. This flag will will be set once assets have been loaded.
       
       // load welcome screen
-      loadWelcomeScreen();
+      displayWelcomeScreen();
 
       // Don't load a second time
-      clearInterval(interval_loadWelcomeScreen);
+      clearInterval(interval_displayWelcomeScreen);
     }
   }, 100);
 });
@@ -865,8 +922,10 @@ socket.on('joinSuccessful', function(data){
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
   var interval_loadGameSession = setInterval(function() {
+    
     // Only load the game after the clock is synchronized
     if (_clockSynchronized) {
+
       console.log("Clock synchronized with timestampOffset = " + timestampOffset);
       loadGameSession();
       clearInterval(interval_loadGameSession);
@@ -882,6 +941,7 @@ socket.on('synchronizeClocks', function(data) {
   var clientSendTime = data.clientSendTime;         // t0
   
   timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  
   _clockSynchronized = true;
 });
 
@@ -985,18 +1045,17 @@ socket.on('removeSprite', function(data){
 
 // sprite took damage
 socket.on('spriteTookDmg', function(data) {
+  
   console.log("Event: spriteTookDmg: data: " + getJSON(data));
+
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       shooterEntityType = data.shooter.entityType,
       shooterId = data.shooter.spriteId;
-      
-  if (victimEntityType == 'PLAYER' && victimId != selfId) {
-    // Not myself, so this is an ACTOR
-    victimEntityType = 'ACTOR';
-  }
-      
+
+  // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
   var sprite = getSprite(victimEntityType, victimId);
+
   if (typeof sprite === 'undefined') {
     console.log("Error in spriteTookDmg socket event: " + victimEntityType + " " + victimId + " does not exist");
     return;
@@ -1012,12 +1071,7 @@ socket.on('spriteDied', function(data) {
       killerEntityType = data.killer.entityType,
       killerId = data.killer.spriteId;
   
-  // getSprite will convert it
-  // if (victimEntityType == 'PLAYER' && victimId != selfId) {
-  //   // Not myself, so this is an ACTOR
-  //   victimEntityType = 'ACTOR';
-  // }
-  
+  // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
   var sprite = getSprite(victimEntityType, victimId);
   if (!sprite) {
     console.log("Error in spriteDied socket event: " + victimEntityType + " " + victimId + " does not exist");
@@ -1032,9 +1086,8 @@ socket.on('spriteDied', function(data) {
 socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
-    // clear other screens
-  Q.clearStage(STAGE_LEVEL);
-  Q.clearStage(STAGE_HUD);
+  // ask player to join a session again
+  displayWelcomeScreen();
 
   _isSessionConnected = false;
 });
@@ -1050,6 +1103,7 @@ socket.on('playerDisconnected', function(data) {
 // when app.js is disconnected
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
+
   _isSessionConnected = false;
   Q.pauseGame();
 });
