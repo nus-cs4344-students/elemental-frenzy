@@ -434,9 +434,11 @@ Q.scene(SCENE_HUD, function(stage) {
   var scalingStep = 0.1;
   var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
                                                          y: 0,
-                                                         angleStep: 0,
                                                          activeElement: element,
-                                                         targetAngle: 0
+                                                         targetAngle: 0,
+                                                         angleStep: 0,
+                                                         angleShifted: 0,
+                                                         angleNeeded: 0
                                                         }));
 
   selector.on('step', function(dt){
@@ -450,20 +452,32 @@ Q.scene(SCENE_HUD, function(stage) {
     }
 
     var a = this.p.angle;
-    var aStep = this.p.angleStep;
     var tAngle = this.p.targetAngle;
+    var aNeeded = this.p.angleNeeded;
+    var aShifted = this.p.angleShifted;
 
-     if(aStep > 0 && Math.abs(a - tAngle) > 5){
+    var aStep = this.p.angleStep;
+    
+    if(aNeeded >= aShifted){
 
-        var aS = aStep * dt;
-        var nextAngle = a - aS;
-
-        if(nextAngle<0){
-          nextAngle = 360 + nextAngle;
-        }
-
-        this.p.angle = Math.max(nextAngle % 360, 0);
+      // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
+      
+      var aS = aStep * dt;
+      this.p.angleShifted += aS;
+      if(this.p.angleShifted > this.p.angleNeeded){
+        aS = this.p.angleNeeded - (this.p.angleShifted - aS);
+        this.p.angleShifted = this.p.angleNeeded;
       }
+      var nextAngle = a - aS;
+
+      if(nextAngle<0){
+        nextAngle = 360 + nextAngle;
+      }
+
+      // console.log('next angle '+nextAngle);
+      var nAngle = Math.max(nextAngle % 360, 0);
+      this.p.angle = nAngle;
+    }
   });
 
   for(var eId in ELEBALL_ELEMENTNAMES){
@@ -520,10 +534,20 @@ Q.scene(SCENE_HUD, function(stage) {
       }
     }
 
-    var targetAngle = ((ELEBALL_ELEMENTNAMES.length -nextElement) *90 )% 360;
+    var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
+    var angleNeeded = selector.p.angle - targetAngle;
+    
+    if(angleNeeded < 0){
+      angleNeeded = 360 + angleNeeded;
+    }
+
     selector.p.targetAngle = targetAngle;
-    selector.p.angleStep = Math.abs(targetAngle - selector.p.angle)/0.3;
+    selector.p.angleNeeded = angleNeeded;
+    selector.p.angleStep = angleNeeded/0.3;
+    selector.p.angleShifted = 0;
     selector.p.activeElement = nextElement;
+
+    // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
   };
 
   updateEleSelector(element);
