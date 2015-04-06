@@ -176,11 +176,7 @@ Q.Sprite.extend("Player",{
       return;
     }
     
-    var e = data.e,
-        delayToInsert = data.delayToInsert;
-        
-    delayToInsert = delayToInsert || 0; // milliseconds
-    
+    var e = data.e;    
     
     //console.log("cooldown is " + this.p.cooldown);
 
@@ -229,7 +225,7 @@ Q.Sprite.extend("Player",{
                               vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
     };
 
-    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties, delayToInsert);
+    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties);
 
     // fire ball location offset from player
     var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
