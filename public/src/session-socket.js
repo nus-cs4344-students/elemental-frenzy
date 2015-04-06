@@ -70,6 +70,7 @@ var updateAvgRttOfPlayer = function(oneWayDelay, playerId) {
     avgRttOfPlayers[playerId] = 0;
   }
   avgRttOfPlayers[playerId] = (rttAlpha * avgRttOfPlayers[playerId]) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  //console.log("For player " + playerId + ": sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRttOfPlayer(playerId));
   return avgRttOfPlayers[playerId];
 }
 
