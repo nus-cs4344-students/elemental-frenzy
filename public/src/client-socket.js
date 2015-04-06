@@ -44,6 +44,9 @@ var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
 var timestampOffset;
+var timestampOffsetSum = 0;         // used so as to allow multiple synchronization packets
+var numSyncPacketsReceived = 0;     //
+var NUM_SYNC_PACKETS_TOSEND = 3;    // send this many packets when synchronizeClocks() is called
 
 // RTT-related
 var avgRtt = 0;
@@ -941,10 +944,7 @@ socket.on('joinSuccessful', function(data){
   _isSessionConnected = true;
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
-  Q.input.trigger('sessionCast', {
-    eventName: 'synchronizeClocks',
-    eventData: {playerId: selfId}
-  });
+  synchronizeClocksWithServer();
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
@@ -960,6 +960,17 @@ socket.on('joinSuccessful', function(data){
   }, 100);
 });
 
+var synchronizeClocksWithServer = function() {
+  timestampOffsetSum = 0;     
+  numSyncPacketsReceived = 0;
+  for (var i = NUM_SYNC_PACKETS_TOSEND; i >= 1; i--) {
+    Q.input.trigger('sessionCast', {
+      eventName: 'synchronizeClocks',
+      eventData: {playerId: selfId, packetNum: i}
+    });
+  }
+}
+
 socket.on('synchronizeClocks', function(data) {
   // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
   var clientReceiveTime = getCurrentTime();         // t3
@@ -967,9 +978,15 @@ socket.on('synchronizeClocks', function(data) {
   var sessionReceiveTime = data.sessionReceiveTime; // t1
   var clientSendTime = data.clientSendTime;         // t0
   
-  timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  numSyncPacketsReceived++;
   
-  _clockSynchronized = true;
+  timestampOffsetSum += ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  
+  var packetNum = data.packetNum; // last synchronization packet is 1
+  if (packetNum == 1 || numSyncPacketsReceived == NUM_SYNC_PACKETS_TOSEND) {
+    timestampOffset = timestampOffsetSum / numSyncPacketsReceived;
+    _clockSynchronized = true;
+  }
 });
 
 // Failed to join a session
