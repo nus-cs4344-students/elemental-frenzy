@@ -443,6 +443,17 @@ var removeSprite = function(entityType, id){
   }
 
   console.log("Removed sprite " + eType + " id " + spriteId);
+  
+  if (eType == 'PLAYERELEBALL') {
+    // Only the server chooses to destroy eleballs, so it must tell all players to remove the sprite
+    Q.input.trigger('broadcastAll', {eventName:'removeSprite', eventData: {
+        p: {
+          entityType: eType,
+          spriteId: spriteId
+        }
+      }
+     });
+  }
 
   var sDel = allSprites[eType][spriteId];
   sDel.destroy();

@@ -356,13 +356,14 @@ io.on('connection', function (socket) {
         }
         break;
       }
+      case 'removeSprite': console.log("REMOVESPRITE: " + getJSON(data));
       case 'joinSuccessful':
       case 'joinFailed':
       case 'synchronizeClocks':
       
       case 'addSprite':
       case 'updateSprite':
-      case 'removeSprite':
+      
 
       case 'updateEnemy':
       

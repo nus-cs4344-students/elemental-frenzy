@@ -185,10 +185,15 @@ Q.component('2dEleball', {
   //  - Case 2: this element of index i destroys the other element of index j
   //        and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
   //  - Case 3: Both elements pass through each other if |i-j| == 2
-  collision: function(col,last) {
+  collision: function(col,last) {    
     // Don't collide with the shooter of the eleball
     if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId) {
       // console.log("Eleball passing object!!!");
+      return;
+    }
+    
+    // Don't destroy eleballs on hit with enemy players if we are NOT the server (only the server decides this)
+    if ( !this.entity.p.isServerSide && col.obj.isA('Actor') ) {
       return;
     }
     
@@ -205,9 +210,6 @@ Q.component('2dEleball', {
         console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
-        if(entity.selfDestruct){
-          clearTimeout(entity.selfDestruct);
-        }
         removeSprite(entity.p.entityType, entity.p.spriteId);
 
         // Play sound
@@ -219,9 +221,6 @@ Q.component('2dEleball', {
         console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys " + ELEBALL_ELEMENTNAMES[j]);
         
-        if(other.selfDestruct){
-          clearTimeout(other.selfDestruct);
-        }
         removeSprite(other.p.entityType, other.p.spriteId);
 
         // Play sound
@@ -237,9 +236,6 @@ Q.component('2dEleball', {
       console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
-      if(entity.selfDestruct){
-        clearTimeout(entity.selfDestruct);
-      }
       removeSprite(entity.p.entityType, entity.p.spriteId);
     }
   },
