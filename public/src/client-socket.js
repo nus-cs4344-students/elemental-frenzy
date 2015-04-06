@@ -62,6 +62,7 @@ var updateAvgRtt = function(oneWayDelay) {
   }
   
   avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + avgRtt + " getAvgRtt() = " + getAvgRtt());
   return avgRtt;
 }
 
@@ -748,6 +749,7 @@ var setupEventListeners = function(){
     var player = getPlayerSprite(selfId);
     if(!player || !player.p.canFire || player.p.isDead
       || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
+        //console.log("cannot shoot canFire? " + player.p.canFire);
       return;
     }
 
@@ -1002,12 +1004,9 @@ socket.on('addSprite', function(data){
 
   if (eType == 'PLAYERELEBALL' && props.shooterId != selfId) {
     // not my eleball! Use local-perception filter
-    console.log("Before LPF: eleball x " + props.x + " y " + props.y);
-    console.log("Applying LPF: eleball x " + props.x + " + " + props.vx + " * " + getAvgRtt() + "/1000" +
-                " eleball y " + props.y + " + " + props.vy + " * " + getAvgRtt() + "/1000");
-    props.x += props.vx * (getAvgRtt() / 1000);
-    props.y += props.vy * (getAvgRtt() / 1000);
-    console.log("After LPF: eleball x " + props.x + " y " + props.y);
+    props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
+    props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
+    props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
   }
   addSprite(eType, spriteId, props);
 });
