@@ -50,6 +50,42 @@ var allSprites;
 var spriteId = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 
+// RTT-related
+var avgRttOfPlayers = [];
+var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+
+// Updates the average RTT with the new sample oneWayDelay using a weighted average
+var updateAvgRttOfPlayer = function(oneWayDelay, playerId) {
+  if (typeof oneWayDelay === 'undefined') {
+    console.log("Error in updateAvgRttOfPlayer(): oneWayDelay is undefined");
+    return;
+  }
+  if (typeof playerId === 'undefined') {
+    console.log("Error in updateAvgRttOfPlayer(): playerId is undefined");
+    return;
+  }
+  
+  if (typeof avgRttOfPlayers[playerId] === 'undefined') {
+    // initialize
+    avgRttOfPlayers[playerId] = 0;
+  }
+  avgRttOfPlayers[playerId] = (rttAlpha * avgRttOfPlayers[playerId]) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  return avgRttOfPlayers[playerId];
+}
+
+var getAvgRttOfPlayer = function(playerId) {
+  if (typeof playerId === 'undefined') {
+    console.log("Error in getAvgRttOfPlayer(): playerId is undefined");
+    return;
+  }
+  
+  if (typeof avgRttOfPlayers[playerId] === 'undefined') {
+    // initialize
+    avgRttOfPlayers[playerId] = 0;
+  }
+  return avgRttOfPlayers[playerId];
+}
+
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
   ACTOR: function(p) { return new Q.Actor(p); },
@@ -897,6 +933,20 @@ socket.on('disconnect', function(){
 // Authoritative message about the movement of the sprite from a client
 // Session must obey
 socket.on('authoritativeSpriteUpdate', function(data) {
+  if ( !checkGoodSprite(data.entityType, data.spriteId, 'authoritativeSpriteUpdate socket event')) {
+    return;
+  }
+  
+  if (data.entityType == 'PLAYER') {
+    // Update average RTT for that player
+    var receivedTimeStamp = data.timestamp;
+    var curTimeStamp = (new Date()).getTime();
+    var oneWayDelay = curTimeStamp - receivedTimeStamp;
+    updateAvgRttOfPlayer(oneWayDelay, data.spriteId);
+    
+    //console.log("aurhoritativeSpriteUpdate: avgRtt of player " + data.spriteId + " is " + getAvgRttOfPlayer(data.spriteId));
+  }
+  
   updateSprite(data.entityType, data.spriteId, data.p);
 });
 

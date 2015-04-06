@@ -44,9 +44,30 @@ var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
 var timestampOffset;
+
+// RTT-related
+var avgRtt = 0;
+var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+
+// Global flags for synchronization
 var _isSessionConnected = false;
 var _clockSynchronized = false;
 var _gameLoaded = false;
+
+// Updates the average RTT with the new sample oneWayDelay using a weighted average
+var updateAvgRtt = function(oneWayDelay) {
+  if (typeof oneWayDelay === 'undefined') {
+    console.log("Error in updateAvgRtt(): oneWayDelay is undefined");
+    return;
+  }
+  
+  avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  return avgRtt;
+}
+
+var getAvgRtt = function() {
+  return avgRtt;
+}
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -982,8 +1003,14 @@ socket.on('addSprite', function(data){
 socket.on('updateSprite', function(data){
   var receivedTimeStamp = data.timestamp;
   var curTimeStamp = (new Date()).getTime();
+  var oneWayDelay = curTimeStamp - receivedTimeStamp;
+  
+  // Update rtt
+  updateAvgRtt(oneWayDelay);  
+  //console.log("aurhoritativeSpriteUpdate: avgRtt to the session is " + getAvgRtt());
+  
   //console.log("Message: updateSprite: timeStamp: ");
-  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
+  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
   if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
     return;
   }
