@@ -66,6 +66,10 @@ var updateAvgRtt = function(oneWayDelay) {
 }
 
 var getAvgRtt = function() {
+  if ( !_clockSynchronized) { // cannot accurately get the avgRtt
+    return 0;
+  }
+  
   return avgRtt;
 }
 
@@ -996,18 +1000,29 @@ socket.on('addSprite', function(data){
     return;
   }
 
+  if (eType == 'PLAYERELEBALL' && props.shooterId != selfId) {
+    // not my eleball! Use local-perception filter
+    console.log("Before LPF: eleball x " + props.x + " y " + props.y);
+    console.log("Applying LPF: eleball x " + props.x + " + " + props.vx + " * " + getAvgRtt() + "/1000" +
+                " eleball y " + props.y + " + " + props.vy + " * " + getAvgRtt() + "/1000");
+    props.x += props.vx * (getAvgRtt() / 1000);
+    props.y += props.vy * (getAvgRtt() / 1000);
+    console.log("After LPF: eleball x " + props.x + " y " + props.y);
+  }
   addSprite(eType, spriteId, props);
 });
 
 // update sprite
 socket.on('updateSprite', function(data){
-  var receivedTimeStamp = data.timestamp;
-  var curTimeStamp = (new Date()).getTime();
-  var oneWayDelay = curTimeStamp - receivedTimeStamp;
-  
-  // Update rtt
-  updateAvgRtt(oneWayDelay);  
-  //console.log("aurhoritativeSpriteUpdate: avgRtt to the session is " + getAvgRtt());
+  if (_clockSynchronized) {
+    var receivedTimeStamp = data.timestamp;
+    var curTimeStamp = (new Date()).getTime() + timestampOffset;
+    var oneWayDelay = curTimeStamp - receivedTimeStamp;
+    
+    // Update rtt
+    updateAvgRtt(oneWayDelay);  
+    //console.log("aurhoritativeSpriteUpdate: avgRtt to the session is " + getAvgRtt());
+  }
   
   //console.log("Message: updateSprite: timeStamp: ");
   //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
