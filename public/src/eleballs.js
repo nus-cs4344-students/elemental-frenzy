@@ -59,7 +59,7 @@ Q.Sprite.extend("Eleball", {
     // Set bounding box smaller
     this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 
-    this.add("2dEleball, animation");
+    this.add("2dEleball, animation, localPerceptionFilter");
     
     this.play("fire");
 
@@ -68,7 +68,9 @@ Q.Sprite.extend("Eleball", {
     // Destroy itself after 10 seconds
     var that = this;
     this.selfDestruct = setTimeout(function() {
-      removeSprite(that.p.entityType, that.p.spriteId);
+      if (that) {
+        removeSprite(that.p.entityType, that.p.spriteId);
+      }
     }, 10000);
     
     // Play fire sound when eleball is launched
@@ -97,8 +99,6 @@ Q.Eleball.extend("PlayerEleball", {
       shooterEntityType: 'PLAYER',
       shooterEntityId: -1
     });
-    
-    this.on('destroyed');
   },
   
   // Player eleballs only damage enemies
@@ -110,10 +110,6 @@ Q.Eleball.extend("PlayerEleball", {
       collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
     }
     this._super(collision);
-  },
-  
-  destroyed: function() {
-    // no need to send destoryed message to everyone as it will self destruct after 10 seconds
   }
 });
 
@@ -131,8 +127,6 @@ Q.Eleball.extend("EnemyEleball", {
       dmg : ENEMY_ELEBALL_DEFAULT_DMG,
       collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
     });  
-    
-    this.on('destroyed');
   },
   
   // Enemy eleballs only damage players
@@ -141,10 +135,6 @@ Q.Eleball.extend("EnemyEleball", {
       collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
     }
     this._super(collision);
-  },
-  
-  destroyed: function() {
-    // no need to send destoryed message to everyone as it will self destruct after 10 seconds
   }
 });
 

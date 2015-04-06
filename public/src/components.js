@@ -10,6 +10,9 @@ var MANABAR_WIDTH_SF = 1.5;
 var MANABAR_HEIGHT_SF = 0.2;
 var MANABAR_HEIGHT_OFFSET = 2.0;
 
+// ## localPerceptionFilter constants
+var LPF_TOTALTIME = 0.5; // in seconds
+
 var updateInterval = 100;
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -158,6 +161,37 @@ Q.component('2dLadder', {
   }
 });
 
+// Implements a local perception filter using 3 variables:
+// 1. lpfNeededX - (unchanging) the total extra distance in the x-axis that needs to be covered
+// 2. lpfNeededY - (unchanging) the total extra distance in the y-axis that needs to be covered
+// 3. lptTimeLeft - (starts at LPF_TOTALTIME and decreases to 0) amount of time left to finish travelling the extra distance needed
+Q.component('localPerceptionFilter', {
+  added: function() {
+    var entity = this.entity;
+    Q._defaults(entity.p, {
+      lpfNeededX: 0,
+      lpfNeededY: 0,
+      lpfTimeLeft: LPF_TOTALTIME
+    });
+    entity.on('step', this, "step");
+  },
+  
+  step: function(dt) {
+    var entity = this.entity;
+    if (entity.p.lpfTimeLeft > 0) {
+      
+      var t = Math.min(entity.p.lpfTimeLeft, dt);
+      entity.p.lpfTimeLeft -= t;
+      
+      var dx = entity.p.lpfNeededX * t;
+      var dy = entity.p.lpfNeededY * t;
+      
+      entity.p.x += dx;
+      entity.p.y += dy;
+    }
+  }
+});
+
 // ## 2dEleball component that is an extension of the '2d' component provided by Quintus (in Quintus_2d.js)
 //   Modifies what happens on collision with another eleball
 Q.component('2dEleball', {
@@ -185,10 +219,15 @@ Q.component('2dEleball', {
   //  - Case 2: this element of index i destroys the other element of index j
   //        and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
   //  - Case 3: Both elements pass through each other if |i-j| == 2
-  collision: function(col,last) {
+  collision: function(col,last) {    
     // Don't collide with the shooter of the eleball
     if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId) {
       // console.log("Eleball passing object!!!");
+      return;
+    }
+    
+    // Don't destroy eleballs on hit with enemy players if we are NOT the server (only the server decides this)
+    if ( !this.entity.p.isServerSide && col.obj.isA('Actor') ) {
       return;
     }
     
@@ -205,9 +244,6 @@ Q.component('2dEleball', {
         console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
-        if(entity.selfDestruct){
-          clearTimeout(entity.selfDestruct);
-        }
         removeSprite(entity.p.entityType, entity.p.spriteId);
 
         // Play sound
@@ -219,9 +255,6 @@ Q.component('2dEleball', {
         console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
               + " destroys " + ELEBALL_ELEMENTNAMES[j]);
         
-        if(other.selfDestruct){
-          clearTimeout(other.selfDestruct);
-        }
         removeSprite(other.p.entityType, other.p.spriteId);
 
         // Play sound
@@ -237,9 +270,6 @@ Q.component('2dEleball', {
       console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
-      if(entity.selfDestruct){
-        clearTimeout(entity.selfDestruct);
-      }
       removeSprite(entity.p.entityType, entity.p.spriteId);
     }
   },

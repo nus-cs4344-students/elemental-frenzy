@@ -26,8 +26,10 @@ var playerId = 0;
 var sessionId = 0;
 
 // Artificial delay
-var delay_s2p = 200;
-var delay_p2s = 200;
+var delay_s2p = 200;    // delay in ms
+var delay_p2s = 200;    //
+var delayVar_s2p = 0.2; // delay variance, in the range [0, 1] (percentage)
+var delayVar_p2s = 0.2; //
 
 // ## Helper functions
 var getSocketOfPlayerId = function(playerId) {
@@ -179,11 +181,14 @@ var sendToPlayer = function(playerId, eventName, eventData) {
   }
   
   // console.log("Sending "+getJSON(eventData)+" of event[ "+eventName+" ] to player " + playerId);
+  var artificialDelayVariance = (delay_s2p * (delayVar_s2p * Math.random()));
+  artificialDelayVariance = (Math.random() < 0.5 ? -artificialDelayVariance : artificialDelayVariance);
+  var artificialS2pDelay = delay_s2p + artificialDelayVariance;
   setTimeout(function() {
     if (getSocketOfPlayerId(playerId)) {
       getSocketOfPlayerId(playerId).emit(eventName, eventData);
     }
-  }, delay_s2p);
+  }, artificialS2pDelay);
   return true;
 };
 
@@ -224,11 +229,14 @@ var sendToSession = function(sessionId, eventName, eventData) {
   }
   
   // console.log("Sending "+getJSON(eventData)+" of event["+eventName+"] to session " + sessionId);
+  var artificialDelayVariance = (delay_p2s * (delayVar_p2s * Math.random()));
+  artificialDelayVariance = (Math.random() < 0.5 ? -artificialDelayVariance : artificialDelayVariance);
+  var artificialP2sDelay = delay_p2s + artificialDelayVariance;
   setTimeout(function() {
     if (getSocketOfSessionId(sessionId)) {
       getSocketOfSessionId(sessionId).emit(eventName, eventData);
     }
-  }, delay_p2s);
+  }, artificialP2sDelay);
   return true;
 };
 
@@ -356,13 +364,14 @@ io.on('connection', function (socket) {
         }
         break;
       }
+      case 'removeSprite': console.log("REMOVESPRITE: " + getJSON(data));
       case 'joinSuccessful':
       case 'joinFailed':
       case 'synchronizeClocks':
       
       case 'addSprite':
       case 'updateSprite':
-      case 'removeSprite':
+      
 
       case 'updateEnemy':
       

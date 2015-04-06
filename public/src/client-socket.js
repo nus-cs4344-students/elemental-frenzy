@@ -44,9 +44,38 @@ var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
 var timestampOffset;
+var timestampOffsetSum = 0;         // used so as to allow multiple synchronization packets
+var numSyncPacketsReceived = 0;     //
+var NUM_SYNC_PACKETS_TOSEND = 3;    // send this many packets when synchronizeClocks() is called
+
+// RTT-related
+var avgRtt = 0;
+var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+
+// Global flags for synchronization
 var _isSessionConnected = false;
 var _clockSynchronized = false;
 var _gameLoaded = false;
+
+// Updates the average RTT with the new sample oneWayDelay using a weighted average
+var updateAvgRtt = function(oneWayDelay) {
+  if (typeof oneWayDelay === 'undefined') {
+    console.log("Error in updateAvgRtt(): oneWayDelay is undefined");
+    return;
+  }
+  
+  avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRtt());
+  return avgRtt;
+}
+
+var getAvgRtt = function() {
+  if ( !_clockSynchronized) { // cannot accurately get the avgRtt
+    return 0;
+  }
+  
+  return avgRtt;
+}
 
 var creates = {
   PLAYER: function(p) { return new Q.Player(p); },
@@ -724,6 +753,7 @@ var setupEventListeners = function(){
     var player = getPlayerSprite(selfId);
     if(!player || !player.p.canFire || player.p.isDead
       || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
+        //console.log("cannot shoot canFire? " + player.p.canFire);
       return;
     }
 
@@ -957,10 +987,7 @@ socket.on('joinSuccessful', function(data){
   _isSessionConnected = true;
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
-  Q.input.trigger('sessionCast', {
-    eventName: 'synchronizeClocks',
-    eventData: {playerId: selfId}
-  });
+  synchronizeClocksWithServer();
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
@@ -976,6 +1003,17 @@ socket.on('joinSuccessful', function(data){
   }, 100);
 });
 
+var synchronizeClocksWithServer = function() {
+  timestampOffsetSum = 0;     
+  numSyncPacketsReceived = 0;
+  for (var i = NUM_SYNC_PACKETS_TOSEND; i >= 1; i--) {
+    Q.input.trigger('sessionCast', {
+      eventName: 'synchronizeClocks',
+      eventData: {playerId: selfId, packetNum: i}
+    });
+  }
+}
+
 socket.on('synchronizeClocks', function(data) {
   // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
   var clientReceiveTime = getCurrentTime();         // t3
@@ -983,9 +1021,15 @@ socket.on('synchronizeClocks', function(data) {
   var sessionReceiveTime = data.sessionReceiveTime; // t1
   var clientSendTime = data.clientSendTime;         // t0
   
-  timestampOffset = ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  numSyncPacketsReceived++;
   
-  _clockSynchronized = true;
+  timestampOffsetSum += ((sessionReceiveTime - clientSendTime) + (sessionSendTime - clientReceiveTime)) / 2;
+  
+  var packetNum = data.packetNum; // last synchronization packet is 1
+  if (packetNum == 1 || numSyncPacketsReceived == NUM_SYNC_PACKETS_TOSEND) {
+    timestampOffset = timestampOffsetSum / numSyncPacketsReceived;
+    _clockSynchronized = true;
+  }
 });
 
 // Failed to join a session
@@ -1018,15 +1062,29 @@ socket.on('addSprite', function(data){
     return;
   }
 
+  if (eType == 'PLAYERELEBALL' && props.shooterId != selfId) {
+    // not my eleball! Use local-perception filter
+    props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
+    props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
+    props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+  }
   addSprite(eType, spriteId, props);
 });
 
 // update sprite
 socket.on('updateSprite', function(data){
-  var receivedTimeStamp = data.timestamp;
-  var curTimeStamp = (new Date()).getTime();
+  if (_clockSynchronized) {
+    var receivedTimeStamp = data.timestamp;
+    var curTimeStamp = (new Date()).getTime() + timestampOffset;
+    var oneWayDelay = curTimeStamp - receivedTimeStamp;
+    
+    // Update rtt
+    updateAvgRtt(oneWayDelay);  
+    //console.log("aurhoritativeSpriteUpdate: avgRtt to the session is " + getAvgRtt());
+  }
+  
   //console.log("Message: updateSprite: timeStamp: ");
-  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " difference: " + (curTimeStamp - receivedTimeStamp));
+  //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
   if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
     return;
   }

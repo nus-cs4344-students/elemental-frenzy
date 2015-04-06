@@ -23,6 +23,7 @@ var PLAYER_TAKEDAMAGE_ANIMATION_TIME = 0.5;
 var PLAYER_RUN_STILL_ANIMATION_TIME = 0.5;
 var PLAYER_RUN_ANIMATION_TIME = 0.5;
 
+var PLAYER_DEFAULT_FIRING_COOLDOWN = PLAYER_FIRE_ANIMATION_TIME;
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
@@ -66,6 +67,7 @@ Q.Sprite.extend("Player",{
       ladderX: 0,
       takeDamageCooldown: 0,
       toggleElementCooldown: 0,
+      firingCooldown: 0,
       update: true//,
       //updateCountdown: 1.0 // countdown before the client side uses the update from the server side, to reduce perceived lag
     });
@@ -104,6 +106,11 @@ Q.Sprite.extend("Player",{
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
    
+    // Normally, canFire will be set to true in the fired function, but this is just for precaution
+    if (this.p.firingCooldown <= 0) {
+      this.p.canFire = true;
+    }
+    
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
     if (this.p.isDead || !this.p.canFire ||
         this.p.currentMana < this.p.manaPerShot) {
@@ -113,6 +120,7 @@ Q.Sprite.extend("Player",{
     
     // Will be set to true in the fired function
     this.p.canFire = false;
+    this.p.firingCooldown = PLAYER_DEFAULT_FIRING_COOLDOWN;
 
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
@@ -176,11 +184,7 @@ Q.Sprite.extend("Player",{
       return;
     }
     
-    var e = data.e,
-        delayToInsert = data.delayToInsert;
-        
-    delayToInsert = delayToInsert || 0; // milliseconds
-    
+    var e = data.e;    
     
     //console.log("cooldown is " + this.p.cooldown);
 
@@ -229,7 +233,7 @@ Q.Sprite.extend("Player",{
                               vy : ELEBALL_DEFAULT_VY * Math.sin(angleRad)
     };
 
-    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties, delayToInsert);
+    var eleball = addPlayerEleballSprite(getNextSpriteId(), eleballProperties);
 
     // fire ball location offset from player
     var ballToPlayerY = Math.abs((clonedProps.h/2 + eleball.p.h/2) * Math.sin(angleRad)) * ELEBALL_PLAYER_SF;
@@ -359,6 +363,8 @@ Q.Sprite.extend("Player",{
       clearInterval(this.takeDamageIntervalId);
       this.takeDamageIntervalId = -1;
     }
+    
+    this.p.firingCooldown -= dt;
   
     // Update countdown
     //this.p.updateCountdown -= dt;
