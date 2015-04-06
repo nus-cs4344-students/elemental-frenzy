@@ -107,6 +107,28 @@ var clone = function(item){
   }
 };
 
+function isCyclic (obj) {
+  var seenObjects = [];
+
+  function detect (obj) {
+    if (obj && typeof obj === 'object') {
+      if (seenObjects.indexOf(obj) !== -1) {
+        return true;
+      }
+      seenObjects.push(obj);
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && detect(obj[key])) {
+          console.log(obj, 'cycle at ' + key);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return detect(obj);
+}
+
 var getNextSpriteId = function(){
   return ++spriteId;
 }
@@ -743,7 +765,12 @@ var sendToApp = function(eventName, eventData){
     console.log("Session trying to send to App without event data");
     return;
   }
-
+  
+  if(isCyclic(eventData)){
+    console.log("Detected cyclic event "+eventName);
+    return;
+  }
+  
   eventData.timestamp = (new Date()).getTime();
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };

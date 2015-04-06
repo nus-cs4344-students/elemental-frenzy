@@ -63,7 +63,8 @@ var Q = window.Q
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
         // And turn on default input controls and touch input (for UI)
-        .touch()
+        .touch() // to user buttom keyboard, must comment out .controls()
+        // .controls(true) // to use joypad, must comment out .touch()
         .enableSound();
 
 // ## Asset Loading and Game Launch
@@ -97,7 +98,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   // console.log('Asset loaded');
 
   require([ 'keyboard-controls',
-            'components', 
+            'components',
             'eleballs', 
             'player',
             'actor',
@@ -107,9 +108,10 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
             'helper-functions',
             'game-state',
             'scenes'], function(){
-    
+
     Q.input.keyboardControls(KEYBOARD_CONTROLS_PLAYER);
     Q.input.touchControls({controls: TOUCH_CONTROLS_PLAYER});
+
 
     _assetsLoaded = true;
   });

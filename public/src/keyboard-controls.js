@@ -19,17 +19,20 @@ var TOUCH_CONTROLS_PLAYER = [
   ['left','<' ],
   ['right','>' ],
   [],  // use an empty array as a spacer
-  ['up','up'],
-  ['toggleNextElement', 'next']
+  [],
+  ['up','^'],
+  ['toggleNextElement', 'next'],
+  ['displayScoreScreen', 'score']
 ];
 
 var TOUCH_CONTROLS_SESSION = [ 
-  ['left','<' ],
-  ['right','>' ],
-  ['up','up'],
-  ['down','down'],
+  ['server_left','<' ],
+  ['server_right','>' ],
+  ['server_up','^'],
+  ['server_down','v'],
   ['toggleFollow', 'tf'],
-  ['stopFollow', 'sf']
+  ['stopFollow', 'sf'],
+  ['displayScoreScreen', 'score']
 ];
 
 var KEYBOARD_CONTROLS_SESSION = {
