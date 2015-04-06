@@ -13,6 +13,8 @@ var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
+var STAGE_NOTIFICATION = 10;
+var SCENE_NOTIFICATION = 'notificationScreen';
 
 
 // ## UI constants
@@ -37,6 +39,16 @@ var WEIGHT_TITLE = 800;
 var WEIGHT_BOLD = 600;
 var WEIGHT_NORMAL =  200;
 
+var SIZE_TITLE = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
+SIZE_TITLE -= SIZE_TITLE%2;
+var SIZE_BOLD = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
+SIZE_BOLD -= SIZE_BOLD%2;
+var SIZE_NORMAL = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
+SIZE_NORMAL -= SIZE_NORMAL%2;
+
+var FONT_BOLD = WEIGHT_BOLD +' '+SIZE_BOLD+'px '+FONT_FAMILY;
+var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
+
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -46,24 +58,11 @@ Q.scene(SCENE_WELCOME,function(stage) {
     welcomeSessionSelected = undefined;
   }
 
-  var titleSize = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
-  titleSize -= titleSize%2;
-  var boldSize = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
-  boldSize -= boldSize%2;
-  var normalSize = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
-  normalSize -= normalSize%2;
-
-  var boldFont = WEIGHT_BOLD +' '+boldSize+'px '+FONT_FAMILY;
-  var normalFont = WEIGHT_NORMAL+' '+normalSize+'px '+FONT_FAMILY;
- 
-
-  console.log(boldFont);
-  console.log(normalFont);
-
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
                                             weight: WEIGHT_TITLE,
-                                            size: titleSize,
+                                            size: SIZE_TITLE,
+                                            font: FONT_FAMILY,
                                             align: 'center',
                                             color: 'red',
                                             label: "Elemental Frenzy"
@@ -79,7 +78,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   w: Q.width/10,
                                                   h: Q.height/20,
                                                   label: 'Join',
-                                                  font: boldFont,
+                                                  font: FONT_BOLD,
                                                   fontColor: 'black'
                                                 }));
 
@@ -169,7 +168,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                     w: sSpriteW,
                                     h: sSpriteH,
                                     label: sLabel,
-                                    font: normalFont,
+                                    font: FONT_NORMAL,
                                     fontColor:  isFull ? 'red' : 'black',
                                     sessionId: sInfo.sessionId,
                                     isFull: isFull
@@ -182,7 +181,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
                                                   y:sessionsSection.p.y - 4*sessionsSection.p.h/9,
                                                   weight: WEIGHT_BOLD,
-                                                  size: boldSize,
+                                                  size: SIZE_BOLD,
+                                                  font: FONT_FAMILY,
                                                   align: 'center',
                                                   color: 'black',
                                                   label: "Please choose a session to join"
@@ -206,7 +206,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               w: 3*sessionsSection.p.w/5,
                                               h: 2*sessionsSection.p.h/19,
                                               label: 'No session is avaiable at the moment',
-                                              font: normalFont,
+                                              font: FONT_NORMAL,
                                               fontColor: 'black',
                                               buttonId: numSession
                                             }));
@@ -247,7 +247,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
     nameSprites[numChar] = new Q.UI.Text({ x:0,
                                     y: Math.max(20, Q.height/20),
                                     weight: WEIGHT_NORMAL,
-                                    size: normalSize,
+                                    size: SIZE_NORMAL,
+                                    font: FONT_FAMILY,
                                     align: 'center',
                                     color: PLAYER_NAME_COLORS[numChar],
                                     label: PLAYER_NAMES[numChar]
@@ -260,7 +261,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var choicecharacterSprites = stage.insert(new Q.UI.Text({ x:characterSection.p.x,
                                                             y:characterSection.p.y - 3*characterSection.p.h/7,
                                                             weight: WEIGHT_BOLD,
-                                                            size: boldSize,
+                                                            size: SIZE_BOLD,
+                                                            font: FONT_FAMILY,
                                                             align: 'center',
                                                             color: 'black',
                                                             label: "Please choose your character"
@@ -565,13 +567,13 @@ Q.scene(SCENE_HUD, function(stage) {
     ** HP CIRCLE
     ** represented by a hollow circle with text inside
     */
-    var radius = Q.height / 25;
+    var radius = this.p.h*0.3;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
 
     //if circles will overlap each other, then adjust based on width instead
-    if (radius + lineWidth > Q.width/15) {
-      radius = Q.width / 20;
+    if (radius + lineWidth > this.p.w/15) {
+      radius = this.p.w / 20;
       lineWidth = radius / 2;
       ctx.lineWidth = lineWidth;
     }
@@ -584,7 +586,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    var centerX = 3*Q.width/15;
+    var centerX = 3*this.p.w/15;
     var centerY = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
@@ -599,7 +601,7 @@ Q.scene(SCENE_HUD, function(stage) {
     color = '#0000AA'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    centerX = 5*Q.width/15;
+    centerX = 5*this.p.w/15;
     centerY = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
@@ -610,7 +612,7 @@ Q.scene(SCENE_HUD, function(stage) {
     */
 
     //("inherits" blue color from above, since this is right after drawing mana circle)
-    centerX = -6*Q.width/15;
+    centerX = -this.p.w*0.47;
     centerY = 0;
     var manaPerShot = currentPlayer.p.manaPerShot;
     ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
@@ -618,7 +620,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.arc(centerX, centerY - radius/4, radius/4, 0, Math.PI * 2, false);
     ctx.fill();
 
-    ctx.fillText(manaPerShot, centerX, centerY + 4);
+    ctx.fillText(manaPerShot, centerX - 4, centerY + 4);
   });
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
@@ -631,7 +633,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.stroke();
 
     ctx.font = WEIGHT_NORMAL+" "+(radius*0.8)+"px "+FONT_FAMILY;
-    ctx.fillText(value, centerX, centerY - radius/2);
+    ctx.fillText(value, centerX - 2*radius/29, centerY - radius/2);
   };
 });
 
@@ -645,6 +647,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
                                           y: Q.height/3,
                                           size: 20,
+                                          font: FONT_FAMILY,
                                           align: 'center',
                                           color: 'black',
                                           label: ' ',
@@ -705,6 +708,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
       }
     }
   });
+
   kInfo.on('draw', kInfo, function(ctx) {
     ctx.font = this.p.font || "20px "+FONT_FAMILY;
     ctx.textAlign = this.p.align || "center";
@@ -718,10 +722,11 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   });
 });
 
+
 Q.scene(SCENE_SCORE, function(stage) {
   //every line takes about 30 pixels
   var offsetY = 30;
-  var scoreSize = (Q.width > 600) ? 24 : Math.ceil(Q.width / 30);
+  var scoreSize = Math.ceil(Q.width /100);
 
   /*
   ** Set up UI containers
@@ -766,6 +771,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         color: "rgba(1,1,1,0)",
         x: 0,
         y: 0,
+        font: FONT_FAMILY,
         align: "center"
       }), overlayContainer);
 
@@ -775,6 +781,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), nameContainer);
 
@@ -784,6 +791,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), killsContainer);
   
@@ -794,6 +802,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), deathsContainer);
 
@@ -817,6 +826,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         color: "rgba(1,1,1,0)",
         x: 0,
         y: line*offsetY,
+        font: FONT_FAMILY,
         align: "center"
       }), overlayContainer);
 
@@ -827,6 +837,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), nameContainer);
 
@@ -837,6 +848,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), killsContainer);
 
@@ -847,6 +859,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), deathsContainer);
 
@@ -858,4 +871,41 @@ Q.scene(SCENE_SCORE, function(stage) {
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+});
+
+Q.scene(SCENE_NOTIFICATION, function(stage){
+
+  var msg = stage.options.msg;
+  if(!msg){
+    console.log("No message passed when creating notificationScreen");
+    return;
+  }
+
+
+  var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                    y: Q.height/2,
+                                                    fill: DARK_GREY
+                                                  }));
+
+  var button = container.insert(new Q.UI.Button({ x: 0, 
+                                                  y: 0, 
+                                                  fill: "#CCCCCC",
+                                                  font: FONT_BOLD,
+                                                  fontColor: "black",
+                                                  label: "OK" 
+                                                }));
+
+  var label = container.insert(new Q.UI.Text({x:10, 
+                                              y: -10 - button.p.h, 
+                                              size: SIZE_NORMAL,
+                                              font: FONT_FAMILY,
+                                              weight: WEIGHT_NORMAL,
+                                              label: msg
+                                            }));
+
+  button.on("click",function() {
+    this.destroy();
+  });
+
+  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 });

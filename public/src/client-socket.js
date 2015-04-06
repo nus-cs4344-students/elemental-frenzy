@@ -239,7 +239,9 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
     spriteToUpdate.p.dmg = clonedProps.dmg;
-    spriteToUpdate.p.element = clonedProps.element;
+
+    // not sure need to update this or not, sometime server and client side element will be out of sync
+    // spriteToUpdate.p.element = clonedProps.element;
   } else {
     spriteToUpdate.p = clonedProps;
   }
