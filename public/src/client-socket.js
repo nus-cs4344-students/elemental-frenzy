@@ -62,7 +62,7 @@ var updateAvgRtt = function(oneWayDelay) {
   }
   
   avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
-  //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + avgRtt + " getAvgRtt() = " + getAvgRtt());
+  //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRtt());
   return avgRtt;
 }
 
