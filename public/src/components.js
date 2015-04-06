@@ -10,6 +10,9 @@ var MANABAR_WIDTH_SF = 1.5;
 var MANABAR_HEIGHT_SF = 0.2;
 var MANABAR_HEIGHT_OFFSET = 2.0;
 
+// ## localPerceptionFilter constants
+var LPF_TOTALTIME = 0.5; // in seconds
+
 var updateInterval = 100;
 
 // ## Healthbar component to be attached to an entity with currentHealth and maxHealth
@@ -154,6 +157,37 @@ Q.component('2dLadder', {
     if(col.obj.isA("Ladder")){
       var entity = this.entity;
       entity.trigger("onLadder", col);
+    }
+  }
+});
+
+// Implements a local perception filter using 4 variables:
+// 1. lpfNeededX - (unchanging) the total extra distance in the x-axis that needs to be covered
+// 2. lpfNeededY - (unchanging) the total extra distance in the y-axis that needs to be covered
+// 3. lptTimeLeft - (starts at LPF_TOTALTIME and decreases to 0) amount of time left to finish travelling the extra distance needed
+Q.component('localPerceptionFilter', {
+  added: function() {
+    var entity = this.entity;
+    Q._defaults(entity.p, {
+      lpfNeededX: 0,
+      lpfNeededY: 0,
+      lpfTimeLeft: LPF_TOTALTIME
+    });
+    entity.on('step', this, "step");
+  },
+  
+  step: function(dt) {
+    var entity = this.entity;
+    if (entity.p.lpfTimeLeft > 0) {
+      
+      var t = Math.min(entity.p.lpfTimeLeft, dt);
+      entity.p.lpfTimeLeft -= t;
+      
+      var dx = entity.p.lpfNeededX * t;
+      var dy = entity.p.lpfNeededY * t;
+      
+      entity.p.x += dx;
+      entity.p.y += dy;
     }
   }
 });

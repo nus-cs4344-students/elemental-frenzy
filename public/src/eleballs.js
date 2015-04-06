@@ -59,7 +59,7 @@ Q.Sprite.extend("Eleball", {
     // Set bounding box smaller
     this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
 
-    this.add("2dEleball, animation");
+    this.add("2dEleball, animation, localPerceptionFilter");
     
     this.play("fire");
 
