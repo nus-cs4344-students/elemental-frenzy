@@ -658,8 +658,13 @@ var displayGameScreen = function(level){
 
   // Load the level
   Q.stageScene(level, STAGE_LEVEL);
+
   // load element selector
-  Q.stageScene(SCENE_HUD, STAGE_HUD);
+  // Q.stageScene(SCENE_HUD, STAGE_HUD);
+
+  // show connected status
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Connected as 'Session "+session.sessionId+"'"});
+
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
 };
@@ -936,6 +941,8 @@ socket.on('playerDisconnected', function(data) {
   }
 
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
+  // create notification box
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Player " + pId + " is disconnected", duration: 3000});
   
   // remove player from the session
   leaveSession(pId);
@@ -955,7 +962,11 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  Q.pauseGame();
+  // create notification box
+  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
+
+  // create disconnected status
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Disconnected"});
 });
 
 // Authoritative message about the movement of the sprite from a client

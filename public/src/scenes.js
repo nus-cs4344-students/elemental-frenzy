@@ -13,6 +13,8 @@ var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
+var STAGE_STATUS = 7;
+var SCENE_STATUS = 'statusScreen';
 var STAGE_NOTIFICATION = 10;
 var SCENE_NOTIFICATION = 'notificationScreen';
 
@@ -887,7 +889,7 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                     fill: DARK_GREY
                                                   }));
 
-  var button = container.insert(new Q.UI.Button({ x: 0, 
+  var buttonOk = container.insert(new Q.UI.Button({ x: 0, 
                                                   y: 0, 
                                                   fill: "#CCCCCC",
                                                   font: FONT_BOLD,
@@ -895,17 +897,51 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                   label: "OK" 
                                                 }));
 
-  var label = container.insert(new Q.UI.Text({x:10, 
-                                              y: -10 - button.p.h, 
-                                              size: SIZE_NORMAL,
+  var label = container.insert(new Q.UI.Text({x: 0, 
+                                              y: -10 - buttonOk.p.h, 
+                                              size: SIZE_BOLD,
                                               font: FONT_FAMILY,
-                                              weight: WEIGHT_NORMAL,
+                                              algin: "center",
+                                              weight: WEIGHT_BOLD,
+                                              color: LIGHT_GREY,
                                               label: msg
                                             }));
 
-  button.on("click",function() {
-    this.destroy();
+  buttonOk.on("mouseup",function() {
+    console.log("destroy");
   });
 
   container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+});
+
+
+Q.scene(SCENE_STATUS, function(stage){
+
+  var msg = stage.options.msg;
+  if(!msg){
+    console.log("No message passed when creating statusScreen");
+    return;
+  }
+
+  var duration = stage.options.duration;
+
+  var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                    y: Q.height/50
+                                                  }));
+  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var label = container.insert(new Q.UI.Text({x: 0,
+                                              y: 0, 
+                                              size: SIZE_BOLD,
+                                              font: FONT_FAMILY,
+                                              algin: "center",
+                                              weight: WEIGHT_BOLD,
+                                              label: msg
+                                            }));
+
+  if(Number(duration)){
+    setTimeout(function(){
+      this.destroy();
+    }, duration);
+  }
 });
