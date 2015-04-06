@@ -837,7 +837,7 @@ socket.on('connected', function(data) {
   }
 
   console.log("Connected as SESSION "+sId);
-  
+
   // setup Quintus event listeners
   initialization();
 
@@ -958,7 +958,7 @@ socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
   // create notification box
-  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
+  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
 
   // create disconnected status
   Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Disconnected"});

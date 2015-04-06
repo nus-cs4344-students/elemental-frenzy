@@ -22,7 +22,7 @@ var SCENE_NOTIFICATION = 'notificationScreen';
 // ## UI constants
 var UI_OVERLAY_ALPHA_VALUE = 0.3;
 var UI_TEXT_ALPHA_VALUE = 0.7;
-var UI_PADDING_VALUE = 20; //in pixels
+var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.5)";
 
@@ -51,6 +51,8 @@ SIZE_NORMAL -= SIZE_NORMAL%2;
 var FONT_BOLD = WEIGHT_BOLD +' '+SIZE_BOLD+'px '+FONT_FAMILY;
 var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
 
+var WIDTH_HUD = 9*Q.width/10;
+var HEIGH_HUD = Q.height/10;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -410,8 +412,8 @@ Q.scene(SCENE_HUD, function(stage) {
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
-                                                       w: 9*Q.width/10,
-                                                       h: Q.height/10,
+                                                       w: WIDTH_HUD,
+                                                       h: HEIGH_HUD,
                                                        fill: DARK_GREY
                                                       }));
 
@@ -614,7 +616,7 @@ Q.scene(SCENE_HUD, function(stage) {
     */
 
     //("inherits" blue color from above, since this is right after drawing mana circle)
-    centerX = -this.p.w*0.47;
+    centerX = selector.p.x - eleW/2; //-this.p.w*0.46;
     centerY = 0;
     var manaPerShot = currentPlayer.p.manaPerShot;
     ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
@@ -726,10 +728,10 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 
 
 Q.scene(SCENE_SCORE, function(stage) {
-  //every line takes about 30 pixels
-  var offsetY = 30;
-  // var scoreSize = Math.ceil(Q.width /100);
+  
   var scoreSize = SIZE_BOLD;
+  //every line takes about 30 pixels
+  var offsetY = scoreSize*1.5;
 
   /*
   ** Set up UI containers
@@ -740,29 +742,35 @@ Q.scene(SCENE_SCORE, function(stage) {
       //x, y coordinates here are relative to canvas and top left = (0,0)
       x: Q.width/2,
       y: 11*Q.height/50,
-      w: 9*Q.width/10
+      w: WIDTH_HUD
     }));
   
   var nameContainer = stage.insert(new Q.UI.Container({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 1*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 1*Q.width/12,
+        // y: Q.height*0.23
+        x: -overlayContainer.p.w/3,
+        y: 0
+      }),overlayContainer);
 
   var killsContainer = stage.insert(new Q.UI.Container({ 
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 7*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 7*Q.width/12,
+        // y: Q.height*0.23
+        x: 0,
+        y: 0
+      }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 9*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 9*Q.width/12,
+        // y: Q.height*0.23
+        x: overlayContainer.p.w/3,
+        y: 0
+      }),overlayContainer);
 
   /*
   ** Set up Titles
@@ -796,7 +804,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         y: 0,
         size: scoreSize,
         font: FONT_FAMILY,
-        align: "left"
+        align: "center"
       }), killsContainer);
   
 
@@ -807,7 +815,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         y: 0,
         size: scoreSize,
         font: FONT_FAMILY,
-        align: "left"
+        align: "right"
       }), deathsContainer);
 
 
@@ -823,16 +831,6 @@ Q.scene(SCENE_SCORE, function(stage) {
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
       continue;
     }
-
-    stage.insert(new Q.UI.Text({
-        //invisible placeholder
-        label: "i",
-        color: "rgba(1,1,1,0)",
-        x: 0,
-        y: line*offsetY,
-        font: FONT_FAMILY,
-        align: "center"
-      }), overlayContainer);
 
     stage.insert(new Q.UI.Text({ 
         label: name,
@@ -853,7 +851,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         y: line*offsetY,
         size: scoreSize,
         font: FONT_FAMILY,
-        align: "left"
+        align: "center"
       }), killsContainer);
 
       stage.insert(new Q.UI.Text({ 
@@ -864,17 +862,17 @@ Q.scene(SCENE_SCORE, function(stage) {
         y: line*offsetY,
         size: scoreSize,
         font: FONT_FAMILY,
-        align: "left"
+        align: "right"
       }), deathsContainer);
 
       ++line;
   }
   
   //padding between stuff in container and border of container
-  overlayContainer.fit(UI_PADDING_VALUE, 5*Q.width/12 + UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+  overlayContainer.fit(2*UI_PADDING_VALUE, UI_PADDING_VALUE);
 });
 
 Q.scene(SCENE_NOTIFICATION, function(stage){
@@ -885,22 +883,16 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
     return;
   }
 
-
+  var duration = stage.options.duration;
   var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                     y: Q.height/2,
                                                     fill: DARK_GREY
                                                   }));
 
-  var buttonOk = container.insert(new Q.UI.Button({ x: 0, 
-                                                  y: 0, 
-                                                  fill: "#CCCCCC",
-                                                  font: FONT_BOLD,
-                                                  fontColor: "black",
-                                                  label: "OK" 
-                                                }));
+
 
   var label = container.insert(new Q.UI.Text({x: 0, 
-                                              y: -10 - buttonOk.p.h, 
+                                              y: 0,//-10 - buttonOk.p.h, 
                                               size: SIZE_BOLD,
                                               font: FONT_FAMILY,
                                               algin: "center",
@@ -909,11 +901,14 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                               label: msg
                                             }));
 
-  buttonOk.on("mouseup",function() {
-    console.log("destroy");
-  });
-
   container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var that = this;
+  if(Number(duration)){
+    setTimeout(function(){
+      that.destroy();
+    }, duration);
+  }
 });
 
 
@@ -926,24 +921,27 @@ Q.scene(SCENE_STATUS, function(stage){
   }
 
   var duration = stage.options.duration;
-
   var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                    y: Q.height/50
+                                                    y: Q.height/50,
+                                                    fill: DARK_GREY
                                                   }));
-  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 
   var label = container.insert(new Q.UI.Text({x: 0,
                                               y: 0, 
-                                              size: SIZE_BOLD,
+                                              size: SIZE_NORMAL,
                                               font: FONT_FAMILY,
                                               algin: "center",
-                                              weight: WEIGHT_BOLD,
+                                              color: LIGHT_GREY,
+                                              weight: WEIGHT_NORMAL,
                                               label: msg
                                             }));
 
+  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var that = this;
   if(Number(duration)){
     setTimeout(function(){
-      this.destroy();
+      that.destroy();
     }, duration);
   }
 });
