@@ -659,9 +659,6 @@ var displayGameScreen = function(level){
   // Load the level
   Q.stageScene(level, STAGE_LEVEL);
 
-  // load element selector
-  // Q.stageScene(SCENE_HUD, STAGE_HUD);
-
   // show connected status
   Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Connected as 'Session "+session.sessionId+"'"});
 
@@ -941,8 +938,6 @@ socket.on('playerDisconnected', function(data) {
   }
 
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
-  // create notification box
-  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Player " + pId + " is disconnected", duration: 3000});
   
   // remove player from the session
   leaveSession(pId);

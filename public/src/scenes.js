@@ -409,7 +409,7 @@ Q.scene(SCENE_HUD, function(stage) {
   }
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                       y: Q.height/10,
+                                                       y: 11*Q.height/100,
                                                        w: 9*Q.width/10,
                                                        h: Q.height/10,
                                                        fill: DARK_GREY
@@ -728,7 +728,8 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
 Q.scene(SCENE_SCORE, function(stage) {
   //every line takes about 30 pixels
   var offsetY = 30;
-  var scoreSize = Math.ceil(Q.width /100);
+  // var scoreSize = Math.ceil(Q.width /100);
+  var scoreSize = SIZE_BOLD;
 
   /*
   ** Set up UI containers
@@ -738,7 +739,8 @@ Q.scene(SCENE_SCORE, function(stage) {
       border: 5,
       //x, y coordinates here are relative to canvas and top left = (0,0)
       x: Q.width/2,
-      y: Q.height/5
+      y: 11*Q.height/50,
+      w: 9*Q.width/10
     }));
   
   var nameContainer = stage.insert(new Q.UI.Container({ 

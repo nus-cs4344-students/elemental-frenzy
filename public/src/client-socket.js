@@ -906,6 +906,9 @@ var loadGameSession = function() {
               spritesToAdd[i].props);
   }
 
+  // show connected status
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Connected to 'Session "+sessionId+"'"});
+
   // load element selector
   Q.stageScene(SCENE_HUD, STAGE_HUD);
   
