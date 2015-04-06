@@ -144,6 +144,28 @@ var clone = function(item){
   }
 };
 
+function isCyclic (obj) {
+  var seenObjects = [];
+
+  function detect (obj) {
+    if (obj && typeof obj === 'object') {
+      if (seenObjects.indexOf(obj) !== -1) {
+        return true;
+      }
+      seenObjects.push(obj);
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key) && detect(obj[key])) {
+          console.log(obj, 'cycle at ' + key);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  return detect(obj);
+}
+
 var getNextSpriteId = function(){
   return ++spriteId;
 }
@@ -791,7 +813,12 @@ var sendToApp = function(eventName, eventData){
     console.log("Session trying to send to App without event data");
     return;
   }
-
+  
+  if(isCyclic(eventData)){
+    console.log("Detected cyclic event "+eventName);
+    return;
+  }
+  
   eventData.timestamp = (new Date()).getTime();
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };
@@ -855,9 +882,6 @@ socket.on('join', function(data) {
     // add player and creates sprite for it
     addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
     
-    // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
-    
     // update the new player
     var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
@@ -865,6 +889,9 @@ socket.on('join', function(data) {
     // update other players
     var otherPlayersData = {p: getPlayerProperties(pId)};
     Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'addSprite', eventData: otherPlayersData});
+
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
 
   }else{
     // update app.js regarding joinSession failed

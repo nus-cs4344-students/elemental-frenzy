@@ -33,6 +33,10 @@ var killedInfoTimeLeft= [];
 var killedInfoPosition = [];
 
 var FONT_FAMILY = "Trebuchet MS";
+var WEIGHT_TITLE = 800;
+var WEIGHT_BOLD = 600;
+var WEIGHT_NORMAL =  200;
+
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -49,12 +53,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var normalSize = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
   normalSize -= normalSize%2;
 
-  var titleWeight = 800;
-  var boldWeight = 600;
-  var normalWeight =  200;
-
-  var boldFont = boldWeight +' '+boldSize+'px '+FONT_FAMILY;
-  var normalFont = normalWeight+' '+normalSize+'px '+FONT_FAMILY;
+  var boldFont = WEIGHT_BOLD +' '+boldSize+'px '+FONT_FAMILY;
+  var normalFont = WEIGHT_NORMAL+' '+normalSize+'px '+FONT_FAMILY;
  
 
   console.log(boldFont);
@@ -62,7 +62,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
-                                            weight: titleWeight,
+                                            weight: WEIGHT_TITLE,
                                             size: titleSize,
                                             align: 'center',
                                             color: 'red',
@@ -181,7 +181,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
   // please choose a session
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
                                                   y:sessionsSection.p.y - 4*sessionsSection.p.h/9,
-                                                  weight: boldWeight,
+                                                  weight: WEIGHT_BOLD,
                                                   size: boldSize,
                                                   align: 'center',
                                                   color: 'black',
@@ -246,7 +246,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({ x:0,
                                     y: Math.max(20, Q.height/20),
-                                    weight: normalWeight,
+                                    weight: WEIGHT_NORMAL,
                                     size: normalSize,
                                     align: 'center',
                                     color: PLAYER_NAME_COLORS[numChar],
@@ -259,7 +259,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
   // please choose your characterSprites
   var choicecharacterSprites = stage.insert(new Q.UI.Text({ x:characterSection.p.x,
                                                             y:characterSection.p.y - 3*characterSection.p.h/7,
-                                                            weight: boldWeight,
+                                                            weight: WEIGHT_BOLD,
                                                             size: boldSize,
                                                             align: 'center',
                                                             color: 'black',
@@ -551,7 +551,8 @@ Q.scene(SCENE_HUD, function(stage) {
   };
 
   updateEleSelector(element);
-});
+
+
 
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
@@ -612,7 +613,7 @@ Q.scene(SCENE_HUD, function(stage) {
     centerX = -6*Q.width/15;
     centerY = 0;
     var manaPerShot = currentPlayer.p.manaPerShot;
-    ctx.font = "Bold " + "" + "12px Arial";
+    ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
     ctx.beginPath();
     ctx.arc(centerX, centerY - radius/4, radius/4, 0, Math.PI * 2, false);
     ctx.fill();
@@ -629,9 +630,10 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledValue) - start, false);
     ctx.stroke();
 
-    ctx.font = "Bold "+(radius*0.8)+"px Arial";
+    ctx.font = WEIGHT_NORMAL+" "+(radius*0.8)+"px "+FONT_FAMILY;
     ctx.fillText(value, centerX, centerY - radius/2);
   };
+});
 
 
 Q.scene(SCENE_KILLED_INFO ,function(stage) {

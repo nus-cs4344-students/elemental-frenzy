@@ -239,6 +239,7 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
     spriteToUpdate.p.dmg = clonedProps.dmg;
+    spriteToUpdate.p.element = clonedProps.element;
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -742,10 +743,10 @@ var setupEventListeners = function(){
   });
 
 
-  // Event listener for firing
-  Q.el.addEventListener('mouseup', function(e){
-
+  var handleMouseOrTouchEvent = function(e){
+    
     if(!_gameLoaded){
+      // game state need to be loaded
       return;
     }
 
@@ -758,17 +759,18 @@ var setupEventListeners = function(){
 
     var stage = Q.stage(STAGE_LEVEL);
     var touch = e.changedTouches ?  e.changedTouches[0] : e;
-    var mouseX = Q.canvasToStageX(touch.x, stage);
-    var mouseY = Q.canvasToStageY(touch.y, stage);
+
+    var touchLocation = Q.input.touchLocation(touch);
+    var mouseX = Q.canvasToStageX(touchLocation.x, stage);
+    var mouseY = Q.canvasToStageY(touchLocation.y, stage);
+
     // Client side player fires the event!
     var createdEvt = {
       x: mouseX,
       y: mouseY
     };
 
-    // prevent event redirection. 
-    // e.g clicking on a hypelink with redirect the browser, 
-    // however by calling prevent default, redirection will not be happening
+    // prevent event propagation
     e.preventDefault();
 
     var eData = { sessionId: sessionId,
@@ -776,7 +778,7 @@ var setupEventListeners = function(){
                   entityType: 'PLAYER',
                   e: createdEvt
     };
-    
+
     time_sentMouseUp = getCurrentTime();
     console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
@@ -788,8 +790,49 @@ var setupEventListeners = function(){
     } else {
       console.log("Cannot locate current player to perform mouseup");
     }
+  };
 
-    // console.log("Player props: " + getJSON(getPlayerSprite(selfId).p));
+  // listening to touch start firing
+  Q.el.addEventListener('touchstart',function(e){
+
+    var i, len, tch, key;
+    var keypad = Q.input.keypad;
+
+    // determine if the touch location is on one of the keys shown to the player
+    function getKey(touch) {
+      var pos = Q.input.touchLocation(touch),
+          minY = keypad.bottom - keypad.unit;
+
+      for(var i=0,len=keypad.controls.length;i<len;i++) {
+        var minX = i * keypad.unit + keypad.gutter;
+        if(pos.x >= minX && pos.x <= (minX+keypad.size) && 
+          (keypad.fullHeight || (pos.y >= minY + keypad.gutter && pos.y <= (minY+keypad.unit - keypad.gutter)))){
+          return keypad.controls[i][0];
+        }
+      }
+    }
+
+    var touches = event.touches ? event.touches : [ event ];
+    
+    // go through all the touch events
+    for(i=0,len=touches.length;i<len;i++) {
+      tch = touches[i];
+      key = getKey(tch);
+
+      // not the key shown to the player
+      // it should be a firing action
+      if(!key) {
+        handleMouseOrTouchEvent(e);
+      }
+    }
+
+    // prevent event propagation
+    e.preventDefault();
+  });
+
+  // Event listener for mouse up firing
+  Q.el.addEventListener('mouseup', function(e){
+    handleMouseOrTouchEvent(e);
   });
 };
 
