@@ -161,7 +161,7 @@ Q.component('2dLadder', {
   }
 });
 
-// Implements a local perception filter using 4 variables:
+// Implements a local perception filter using 3 variables:
 // 1. lpfNeededX - (unchanging) the total extra distance in the x-axis that needs to be covered
 // 2. lpfNeededY - (unchanging) the total extra distance in the y-axis that needs to be covered
 // 3. lptTimeLeft - (starts at LPF_TOTALTIME and decreases to 0) amount of time left to finish travelling the extra distance needed
