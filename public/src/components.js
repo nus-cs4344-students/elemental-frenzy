@@ -161,17 +161,19 @@ Q.component('2dLadder', {
   }
 });
 
-// Implements a local perception filter using 3 variables:
+// Implements a local perception filter using 4 variables:
 // 1. lpfNeededX - (unchanging) the total extra distance in the x-axis that needs to be covered
 // 2. lpfNeededY - (unchanging) the total extra distance in the y-axis that needs to be covered
-// 3. lptTimeLeft - (starts at LPF_TOTALTIME and decreases to 0) amount of time left to finish travelling the extra distance needed
+// 3. lpfTimeLeft - (starts at LPF_TOTALTIME and decreases to 0) amount of time left to finish travelling the extra distance needed
+// 4. lpfTotalTime - (constant) total amount of time to perform the local perception filter
 Q.component('localPerceptionFilter', {
   added: function() {
     var entity = this.entity;
     Q._defaults(entity.p, {
       lpfNeededX: 0,
       lpfNeededY: 0,
-      lpfTimeLeft: LPF_TOTALTIME
+      lpfTimeLeft: LPF_TOTALTIME,
+      lpfTotalTime: LPF_TOTALTIME
     });
     entity.on('step', this, "step");
   },
@@ -180,11 +182,12 @@ Q.component('localPerceptionFilter', {
     var entity = this.entity;
     if (entity.p.lpfTimeLeft > 0) {
       
+      var multiplier = 1.0/entity.p.lpfTotalTime;
       var t = Math.min(entity.p.lpfTimeLeft, dt);
       entity.p.lpfTimeLeft -= t;
       
-      var dx = entity.p.lpfNeededX * t;
-      var dy = entity.p.lpfNeededY * t;
+      var dx = entity.p.lpfNeededX * t * multiplier;
+      var dy = entity.p.lpfNeededY * t * multiplier;
       
       entity.p.x += dx;
       entity.p.y += dy;
