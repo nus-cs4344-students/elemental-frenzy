@@ -54,6 +54,7 @@ var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 
 
 // Global flags for synchronization
 var _isSessionConnected = false;
+var _isWelcomeScreenShown = false;
 var _clockSynchronized = false;
 var _gameLoaded = false;
 
@@ -239,9 +240,6 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
     spriteToUpdate.p.dmg = clonedProps.dmg;
-
-    // not sure need to update this or not, sometime server and client side element will be out of sync
-    // spriteToUpdate.p.element = clonedProps.element;
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -587,10 +585,9 @@ var updateSessions = function(sessionsInfo){
     return;
   }
 
-  if(_assetsLoaded){
+  if(_isWelcomeScreenShown){
     // refresh welcome screen
-    Q.clearStage(STAGE_WELCOME);
-    Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+    displayWelcomeScreen();
   }
 }
 
@@ -773,7 +770,7 @@ var setupEventListeners = function(){
     };
 
     // prevent event propagation
-    e.preventDefault();
+    // e.preventDefault();
 
     var eData = { sessionId: sessionId,
                   spriteId: selfId,
@@ -829,7 +826,7 @@ var setupEventListeners = function(){
     }
 
     // prevent event propagation
-    e.preventDefault();
+    // e.preventDefault();
   });
 
   // Event listener for mouse up firing
@@ -842,7 +839,26 @@ var resetDisplayScreen = function(){
   // clear all screens
   Q.clearStages();
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
-}
+
+  _isWelcomeScreenShown = false;
+};
+
+var displayNotificationScreen = function(msg, callback){
+  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: msg , callback: callback});
+};
+
+var displayStatusScreeen = function(msg) {
+  if(!msg){
+    console.log("No message passed in when calling displayStatusScreeen");
+    return;
+  }
+
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: msg});
+};
+
+var displayPlayerHUDScreen = function(){
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+};
 
 var displayScoreScreen = function(){
   hideScoreScreen();
@@ -859,6 +875,8 @@ var displayWelcomeScreen = function(){
 
   // character selection
   Q.stageScene(SCENE_WELCOME, STAGE_WELCOME);
+
+  _isWelcomeScreenShown = true;
 };
 
 var displayGameScreen = function(level){
@@ -907,10 +925,10 @@ var loadGameSession = function() {
   }
 
   // show connected status
-  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Connected to 'Session "+sessionId+"'"});
-
-  // load element selector
-  Q.stageScene(SCENE_HUD, STAGE_HUD);
+  displayStatusScreeen("Connected to 'Session "+sessionId+"'");
+  
+    // load player HUD info
+  displayPlayerHUDScreen();
   
   _gameLoaded = true;
 }
@@ -1193,7 +1211,10 @@ socket.on('sessionDisconnected', function(){
   console.log("Session disconnected");
 
   // ask player to join a session again
-  displayWelcomeScreen();
+  displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
+
+  // create disconnected status
+  displayStatusScreeen("Disconnected");
 
   _isSessionConnected = false;
 });
@@ -1210,6 +1231,8 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
 
+  // create notification box
+  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "Unable to connect to the server"});
+
   _isSessionConnected = false;
-  Q.pauseGame();
 });

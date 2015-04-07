@@ -5,18 +5,20 @@
 var STAGE_BACKGROUND = 0;
 var SCENE_BACKGROUND = 'background';
 var STAGE_LEVEL = 1;
-var STAGE_WELCOME = 2;
+var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
+var STAGE_NOTIFICATION = 2;
+var SCENE_NOTIFICATION = 'notificationScreen';
+
+// Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
 var SCENE_SCORE = 'scoreScreen';
 var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
-var STAGE_STATUS = 7;
+var STAGE_STATUS = 6;
 var SCENE_STATUS = 'statusScreen';
-var STAGE_NOTIFICATION = 10;
-var SCENE_NOTIFICATION = 'notificationScreen';
 
 
 // ## UI constants
@@ -248,14 +250,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
     updateCharacterSprites();
 
     // characterSprites nameSpritesSprites
-    nameSprites[numChar] = new Q.UI.Text({ x:0,
-                                    y: Math.max(20, Q.height/20),
-                                    weight: WEIGHT_NORMAL,
-                                    size: SIZE_NORMAL,
-                                    font: FONT_FAMILY,
-                                    align: 'center',
-                                    color: PLAYER_NAME_COLORS[numChar],
-                                    label: PLAYER_NAMES[numChar]
+    nameSprites[numChar] = new Q.UI.Text({x:0,
+                                          y: Math.max(20, Q.height/20),
+                                          weight: WEIGHT_NORMAL,
+                                          size: SIZE_NORMAL,
+                                          font: FONT_FAMILY,
+                                          align: 'center',
+                                          color: PLAYER_NAME_COLORS[numChar],
+                                          label: PLAYER_NAMES[numChar]
                                   });
     numChar++;
   }
@@ -563,7 +565,7 @@ Q.scene(SCENE_HUD, function(stage) {
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
-      console.log("Cannot locate current player during HUD element selector update");
+      console.log("Cannot locate current player during HUD player attribute drawing");
       return;
     }
     
@@ -883,30 +885,58 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
     return;
   }
 
-  var duration = stage.options.duration;
+  var buttonOkH = Q.height/30;
+  var msgArray = msg.split('\n');
+  var maxMsgLength = 0;
+  var msgLength;
+  var msgCount = msgArray.length;
+
+  for(var m in msgArray){
+    msgLength = msgArray[m].length; 
+    if(msgLength > maxMsgLength){
+      maxMsgLength = msgLength;
+    }
+  }
+
   var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                     y: Q.height/2,
-                                                    fill: DARK_GREY
+                                                    fill: DARK_GREY,
+
                                                   }));
 
-
-
   var label = container.insert(new Q.UI.Text({x: 0, 
-                                              y: 0,//-10 - buttonOk.p.h, 
+                                              y: -SIZE_BOLD*msgCount - buttonOkH,
                                               size: SIZE_BOLD,
                                               font: FONT_FAMILY,
                                               algin: "center",
-                                              weight: WEIGHT_BOLD,
+                                              weight: WEIGHT_NORMAL,
                                               color: LIGHT_GREY,
                                               label: msg
                                             }));
 
+  var buttonOk = container.insert(new Q.UI.Button({ x: 0, 
+                                                    y: 0,
+                                                    w: container.p.w/3,
+                                                    h: buttonOkH,
+                                                    font: FONT_BOLD,
+                                                    fill: LIGHT_GREY,
+                                                    label: 'OK'
+  }));
   container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 
-  var that = this;
+
+  var callback = stage.options.callback;
+  buttonOk.on("click", function(){
+    
+    if(callback) callback();
+
+    container.destroy();
+  });  
+
+  var duration = stage.options.duration;
   if(Number(duration)){
     setTimeout(function(){
-      that.destroy();
+      container.destroy();
     }, duration);
   }
 });
