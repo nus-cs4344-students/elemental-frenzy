@@ -446,10 +446,11 @@ var addSprite = function(entityType, id, properties) {
     
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
-      
+      console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
           sprite.p.isDead || !_isSessionConnected) {
         // (Defensive) Remove interval because it is gone/not on the client side
+        console.log("clearing interval for sprite "+sprite.p.spriteId);
         clearInterval(interval_updateServer);
       }
 
@@ -1057,7 +1058,11 @@ socket.on('synchronizeClocks', function(data) {
 
 // Failed to join a session
 socket.on('joinFailed', function(data){
-  console.log("Player "+selfId+" failed to join sesssion "+data.sessionId);
+  console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
+
+  _isSessionConnected = false;
+  
+  displayNotificationScreen("Failed to join session "+data.sessionId+" due to "+data.msg, displayWelcomeScreen);
 });
 
 // add sprite
@@ -1207,16 +1212,17 @@ socket.on('spriteDied', function(data) {
 
 
 // when session is disconnected
-socket.on('sessionDisconnected', function(){
+socket.on('sessionDisconnected', function(data){
   console.log("Session disconnected");
 
+  _isSessionConnected = false;
+  _gameLoaded = false;
+  
   // ask player to join a session again
   displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
 
   // create disconnected status
   displayStatusScreeen("Disconnected");
-
-  _isSessionConnected = false;
 });
 
 // when one or more players disconnected from app.js
@@ -1231,8 +1237,11 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js disconnected");
 
-  // create notification box
-  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "Unable to connect to the server"});
-
   _isSessionConnected = false;
+  _gameLoaded = false;
+
+  // ask player to refresh browser again
+  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");
+
+  displayStatusScreeen("Unable to connect to the server");
 });

@@ -726,23 +726,28 @@ var loadGameSession = function(sessionId) {
 };
 
 var joinSession = function(playerId, characterId) {
+  var result = {status: false, msg: ""};
 
   var pId = playerId;
   if(!pId){
     console.log("Trying to let a player to join session without player id");
-    return;
+    result.msg = "Requested to join session "+session.sessionId+" without player id";
+    return result;
   }
 
   var cId = characterId;
   if(!cId){
     console.log("Trying to let player "+pId+" to join session without character id");
-    return;
+    result.msg = "Requested to join session "+session.sessionId+" without character id";
+    return result;
   }
 
   // session full
   if(session.playerCount >= session.playerMaxCount){
     console.log("Session "+session.sessionId +" is full");
-    return false;
+    result.msg = "Requested to join session "+session.sessionId+" which is currently full";
+    return result;
+  
   }
 
   // make sure the player is not in the session already
@@ -750,13 +755,16 @@ var joinSession = function(playerId, characterId) {
     // player already joins the session
     if(session.players[pId]){
       console.log("Player "+pId+" is already in session "+session.sessionId);
-      return false;
-    }
+      result.msg = "Requested to join session "+session.sessionId+" which player "+pId+" has already joined";
+      return result;
+      }
 
     for(var p in session.players){
       if(session.players[p] == cId){
         console.log("Character "+cId+" is already used by Player "+p+" in session "+session.sessionId);
-        return false;
+        result.msg = "Requested to join session "+session.sessionId+
+                    " with character ["+PLAYER_NAMES[cId]+"] which is currently in use by other player";
+        return result;
       }
     }
   }
@@ -765,7 +773,8 @@ var joinSession = function(playerId, characterId) {
   session.players[pId] = cId;
   session.playerCount++;
 
-  return true;
+  result.status = true;
+  return result;
 };
 
 var leaveSession = function(playerId) {
@@ -879,12 +888,12 @@ socket.on('join', function(data) {
   // try to put the player into  the session
   var isJoined = joinSession(pId, cId);
   
-  if(isJoined){
+  if(isJoined.status){
     // console.log("gameState joined - "+getJSON(gameState));
 
     // add player and creates sprite for it
     addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
-    
+
     // update the new player
     var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
@@ -898,7 +907,7 @@ socket.on('join', function(data) {
 
   }else{
     // update app.js regarding joinSession failed
-    var newPlayerData = {sessionId: session.sessionId};
+    var newPlayerData = {sessionId: session.sessionId, msg: isJoined.msg};
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinFailed', eventData: newPlayerData});
   }
 });
@@ -982,6 +991,7 @@ socket.on('authoritativeSpriteUpdate', function(data) {
     //console.log("aurhoritativeSpriteUpdate: avgRtt of player " + data.spriteId + " is " + getAvgRttOfPlayer(data.spriteId));
   }
   
+  console.log("authoritativeSpriteUpdate from "+data.spriteId +" characterId "+data.characterId);
   updateSprite(data.entityType, data.spriteId, data.p);
 });
 
