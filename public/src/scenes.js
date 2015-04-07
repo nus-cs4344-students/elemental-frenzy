@@ -604,7 +604,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var currentMana = Math.round(currentPlayer.p.currentMana);
     var maxMana =currentPlayer.p.maxMana;
 
-    color = '#0000FF'; //blue
+    color = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     centerX = 5*this.p.w/15;
@@ -612,6 +612,8 @@ Q.scene(SCENE_HUD, function(stage) {
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
 
+    //icon sprites are 34 by 34. ideal case is scale height to this.p.h / 3
+    var scaleIcons = this.p.h / 3 / 34;
     /*
     ** Mana cost per shot
     ** represented by a light blue line with blue text beside
@@ -621,34 +623,34 @@ Q.scene(SCENE_HUD, function(stage) {
     centerX = selector.p.x - eleW / 1.2;
     centerY = selector.p.y;
     var manaPerShot = currentPlayer.p.manaPerShot;
-    ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
+    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(manaPerShot, centerX + 15, centerY - 6);
+    ctx.fillText(manaPerShot, centerX + 25, centerY - 6);
 
     this.insert(new Q.UI.Button({ sheet: 'icon_mana',
                                   x: centerX,
                                   y: centerY,
-                                  scale: scaling
+                                  scale: scaleIcons
                                   }));
 
     /*
     ** Attack Damage per shot
     ** represented by a sword with red text beside
     */
-    color = '#FF0000'; //red
+    color = '#F88017'; //red
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    centerX = selector.p.x - eleW / 1.2;
+    //centerX = selector.p.x - eleW / 1.2;
     centerY = selector.p.y - this.p.h / 3;
     var damagePerShot = currentPlayer.p.dmg;
-    ctx.font = WEIGHT_NORMAL + " " +"11px "+FONT_FAMILY;
+    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(damagePerShot, centerX + 15, centerY - 6);
+    ctx.fillText(damagePerShot, centerX + 25, centerY - 6);
 
     this.insert(new Q.UI.Button({ sheet: 'icon_attack',
                                   x: centerX,
                                   y: centerY,
-                                  scale: scaling
+                                  scale: scaleIcons
                                   }));
 
     /*
@@ -658,23 +660,23 @@ Q.scene(SCENE_HUD, function(stage) {
     color = '#00FF00'; //green
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    centerX = selector.p.x - eleW / 1.2;
+    //centerX = selector.p.x - eleW / 1.2;
     centerY = selector.p.y + this.p.h / 3;
-    var moveSpeed = 300; //currentPlayer.p.moveSpeed???;
-    ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
+    var moveSpeed = 30; //currentPlayer.p.moveSpeed???;
+    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(moveSpeed, centerX + 15, centerY - 6);
+    ctx.fillText(moveSpeed, centerX + 25, centerY - 6);
 
     this.insert(new Q.UI.Button({ sheet: 'icon_movement',
                                   x: centerX,
                                   y: centerY,
-                                  scale: scaling
+                                  scale: scaleIcons
                                   }));
 
     centerX = 34;
     centerY = 0;
 
-    var scaleToHeight = this.p.h > 34 ? 1 : 34 / this.p.h; //34 is the default height of powerup sprite
+    var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
     //if current player has mana powerup
     this.insert(new Q.UI.Button({ sheet: 'powerup_mana',

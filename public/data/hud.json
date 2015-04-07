@@ -1,6 +1,6 @@
 {
 	"icon_mana": {
-		"sx": 68,
+		"sx": 34,
 		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
@@ -9,7 +9,7 @@
 	},
     
 	"powerup_mana": {
-		"sx": 34,
+		"sx": 0,
 		"sy": 0,
 		"cols": 1,
 		"tilew": 34,
@@ -28,7 +28,7 @@
     
     "powerup_movement": {
         "sx": 34,
-		"sy": 34,
+		"sy": 0,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
@@ -36,8 +36,8 @@
     },
     
     "icon_attack": {
-        "sx": 0,
-		"sy": 68,
+        "sx": 34,
+		"sy": 34,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
@@ -45,7 +45,7 @@
     },
     
     "powerup_attack": {
-        "sx": 34,
+        "sx": 0,
 		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
