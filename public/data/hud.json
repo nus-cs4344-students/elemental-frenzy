@@ -1,7 +1,7 @@
 {
 	"icon_mana": {
-		"sx": 0,
-		"sy": 0,
+		"sx": 68,
+		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
@@ -45,7 +45,7 @@
     },
     
     "powerup_attack": {
-        "sx": 68,
+        "sx": 34,
 		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
