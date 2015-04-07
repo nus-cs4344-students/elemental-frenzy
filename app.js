@@ -364,7 +364,7 @@ io.on('connection', function (socket) {
         }
         break;
       }
-      case 'removeSprite': console.log("REMOVESPRITE: " + getJSON(data));
+      case 'removeSprite': //console.log("REMOVESPRITE: " + getJSON(data));
       case 'joinSuccessful':
       case 'joinFailed':
       case 'synchronizeClocks':
