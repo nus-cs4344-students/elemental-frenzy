@@ -235,10 +235,12 @@ var updateSprite = function(entityType, id, properties){
   // so don't update the player
   if (eType == 'PLAYER' && spriteId == selfId) {
     // Include here the properties of a player that should get updated by the server
+    // Health/mana-related
     spriteToUpdate.p.currentHealth = clonedProps.currentHealth;
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
+    // Attack-related
     spriteToUpdate.p.dmg = clonedProps.dmg;
   } else {
     spriteToUpdate.p = clonedProps;
@@ -752,7 +754,7 @@ var setupEventListeners = function(){
 
     var player = getPlayerSprite(selfId);
     if(!player || !player.p.canFire || player.p.isDead
-      || player.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT){
+      || player.p.currentMana < player.p.manaPerShot){
         //console.log("cannot shoot canFire? " + player.p.canFire);
       return;
     }

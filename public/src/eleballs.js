@@ -22,6 +22,8 @@ var ELEBALL_FIRE_ANIMATION_TIME = 0.5;
 var ELEBALL_PLAYER_SF = 0.5;
 var ELEBALL_ENEMY_SF = 0.5;
 
+var TIME_TO_SELFDESTRUCT = 10000;
+
 // Load element sounds
 for (var i = 0; i < ELEBALL_ELEMENTSOUNDS.length; i++) {
   Q.load(ELEBALL_ELEMENTSOUNDS[i]);
@@ -71,7 +73,7 @@ Q.Sprite.extend("Eleball", {
       if (that) {
         removeSprite(that.p.entityType, that.p.spriteId);
       }
-    }, 10000);
+    }, TIME_TO_SELFDESTRUCT);
     
     // Play fire sound when eleball is launched
     if ( !this.p.soundIsAnnoying) {

@@ -180,7 +180,7 @@ Q.Sprite.extend("Player",{
       return;
     }
     
-    if (this.p.isDead || this.p.currentMana < PLAYER_DEFAULT_MANA_PER_SHOT) {
+    if (this.p.isDead || this.p.currentMana < this.p.manaPerShot) {
       return;
     }
     
@@ -263,7 +263,7 @@ Q.Sprite.extend("Player",{
     Q.input.trigger('broadcastAll', {eventName:'addSprite', eventData: eleballData});
 
     //after eleball fired, decrease mana
-    this.p.currentMana -= PLAYER_DEFAULT_MANA_PER_SHOT;
+    this.p.currentMana -= this.p.manaPerShot;
   },
 
   takeDamage: function(dmgAndShooter) {
