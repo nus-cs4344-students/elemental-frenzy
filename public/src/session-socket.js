@@ -346,6 +346,7 @@ var updateSprite = function(eType, spriteId, updateProps) {
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
   spriteToUpdate.p.ay = updateProps.ay;
+  spriteToUpdate.p.element = updateProps.element;
 }
 
 var isSpriteExists = function(entityType, id){
@@ -958,7 +959,7 @@ socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
   // create notification box
-  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
+  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
 
   // create disconnected status
   Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Disconnected"});
