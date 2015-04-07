@@ -698,7 +698,7 @@ var setupEventListeners = function(){
 
   Q.input.on('displayScoreScreen', function(){
     
-    if(!_isSessionConnected){
+    if(!_isSessionConnected || !_gameLoaded){
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -708,13 +708,97 @@ var setupEventListeners = function(){
 
   Q.input.on('displayScoreScreenUp', function(){
     
-    if(!_isSessionConnected){
+    if(!_isSessionConnected || !_gameLoaded){
       // client side need to be connected to the server in order
       // to show score screen
       return;
     }
     hideScoreScreen();
   });
+
+  // intially no orientation detected
+  // true = landscape
+  // false = portrait
+  var deviceOrientation = undefined;
+  var prevAccX , prevAccY , prevAccZ, isUpPrev;
+
+  var setDeviceOrientation = function(){
+    // everytime device orientation changed
+    // reset previously recorded x,y,z values
+     prevAccX = prevAccY = prevAccZ = undefined;
+     isUpPrev = false;
+
+    switch(window.orientation) {  
+      case -90:
+      case 90:
+        deviceOrientation = true;
+        break; 
+      default:
+        deviceOrientation = false;
+        break; 
+    }
+  };
+
+  setDeviceOrientation();
+  window.addEventListener('orientationchange', setDeviceOrientation);
+
+  // activate mobile sensor to trigger toggleNextElement event
+  if(window.DeviceMotionEvent) {
+
+    // console.log('devicemotion supported');
+
+    var accX = undefined,
+        accY = undefined,
+        accZ = undefined;
+    var isUp = false;
+    var diff;
+
+    window.addEventListener('devicemotion', function (event) {
+        accX = event.acceleration.x;
+        accY = event.acceleration.y;
+        accZ = event.acceleration.z;
+
+        if(deviceOrientation){
+          // landscape
+
+          if(typeof prevAccY !== 'undefined'){
+
+            diff = Math.abs(prevAccY - accY);
+
+            // ensure difference is more than 0.5 to filter off noise
+            isUp = diff < 0.7 ? isUp : prevAccY < accY ; 
+
+            if(diff > 1.9 && isUp != isUpPrev){
+              // console.log("toggle on landscape");
+              Q.input.trigger('toggleNextElementUp');
+            }
+          }
+        }else{
+          // portrait
+
+          if(typeof prevAccX !== 'undefined'){
+
+            diff = Math.abs(prevAccX - accX);
+
+            // ensure difference is more than 0.5 to filter off noise
+            isUp = diff < 0.7 ? isUp : prevAccX < accX ; 
+
+            if(diff > 2.9 && isUp != isUpPrev){
+              // console.log("toggle on portrait");
+              Q.input.trigger('toggleNextElementUp');
+            }
+
+          }
+        }
+
+        prevAccX = accX;
+        prevAccY = accY;
+        prevAccZ = accZ;
+        isUpPrev = isUp;
+
+    }, false);
+
+  }
 
   Q.input.on('toggleNextElementUp', function(){
 
