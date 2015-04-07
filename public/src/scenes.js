@@ -412,6 +412,8 @@ Q.scene(SCENE_HUD, function(stage) {
     return;
   }
 
+  var initHud = true;
+
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
                                                        w: WIDTH_HUD,
@@ -627,11 +629,13 @@ Q.scene(SCENE_HUD, function(stage) {
 
     ctx.fillText(manaPerShot, centerX + 25, centerY - 6);
 
-    this.insert(new Q.UI.Button({ sheet: 'icon_mana',
-                                  x: centerX,
-                                  y: centerY,
-                                  scale: scaleIcons
-                                  }));
+    if (initHud) {
+      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
+                                    x: centerX,
+                                    y: centerY,
+                                    scale: scaleIcons
+                                    }));
+    }
 
     /*
     ** Attack Damage per shot
@@ -647,11 +651,13 @@ Q.scene(SCENE_HUD, function(stage) {
 
     ctx.fillText(damagePerShot, centerX + 25, centerY - 6);
 
-    this.insert(new Q.UI.Button({ sheet: 'icon_attack',
-                                  x: centerX,
-                                  y: centerY,
-                                  scale: scaleIcons
-                                  }));
+    if (initHud) {
+      this.insert(new Q.UI.Button({ sheet: 'icon_attack',
+                                    x: centerX,
+                                    y: centerY,
+                                    scale: scaleIcons
+                                    }));
+    }
 
     /*
     ** Movement Speed
@@ -667,19 +673,23 @@ Q.scene(SCENE_HUD, function(stage) {
 
     ctx.fillText(moveSpeed, centerX + 25, centerY - 6);
 
-    this.insert(new Q.UI.Button({ sheet: 'icon_movement',
+    if (initHud) {
+      this.insert(new Q.UI.Button({ sheet: 'icon_movement',
                                   x: centerX,
                                   y: centerY,
                                   scale: scaleIcons
                                   }));
+    }
+    
 
     centerX = 34;
     centerY = 0;
 
     var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
-    //if current player has mana powerup
-    this.insert(new Q.UI.Button({ sheet: 'powerup_mana',
+    // TEMP PLACEHOLDER FOR POWER UPS
+    if (initHud) {
+      this.insert(new Q.UI.Button({ sheet: 'powerup_mana',
                                   x: 0 * scaleToHeight,
                                   y: centerY,
                                   scale: scaleToHeight
@@ -694,6 +704,9 @@ Q.scene(SCENE_HUD, function(stage) {
                                   y: centerY,
                                   scale: scaleToHeight
                                   }));
+    }
+    
+    initHud = false;
 
   });
 
