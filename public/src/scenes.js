@@ -5,20 +5,26 @@
 var STAGE_BACKGROUND = 0;
 var SCENE_BACKGROUND = 'background';
 var STAGE_LEVEL = 1;
-var STAGE_WELCOME = 2;
+var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
+var STAGE_NOTIFICATION = 2;
+var SCENE_NOTIFICATION = 'notificationScreen';
+
+// Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
 var SCENE_SCORE = 'scoreScreen';
 var STAGE_KILLED_INFO = 4;
 var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
+var STAGE_STATUS = 6;
+var SCENE_STATUS = 'statusScreen';
 
 
 // ## UI constants
 var UI_OVERLAY_ALPHA_VALUE = 0.3;
 var UI_TEXT_ALPHA_VALUE = 0.7;
-var UI_PADDING_VALUE = 20; //in pixels
+var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.5)";
 
@@ -37,6 +43,18 @@ var WEIGHT_TITLE = 800;
 var WEIGHT_BOLD = 600;
 var WEIGHT_NORMAL =  200;
 
+var SIZE_TITLE = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
+SIZE_TITLE -= SIZE_TITLE%2;
+var SIZE_BOLD = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
+SIZE_BOLD -= SIZE_BOLD%2;
+var SIZE_NORMAL = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
+SIZE_NORMAL -= SIZE_NORMAL%2;
+
+var FONT_BOLD = WEIGHT_BOLD +' '+SIZE_BOLD+'px '+FONT_FAMILY;
+var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
+
+var WIDTH_HUD = 9*Q.width/10;
+var HEIGH_HUD = Q.height/10;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -46,24 +64,11 @@ Q.scene(SCENE_WELCOME,function(stage) {
     welcomeSessionSelected = undefined;
   }
 
-  var titleSize = Math.max(Math.ceil(Q.height/20),Math.ceil(Q.width/40));
-  titleSize -= titleSize%2;
-  var boldSize = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
-  boldSize -= boldSize%2;
-  var normalSize = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
-  normalSize -= normalSize%2;
-
-  var boldFont = WEIGHT_BOLD +' '+boldSize+'px '+FONT_FAMILY;
-  var normalFont = WEIGHT_NORMAL+' '+normalSize+'px '+FONT_FAMILY;
- 
-
-  console.log(boldFont);
-  console.log(normalFont);
-
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
                                             weight: WEIGHT_TITLE,
-                                            size: titleSize,
+                                            size: SIZE_TITLE,
+                                            font: FONT_FAMILY,
                                             align: 'center',
                                             color: 'red',
                                             label: "Elemental Frenzy"
@@ -79,7 +84,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   w: Q.width/10,
                                                   h: Q.height/20,
                                                   label: 'Join',
-                                                  font: boldFont,
+                                                  font: FONT_BOLD,
                                                   fontColor: 'black'
                                                 }));
 
@@ -169,7 +174,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                     w: sSpriteW,
                                     h: sSpriteH,
                                     label: sLabel,
-                                    font: normalFont,
+                                    font: FONT_NORMAL,
                                     fontColor:  isFull ? 'red' : 'black',
                                     sessionId: sInfo.sessionId,
                                     isFull: isFull
@@ -182,7 +187,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var choiceSession = stage.insert(new Q.UI.Text({x:sessionsSection.p.x,
                                                   y:sessionsSection.p.y - 4*sessionsSection.p.h/9,
                                                   weight: WEIGHT_BOLD,
-                                                  size: boldSize,
+                                                  size: SIZE_BOLD,
+                                                  font: FONT_FAMILY,
                                                   align: 'center',
                                                   color: 'black',
                                                   label: "Please choose a session to join"
@@ -206,7 +212,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               w: 3*sessionsSection.p.w/5,
                                               h: 2*sessionsSection.p.h/19,
                                               label: 'No session is avaiable at the moment',
-                                              font: normalFont,
+                                              font: FONT_NORMAL,
                                               fontColor: 'black',
                                               buttonId: numSession
                                             }));
@@ -244,13 +250,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
     updateCharacterSprites();
 
     // characterSprites nameSpritesSprites
-    nameSprites[numChar] = new Q.UI.Text({ x:0,
-                                    y: Math.max(20, Q.height/20),
-                                    weight: WEIGHT_NORMAL,
-                                    size: normalSize,
-                                    align: 'center',
-                                    color: PLAYER_NAME_COLORS[numChar],
-                                    label: PLAYER_NAMES[numChar]
+    nameSprites[numChar] = new Q.UI.Text({x:0,
+                                          y: Math.max(20, Q.height/20),
+                                          weight: WEIGHT_NORMAL,
+                                          size: SIZE_NORMAL,
+                                          font: FONT_FAMILY,
+                                          align: 'center',
+                                          color: PLAYER_NAME_COLORS[numChar],
+                                          label: PLAYER_NAMES[numChar]
                                   });
     numChar++;
   }
@@ -260,7 +267,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var choicecharacterSprites = stage.insert(new Q.UI.Text({ x:characterSection.p.x,
                                                             y:characterSection.p.y - 3*characterSection.p.h/7,
                                                             weight: WEIGHT_BOLD,
-                                                            size: boldSize,
+                                                            size: SIZE_BOLD,
+                                                            font: FONT_FAMILY,
                                                             align: 'center',
                                                             color: 'black',
                                                             label: "Please choose your character"
@@ -405,9 +413,9 @@ Q.scene(SCENE_HUD, function(stage) {
   }
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                       y: Q.height/10,
-                                                       w: 9*Q.width/10,
-                                                       h: Q.height/10,
+                                                       y: 11*Q.height/100,
+                                                       w: WIDTH_HUD,
+                                                       h: HEIGH_HUD,
                                                        fill: DARK_GREY
                                                       }));
 
@@ -557,7 +565,7 @@ Q.scene(SCENE_HUD, function(stage) {
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
-      console.log("Cannot locate current player during HUD element selector update");
+      console.log("Cannot locate current player during HUD player attribute drawing");
       return;
     }
     
@@ -565,13 +573,13 @@ Q.scene(SCENE_HUD, function(stage) {
     ** HP CIRCLE
     ** represented by a hollow circle with text inside
     */
-    var radius = Q.height / 25;
+    var radius = this.p.h*0.3;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
 
     //if circles will overlap each other, then adjust based on width instead
-    if (radius + lineWidth > Q.width/15) {
-      radius = Q.width / 20;
+    if (radius + lineWidth > this.p.w/15) {
+      radius = this.p.w / 20;
       lineWidth = radius / 2;
       ctx.lineWidth = lineWidth;
     }
@@ -584,7 +592,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    var centerX = 3*Q.width/15;
+    var centerX = 3*this.p.w/15;
     var centerY = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
@@ -599,7 +607,7 @@ Q.scene(SCENE_HUD, function(stage) {
     color = '#0000AA'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    centerX = 5*Q.width/15;
+    centerX = 5*this.p.w/15;
     centerY = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
@@ -610,7 +618,7 @@ Q.scene(SCENE_HUD, function(stage) {
     */
 
     //("inherits" blue color from above, since this is right after drawing mana circle)
-    centerX = -6*Q.width/15;
+    centerX = selector.p.x - eleW/2; //-this.p.w*0.46;
     centerY = 0;
     var manaPerShot = currentPlayer.p.manaPerShot;
     ctx.font = WEIGHT_NORMAL + " " +"12px "+FONT_FAMILY;
@@ -618,7 +626,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.arc(centerX, centerY - radius/4, radius/4, 0, Math.PI * 2, false);
     ctx.fill();
 
-    ctx.fillText(manaPerShot, centerX, centerY + 4);
+    ctx.fillText(manaPerShot, centerX - 4, centerY + 4);
   });
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
@@ -631,7 +639,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.stroke();
 
     ctx.font = WEIGHT_NORMAL+" "+(radius*0.8)+"px "+FONT_FAMILY;
-    ctx.fillText(value, centerX, centerY - radius/2);
+    ctx.fillText(value, centerX - 2*radius/29, centerY - radius/2);
   };
 });
 
@@ -645,6 +653,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
                                           y: Q.height/3,
                                           size: 20,
+                                          font: FONT_FAMILY,
                                           align: 'center',
                                           color: 'black',
                                           label: ' ',
@@ -705,6 +714,7 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
       }
     }
   });
+
   kInfo.on('draw', kInfo, function(ctx) {
     ctx.font = this.p.font || "20px "+FONT_FAMILY;
     ctx.textAlign = this.p.align || "center";
@@ -718,10 +728,12 @@ Q.scene(SCENE_KILLED_INFO ,function(stage) {
   });
 });
 
+
 Q.scene(SCENE_SCORE, function(stage) {
+  
+  var scoreSize = SIZE_BOLD;
   //every line takes about 30 pixels
-  var offsetY = 30;
-  var scoreSize = (Q.width > 600) ? 24 : Math.ceil(Q.width / 30);
+  var offsetY = scoreSize*1.5;
 
   /*
   ** Set up UI containers
@@ -731,29 +743,36 @@ Q.scene(SCENE_SCORE, function(stage) {
       border: 5,
       //x, y coordinates here are relative to canvas and top left = (0,0)
       x: Q.width/2,
-      y: Q.height/5
+      y: 11*Q.height/50,
+      w: WIDTH_HUD
     }));
   
   var nameContainer = stage.insert(new Q.UI.Container({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 1*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 1*Q.width/12,
+        // y: Q.height*0.23
+        x: -overlayContainer.p.w/3,
+        y: 0
+      }),overlayContainer);
 
   var killsContainer = stage.insert(new Q.UI.Container({ 
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 7*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 7*Q.width/12,
+        // y: Q.height*0.23
+        x: 0,
+        y: 0
+      }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         //x, y coordinates here are relative to canvas, top left = (0,0)
-        x: 9*Q.width/12,
-        y: Q.height/5
-      }));
+        // x: 9*Q.width/12,
+        // y: Q.height*0.23
+        x: overlayContainer.p.w/3,
+        y: 0
+      }),overlayContainer);
 
   /*
   ** Set up Titles
@@ -766,6 +785,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         color: "rgba(1,1,1,0)",
         x: 0,
         y: 0,
+        font: FONT_FAMILY,
         align: "center"
       }), overlayContainer);
 
@@ -775,6 +795,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), nameContainer);
 
@@ -784,7 +805,8 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
-        align: "left"
+        font: FONT_FAMILY,
+        align: "center"
       }), killsContainer);
   
 
@@ -794,7 +816,8 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: 0,
         size: scoreSize,
-        align: "left"
+        font: FONT_FAMILY,
+        align: "right"
       }), deathsContainer);
 
 
@@ -811,15 +834,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       continue;
     }
 
-    stage.insert(new Q.UI.Text({
-        //invisible placeholder
-        label: "i",
-        color: "rgba(1,1,1,0)",
-        x: 0,
-        y: line*offsetY,
-        align: "center"
-      }), overlayContainer);
-
     stage.insert(new Q.UI.Text({ 
         label: name,
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
@@ -827,6 +841,7 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
+        font: FONT_FAMILY,
         align: "left"
       }), nameContainer);
 
@@ -837,7 +852,8 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
-        align: "left"
+        font: FONT_FAMILY,
+        align: "center"
       }), killsContainer);
 
       stage.insert(new Q.UI.Text({ 
@@ -847,15 +863,115 @@ Q.scene(SCENE_SCORE, function(stage) {
         x: 0,
         y: line*offsetY,
         size: scoreSize,
-        align: "left"
+        font: FONT_FAMILY,
+        align: "right"
       }), deathsContainer);
 
       ++line;
   }
   
   //padding between stuff in container and border of container
-  overlayContainer.fit(UI_PADDING_VALUE, 5*Q.width/12 + UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+  overlayContainer.fit(2*UI_PADDING_VALUE, UI_PADDING_VALUE);
+});
+
+Q.scene(SCENE_NOTIFICATION, function(stage){
+
+  var msg = stage.options.msg;
+  if(!msg){
+    console.log("No message passed when creating notificationScreen");
+    return;
+  }
+
+  var buttonOkH = Q.height/30;
+  var msgArray = msg.split('\n');
+  var maxMsgLength = 0;
+  var msgLength;
+  var msgCount = msgArray.length;
+
+  for(var m in msgArray){
+    msgLength = msgArray[m].length; 
+    if(msgLength > maxMsgLength){
+      maxMsgLength = msgLength;
+    }
+  }
+
+  var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                    y: Q.height/2,
+                                                    fill: DARK_GREY,
+
+                                                  }));
+
+  var label = container.insert(new Q.UI.Text({x: 0, 
+                                              y: -SIZE_BOLD*msgCount - buttonOkH,
+                                              size: SIZE_BOLD,
+                                              font: FONT_FAMILY,
+                                              algin: "center",
+                                              weight: WEIGHT_NORMAL,
+                                              color: LIGHT_GREY,
+                                              label: msg
+                                            }));
+
+  var buttonOk = container.insert(new Q.UI.Button({ x: 0, 
+                                                    y: 0,
+                                                    w: container.p.w/3,
+                                                    h: buttonOkH,
+                                                    font: FONT_BOLD,
+                                                    fill: LIGHT_GREY,
+                                                    label: 'OK'
+  }));
+  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+
+  var callback = stage.options.callback;
+  buttonOk.on("click", function(){
+    
+    if(callback) callback();
+
+    container.destroy();
+  });  
+
+  var duration = stage.options.duration;
+  if(Number(duration)){
+    setTimeout(function(){
+      container.destroy();
+    }, duration);
+  }
+});
+
+
+Q.scene(SCENE_STATUS, function(stage){
+
+  var msg = stage.options.msg;
+  if(!msg){
+    console.log("No message passed when creating statusScreen");
+    return;
+  }
+
+  var duration = stage.options.duration;
+  var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                    y: Q.height/50,
+                                                    fill: DARK_GREY
+                                                  }));
+
+  var label = container.insert(new Q.UI.Text({x: 0,
+                                              y: 0, 
+                                              size: SIZE_NORMAL,
+                                              font: FONT_FAMILY,
+                                              algin: "center",
+                                              color: LIGHT_GREY,
+                                              weight: WEIGHT_NORMAL,
+                                              label: msg
+                                            }));
+
+  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var that = this;
+  if(Number(duration)){
+    setTimeout(function(){
+      that.destroy();
+    }, duration);
+  }
 });
