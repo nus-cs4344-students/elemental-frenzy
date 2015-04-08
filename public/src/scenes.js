@@ -755,7 +755,6 @@ Q.scene(SCENE_INFO ,function(stage) {
 
     // if there is a countdown duration
     if(this.p.countDown <= 0){
-      console.log("reset countdownMsg");
       this.p.label = ' ';
     }else{
       var cdMsg;
@@ -763,7 +762,6 @@ Q.scene(SCENE_INFO ,function(stage) {
         cdMsg = countdownMsg + ' ';
       }
       this.p.label = cdMsg + Math.floor(this.p.countDown);
-      console.log("label "+this.p.label);
       this.p.countDown -= dt;
     }
 

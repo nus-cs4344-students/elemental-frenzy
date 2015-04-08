@@ -170,7 +170,7 @@ var removePlayer = function(playerId){
 
     var pSessionId = getSessionIdOfPlayerId(playerId);
     // inform respective session about the player disconnection
-    !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
+    !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: playerId});
 
   }, delay_p2s * 5);
 };
@@ -213,7 +213,7 @@ var getAllPlayers = function(){
   for(var p in playerIdToSocketMap){
     pList[p] = p;
   }
-  console.log("get players "+getJSON(pList));
+
   return pList;
 }
 
