@@ -931,7 +931,9 @@ var resetDisplayScreen = function(){
 };
 
 var displayNotificationScreen = function(msg, callback){
-  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: msg , callback: callback});
+  var stageOptions = {msg: msg,
+                      callback: callback};
+  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
 };
 
 var displayStatusScreeen = function(msg) {

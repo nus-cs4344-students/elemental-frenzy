@@ -961,12 +961,14 @@ Q.scene(SCENE_SCORE, function(stage) {
 Q.scene(SCENE_NOTIFICATION, function(stage){
 
   var msg = stage.options.msg;
+  var callback = stage.options.callback;
+
   if(!msg){
     console.log("No message passed when creating notificationScreen");
     return;
   }
 
-  var buttonOkH = Q.height/30;
+  var buttonOkH = Q.height/20;
   var msgArray = msg.split('\n');
   var maxMsgLength = 0;
   var msgLength;
@@ -981,45 +983,39 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
 
   var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                     y: Q.height/2,
-                                                    fill: DARK_GREY,
-
+                                                    fill: DARK_GREY
                                                   }));
 
-  var label = container.insert(new Q.UI.Text({x: 0, 
-                                              y: -SIZE_BOLD*msgCount - buttonOkH,
-                                              size: SIZE_BOLD,
-                                              font: FONT_FAMILY,
-                                              algin: "center",
-                                              weight: WEIGHT_NORMAL,
-                                              color: LIGHT_GREY,
-                                              label: msg
-                                            }));
 
-  var buttonOk = container.insert(new Q.UI.Button({ x: 0, 
-                                                    y: 0,
-                                                    w: container.p.w/3,
-                                                    h: buttonOkH,
-                                                    font: FONT_BOLD,
-                                                    fill: LIGHT_GREY,
-                                                    label: 'OK'
-  }));
-  container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+    var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
+                                                  y: 0,
+                                                  w: container.p.w/3,
+                                                  h: buttonOkH,
+                                                  font: FONT_BOLD,
+                                                  fill: LIGHT_GREY,
+                                                  label: 'OK'
+                                            }), container);
 
+    buttonOk.on("click", function(){
+      
+      if(callback) callback();
 
-  var callback = stage.options.callback;
-  buttonOk.on("click", function(){
-    
-    if(callback) callback();
-
-    container.destroy();
-  });  
-
-  var duration = stage.options.duration;
-  if(Number(duration)){
-    setTimeout(function(){
       container.destroy();
-    }, duration);
-  }
+    }); 
+
+  var label = stage.insert(new Q.UI.Text({x: 0, 
+                                          y: -SIZE_BOLD*msgCount - buttonOkH,
+                                          size: SIZE_BOLD,
+                                          font: FONT_FAMILY,
+                                          algin: "center",
+                                          weight: WEIGHT_NORMAL,
+                                          color: LIGHT_GREY,
+                                          label: msg
+                                        }), container);
+
+  // button is shown, increase message box size
+  container.fit(Q.height/20, Q.width/30);
+
 });
 
 
@@ -1031,7 +1027,6 @@ Q.scene(SCENE_STATUS, function(stage){
     return;
   }
 
-  var duration = stage.options.duration;
   var container = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                     y: Q.height/50,
                                                     fill: DARK_GREY
@@ -1048,11 +1043,4 @@ Q.scene(SCENE_STATUS, function(stage){
                                             }));
 
   container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
-
-  var that = this;
-  if(Number(duration)){
-    setTimeout(function(){
-      that.destroy();
-    }, duration);
-  }
 });
