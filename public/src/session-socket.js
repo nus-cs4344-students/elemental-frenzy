@@ -893,6 +893,9 @@ socket.on('join', function(data) {
 
     // add player and creates sprite for it
     addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
+    
+    // add player kills/deaths to Q.state
+    Q.state.trigger('playerJoined', pId);
 
     // update the new player
     var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
@@ -958,6 +961,9 @@ socket.on('playerDisconnected', function(data) {
   // inform every other player about the player disconnection
   var otherPlayersData = {p: getPlayerProperties(pId)};
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
+  
+  // Update the state (remove this player from the state)
+  Q.state.trigger('playerDisconnected', pId);
 
   // Destroy player and remove him from game state
   removePlayerSprite(pId);

@@ -5,7 +5,28 @@ Q.state.reset({
   kills : {},
   deaths : {}
 });
+
+var addNewPlayerToState = function(playerId) {
+  var playerSprite = getSprite('PLAYER', playerId);
+  if (typeof playerSprite === 'undefined') {
+    console.log("Error in event in addNewPlayerToState(): player " + playerId + " is undefined");
+    return;
+  }
+  var newState = {
+    kills: Q.state.get('kills'),
+    deaths: Q.state.get('deaths')
+  }
+  newState.kills[playerSprite.p.name] = newState.deaths[playerSprite.p.name] = 0;
+  Q.state.set(newState);
+}
+
 // # Set listeners for the game state
+// # When a new player joins, add it to the gamestate with 0 kills 0 deaths
+Q.state.on('playerJoined', function(playerId) {
+  console.log("Gamestate playerJoined event triggered");
+  addNewPlayerToState(playerId);
+});
+
 // # When player dies, update the kills of the killer and the deaths of the victim
 Q.state.on("playerDied", function(data) {
   console.log("Gamestate playerDied event triggered");
@@ -26,18 +47,12 @@ Q.state.on("playerDied", function(data) {
   var deaths = Q.state.get('deaths');
   
   if (typeof kills[killerName] === 'undefined') {
-    kills[killerName] = 0;
-    Q.state.set('kills', kills);
-    
-    deaths[killerName] = 0;
-    Q.state.set('deaths', deaths);
+    console.log("Error in gamestate event playerDied: kills[" + killerName + "] is undefined");
+    return;
   }
   if (typeof deaths[victimName] === 'undefined') {
-    kills[victimName] = 0;
-    Q.state.set('kills', kills);
-    
-    deaths[victimName] = 0;
-    Q.state.set('deaths', deaths);
+    console.log("Error in gamestate event playerDied: deaths[" + victimName + "] is undefined");
+    return;
   }
   
   kills[killerName]++;
@@ -54,6 +69,23 @@ Q.state.on("playerDied", function(data) {
     Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
   }
   
+});
+
+// # When player disconnects, remove it from the gamestate
+Q.state.on('playerDisconnected', function(playerId) {
+  console.log("Gamestate playerDisconnected event triggered");
+  var playerSprite = getSprite('PLAYER', playerId);
+  if (typeof playerSprite === 'undefined') {
+    console.log("Error in event in gamestate: playerDisconnected: player " + playerId + " is undefined");
+    return;
+  }
+  var newState = {
+    kills: Q.state.get('kills'),
+    deaths: Q.state.get('deaths')
+  }
+  delete newState.kills[playerSprite.p.name];
+  delete newState.deaths[playerSprite.p.name];
+  Q.state.set(newState);
 });
 
 // # When enemy dies, update the kills of the killer only

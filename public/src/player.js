@@ -88,12 +88,6 @@ Q.Sprite.extend("Player",{
     this.takeDamageIntervalId = -1;
 
     this.addEventListeners();
-
-    // Add to the game state!
-    // Kills = Deaths = 0
-    if (typeof Q.state.p.kills[this.p.name] === 'undefined') {
-      Q.state.p.kills[this.p.name] = Q.state.p.deaths[this.p.name] = 0;
-    }
   },
   
   addEventListeners: function() { 
