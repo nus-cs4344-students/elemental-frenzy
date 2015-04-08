@@ -207,7 +207,7 @@ Q.component('2dEleball', {
       ay: 0,
       gravity: 0, // Eleballs have no gravity
       type: Q.SPRITE_PARTICLE, // Eleballs are particles
-      collisionMask: Q.SPRITE_ALL // Eleballs collide with anything
+      collisionMask: Q.SPRITE_ALL // Eleballs collide with anything except
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
@@ -224,8 +224,13 @@ Q.component('2dEleball', {
   //  - Case 3: Both elements pass through each other if |i-j| == 2
   collision: function(col,last) {    
     // Don't collide with the shooter of the eleball
-    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId) {
+    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId ){
       // console.log("Eleball passing object!!!");
+      return;
+    }
+    
+    // Don't collide with powerups
+    if (col.obj.isA('Powerup')) {
       return;
     }
     

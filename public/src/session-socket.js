@@ -15,26 +15,11 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var DEFAULT_LEVEL = 'level2';
+/*
 var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}}, 
                        "2": {p: {x: 800, y: 0, enemyId: 2, isServerSide: true}}};
-var DEFAULT_SPRITES = { PLAYER: {},
-                        ACTOR: {},
-                        PLAYERELEBALL: {},
-                        ENEMYELEBALL: {},
-                        ENEMY: {}};
+*/
 
-var DEFAULT_GAMESTATE = {
-  level: DEFAULT_LEVEL,
-  sprites: {PLAYER: {},
-            ACTOR: {},
-            PLAYERELEBALL: {},
-            ENEMYELEBALL: {},
-            ENEMY: {}
-           },
-  kills: {},
-  deaths: {}
-};
 
 var DEFAULT_SESSION = {
   playerCount: 0,
@@ -88,12 +73,61 @@ var getAvgRttOfPlayer = function(playerId) {
 }
 
 var creates = {
-  PLAYER: function(p) { return new Q.Player(p); },
-  ACTOR: function(p) { return new Q.Actor(p); },
-  PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
-  ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
-  ENEMY: function(p) { return new Q.Enemy(p); }
+  PLAYER:         function(p) { return new Q.Player(p); },
+  ACTOR:          function(p) { return new Q.Actor(p); },
+  PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
+  ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
+  ENEMY:          function(p) { return new Q.Enemy(p); },
+  POWERUP:        function(p) { return new Q.Powerup(p); }
 };
+
+var getDefaultSprites = function() {  
+  var defaultSprites = {  PLAYER: {},
+                          ACTOR: {},
+                          PLAYERELEBALL: {},
+                          ENEMYELEBALL: {},
+                          ENEMY: {},
+                          POWERUP: {}
+                        };
+  return defaultSprites;
+}
+
+var getDefaultGameState = function() {
+  var defaultSprites = getDefaultSprites();
+  defaultSprites.POWERUP = {"1": {p: {
+                              name: POWERUP_CLASS_ATTACK_DOUBLEDMG,
+                              sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,
+                              spriteId: 1,
+                              duration: POWERUP_DURATION_ATTACK_DOUBLEDMG
+                            }},
+                            "2": {p: {
+                              name: POWERUP_CLASS_MANA_ZEROMANACOST,
+                              sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,
+                              spriteId: 2,
+                              duration: POWERUP_DURATION_MANA_ZEROMANACOST
+                            }},
+                            "3": {p: {
+                              name: POWERUP_CLASS_MOVESPEED_DOUBLESPEED ,
+                              sheet: POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED ,
+                              spriteId: 3,
+                              duration: POWERUP_DURATION_MOVESPEED_DOUBLESPEED 
+                            }},
+                            "4": {p: {
+                              name: POWERUP_CLASS_HEALTH_HEALTOFULL,
+                              sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
+                              spriteId: 4,
+                              duration: POWERUP_DURATION_HEALTH_HEALTOFULL
+                            }},
+  };
+  var defaultGameState = {
+    level: 'level2',
+    sprites: defaultSprites,
+    kills: {},
+    deaths: {}
+  };
+  
+  return defaultGameState;
+}
 
 var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
@@ -665,6 +699,9 @@ var displayGameScreen = function(level){
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
+  
+  // Powerups system
+  Q.stage(STAGE_LEVEL).add("powerupSystem");
 };
 
 var loadGameSession = function(sessionId) {
@@ -676,10 +713,10 @@ var loadGameSession = function(sessionId) {
   console.log("Loading game state...");
 
   // initialize game state and session
-  gameState = clone(DEFAULT_GAMESTATE);
+  gameState = getDefaultGameState();
   session = clone(DEFAULT_SESSION);
   session.sessionId = sessionId;
-  allSprites = clone(DEFAULT_SPRITES);
+  allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
 

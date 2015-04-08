@@ -36,7 +36,7 @@ Q.Sprite.extend("Actor", {
       update: true
     });
     
-    this.add('healthBar, nameBar, dmgDisplay, animation, 2d');
+    this.add('healthBar, nameBar, dmgDisplay, animation, 2d, powerupable');
     
     this.on("takeDamage");
 
