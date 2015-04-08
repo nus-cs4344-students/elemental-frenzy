@@ -464,7 +464,10 @@ var addSprite = function(entityType, id, properties) {
       }});
 
     }, interval_updateServer_timeInterval);
+  }else (eType == 'ACTOR'){
+     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
   }
+
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
@@ -543,6 +546,10 @@ var removeSprite = function(entityType, id){
   }
 
   console.log("Removed sprite " + eType + " id " + spriteId);
+
+  if(eType == 'ACTOR'){
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has left"});
+  }
 
   var sDel = allSprites[eType][spriteId];
   sDel.destroy();

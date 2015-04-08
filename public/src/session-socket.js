@@ -970,7 +970,8 @@ socket.on('playerDisconnected', function(data) {
   }
 
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
-  
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has left"});
+
   // remove player from the session
   leaveSession(pId);
   
