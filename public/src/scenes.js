@@ -56,6 +56,14 @@ var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
 var WIDTH_HUD = 9*Q.width/10;
 var HEIGH_HUD = Q.height/10;
 
+// HUD constants
+var HUD_ACTIVE_DOUBLE_DMG = "icon_attack_active";
+var HUD_ACTIVE_DOUBLE_MOVESPEED = "icon_movement_active";
+var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
+var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
+var HUD_INACTIVE_DOUBLE_MOVESPEED = "icon_movement_inactive";
+var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
+
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
 
@@ -566,6 +574,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupMovement_DoubleSpeed;
 
   hudContainer.on('draw', hudContainer, function(ctx) {
+
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
       console.log("Cannot locate current player during HUD player attribute drawing");
@@ -576,27 +585,27 @@ Q.scene(SCENE_HUD, function(stage) {
     ** HP CIRCLE
     ** represented by a hollow circle with text inside
     */
-    var radius = this.p.h*0.3;
+    var radius    = this.p.h*0.3;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
 
     //if circles will overlap each other, then adjust based on width instead
     if (radius + lineWidth > this.p.w/15) {
-      radius = this.p.w / 20;
-      lineWidth = radius / 2;
+      radius        = this.p.w / 20;
+      lineWidth     = radius / 2;
       ctx.lineWidth = lineWidth;
     }
 
     var currentHp = currentPlayer.p.currentHealth;
-    var maxHp = currentPlayer.p.maxHealth;
-    var scaledHp = currentHp / maxHp;
+    var maxHp     = currentPlayer.p.maxHealth;
+    var scaledHp  = currentHp / maxHp;
 
     //green -> yellow -> red
-    var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
+    var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    var centerX = 3*this.p.w/15;
-    var centerY = 0;
+    ctx.fillStyle   = color;
+    var centerX     = 3*this.p.w/15;
+    var centerY     = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
 
@@ -605,17 +614,17 @@ Q.scene(SCENE_HUD, function(stage) {
     ** represented by a hollow circle with text inside
     */
     var currentMana = Math.round(currentPlayer.p.currentMana);
-    var maxMana =currentPlayer.p.maxMana;
+    var maxMana     = currentPlayer.p.maxMana;
 
-    color = '#3BB9FF'; //blue
+    color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    centerX = 5*this.p.w/15;
-    centerY = 0;
+    ctx.fillStyle   = color;
+    centerX         = 5*this.p.w/15;
+    centerY         = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
 
-    //icon sprites are 34 by 34. ideal case is scale height to this.p.h / 3
+    //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
     var scaleIcons = this.p.h / 3 / 34;
     /*
     ** Mana cost per shot
@@ -623,15 +632,15 @@ Q.scene(SCENE_HUD, function(stage) {
     */
 
     //("inherits" blue color from above, since this is right after drawing mana circle)
-    centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y;
+    centerX         = selector.p.x - eleW / 1.2;
+    centerY         = selector.p.y;
     var manaPerShot = currentPlayer.p.manaPerShot;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(manaPerShot, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_mana_active',
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -640,20 +649,19 @@ Q.scene(SCENE_HUD, function(stage) {
 
     /*
     ** Attack Damage per shot
-    ** represented by a sword with red text beside
+    ** represented by a sword with orangey text beside
     */
-    color = '#F88017'; //red
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    //centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y - this.p.h / 3;
+    color             = '#F88017'; //orangey
+    ctx.strokeStyle   = color;
+    ctx.fillStyle     = color;
+    centerY           = selector.p.y - this.p.h / 3;
     var damagePerShot = currentPlayer.p.dmg;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(damagePerShot, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_attack_active',
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -664,21 +672,20 @@ Q.scene(SCENE_HUD, function(stage) {
     ** Movement Speed
     ** represented by a shoe with green text beside
     */
-    color = '#00FF00'; //green
+    color           = '#00FF00'; //green
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    //centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y + this.p.h / 3;
-    var moveSpeed = currentPlayer.p.speed;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.fillStyle   = color;
+    centerY         = selector.p.y + this.p.h / 3;
+    var moveSpeed   = currentPlayer.p.speed;
+    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(moveSpeed, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_movement_active',
-                                  x: centerX,
-                                  y: centerY,
-                                  scale: scaleIcons
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_MOVESPEED,
+                                    x    : centerX,
+                                    y    : centerY,
+                                    scale: scaleIcons
                                   }));
     }
     
@@ -689,34 +696,29 @@ Q.scene(SCENE_HUD, function(stage) {
     var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
     if (initHud) {
-      powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: 'icon_mana_inactive',
-                                    x: 0 * scaleToHeight,
-                                    y: centerY,
-                                    scale: scaleToHeight,
+      powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
+                                                                  x    : 0 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight,
                                     }));
-      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: 'icon_attack_inactive',
-                                    x: 34 * scaleToHeight,
-                                    y: centerY,
-                                    scale: scaleToHeight
+      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
+                                                                  x    : 34 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight
                                     }));
-      powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: 'icon_movement_inactive',
-                                    x: 68 * scaleToHeight,
-                                    y: centerY,
-                                    scale: scaleToHeight
+      powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
+                                                                  x    : 68 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight
                                     }));
     } else {
       var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
       var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
       
-      isZeroManaActive ? 
-      powerupMana_ZeroMana.p.sheet = 'icon_mana_active' : powerupMana_ZeroMana.p.sheet = 'icon_mana_inactive';
-
-      isDoubleDmgActive ?
-      powerupAtk_DoubleDmg.p.sheet = 'icon_attack_active' : powerupAtk_DoubleDmg.p.sheet = 'icon_attack_inactive';
-
-      isDoubleMovespeedActive ?
-      powerupMovement_DoubleSpeed.p.sheet = 'icon_movement_active' : powerupMovement_DoubleSpeed.p.sheet = 'icon_movement_inactive';
+      powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
+      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
+      powerupMovement_DoubleSpeed.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
     }
 
     initHud = false;
@@ -725,8 +727,8 @@ Q.scene(SCENE_HUD, function(stage) {
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
-    var end = Math.PI * 2.0;
-    var start = Math.PI / 2.0;
+    var end         = Math.PI * 2.0;
+    var start       = Math.PI / 2.0;
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledValue) - start, false);
@@ -820,7 +822,6 @@ Q.scene(SCENE_SCORE, function(stage) {
   var overlayContainer = stage.insert(new Q.UI.Container({
       fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
       border: 5,
-      //x, y coordinates here are relative to canvas and top left = (0,0)
       x: Q.width/2,
       y: 11*Q.height/50,
       w: WIDTH_HUD
@@ -829,26 +830,17 @@ Q.scene(SCENE_SCORE, function(stage) {
   var nameContainer = stage.insert(new Q.UI.Container({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 1*Q.width/12,
-        // y: Q.height*0.23
         x: -overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
 
   var killsContainer = stage.insert(new Q.UI.Container({ 
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 7*Q.width/12,
-        // y: Q.height*0.23
         x: 0,
         y: 0
       }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 9*Q.width/12,
-        // y: Q.height*0.23
         x: overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
@@ -916,7 +908,6 @@ Q.scene(SCENE_SCORE, function(stage) {
     stage.insert(new Q.UI.Text({ 
         label: name,
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -927,7 +918,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       stage.insert(new Q.UI.Text({ 
         label: kills[name].toString(),
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -938,7 +928,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       stage.insert(new Q.UI.Text({ 
         label: deaths[name].toString(),
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
