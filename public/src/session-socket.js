@@ -645,6 +645,14 @@ var resetDisplayScreen = function(){
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 }
 
+var displayNotificationScreen = function(msg, btnDisabled, callback, duration){
+  var stageOptions = {msg: msg, 
+                      btnDisabled: btnDisabled,
+                      duration: duration, 
+                      callback: callback};
+  Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
+};
+
 var displayScoreScreen = function(){
   hideScoreScreen();
   Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
@@ -654,6 +662,15 @@ var hideScoreScreen = function(){
   Q.clearStage(STAGE_SCORE);
 };
 
+var displayStatusScreeen = function(msg) {
+  if(!msg){
+    console.log("No message passed in when calling displayStatusScreeen");
+    return;
+  }
+
+  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: msg});
+};
+
 var displayGameScreen = function(level){
   resetDisplayScreen();
 
@@ -661,7 +678,7 @@ var displayGameScreen = function(level){
   Q.stageScene(level, STAGE_LEVEL);
 
   // show connected status
-  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Connected as 'Session "+session.sessionId+"'"});
+  displayStatusScreeen("Connected as 'Session "+session.sessionId+"'");
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
@@ -973,11 +990,10 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
-  // create notification box
-  // Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: "You are disconnected"});
+  // ask host to refresh browser again
+  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while", false);
 
-  // create disconnected status
-  Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: "Disconnected"});
+  displayStatusScreeen("Unable to connect to the server");
 });
 
 // Authoritative message about the movement of the sprite from a client
