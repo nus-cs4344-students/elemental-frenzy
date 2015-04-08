@@ -1,5 +1,5 @@
 {
-	"icon_mana": {
+	"powerup_mana": {
 		"sx": 34,
 		"sy": 68,
 		"cols": 1,
@@ -8,7 +8,7 @@
 		"frames": 1
 	},
     
-	"powerup_mana": {
+	"icon_mana": {
 		"sx": 0,
 		"sy": 0,
 		"cols": 1,
@@ -17,7 +17,7 @@
 		"frames": 1
 	},
     
-	"icon_movement": {
+	"powerup_movement": {
 		"sx": 0,
 		"sy": 34,
 		"cols": 1,
@@ -26,7 +26,7 @@
 		"frames": 1
 	},
     
-    "powerup_movement": {
+    "icon_movement": {
         "sx": 34,
 		"sy": 0,
 		"cols": 1,
@@ -35,7 +35,7 @@
 		"frames": 1
     },
     
-    "icon_attack": {
+    "powerup_attack": {
         "sx": 34,
 		"sy": 34,
 		"cols": 1,
@@ -44,7 +44,7 @@
 		"frames": 1  
     },
     
-    "powerup_attack": {
+    "icon_attack": {
         "sx": 0,
 		"sy": 68,
 		"cols": 1,

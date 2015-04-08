@@ -689,17 +689,17 @@ Q.scene(SCENE_HUD, function(stage) {
 
     // TEMP PLACEHOLDER FOR POWER UPS
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'powerup_mana',
+      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
                                   x: 0 * scaleToHeight,
                                   y: centerY,
                                   scale: scaleToHeight
                                   }));
-    this.insert(new Q.UI.Button({ sheet: 'powerup_attack',
+    this.insert(new Q.UI.Button({ sheet: 'icon_attack',
                                   x: 34 * scaleToHeight,
                                   y: centerY,
                                   scale: scaleToHeight
                                   }));
-    this.insert(new Q.UI.Button({ sheet: 'powerup_movement',
+    this.insert(new Q.UI.Button({ sheet: 'icon_movement',
                                   x: 68 * scaleToHeight,
                                   y: centerY,
                                   scale: scaleToHeight
