@@ -412,8 +412,6 @@ Q.scene(SCENE_HUD, function(stage) {
     return;
   }
 
-  var initHud = true;
-
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
                                                        w: WIDTH_HUD,
@@ -562,7 +560,10 @@ Q.scene(SCENE_HUD, function(stage) {
 
   updateEleSelector(element);
 
-
+  var initHud = true;
+  var powerupMana_ZeroMana;
+  var powerupAtk_DoubleDmg;
+  var powerupMovement_DoubleSpeed;
 
   hudContainer.on('draw', hudContainer, function(ctx) {
     var currentPlayer = getPlayerSprite(selfId);
@@ -630,7 +631,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillText(manaPerShot, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
+      this.insert(new Q.UI.Button({ sheet: 'icon_mana_active',
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -652,7 +653,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillText(damagePerShot, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_attack',
+      this.insert(new Q.UI.Button({ sheet: 'icon_attack_active',
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -668,13 +669,13 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillStyle = color;
     //centerX = selector.p.x - eleW / 1.2;
     centerY = selector.p.y + this.p.h / 3;
-    var moveSpeed = 30; //currentPlayer.p.moveSpeed???;
+    var moveSpeed = currentPlayer.p.speed;
     ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(moveSpeed, centerX + 25, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_movement',
+      this.insert(new Q.UI.Button({ sheet: 'icon_movement_active',
                                   x: centerX,
                                   y: centerY,
                                   scale: scaleIcons
@@ -687,25 +688,37 @@ Q.scene(SCENE_HUD, function(stage) {
 
     var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
-    // TEMP PLACEHOLDER FOR POWER UPS
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
-                                  x: 0 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
-    this.insert(new Q.UI.Button({ sheet: 'icon_attack',
-                                  x: 34 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
-    this.insert(new Q.UI.Button({ sheet: 'icon_movement',
-                                  x: 68 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
+      powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: 'icon_mana_inactive',
+                                    x: 0 * scaleToHeight,
+                                    y: centerY,
+                                    scale: scaleToHeight,
+                                    }));
+      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: 'icon_attack_inactive',
+                                    x: 34 * scaleToHeight,
+                                    y: centerY,
+                                    scale: scaleToHeight
+                                    }));
+      powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: 'icon_movement_inactive',
+                                    x: 68 * scaleToHeight,
+                                    y: centerY,
+                                    scale: scaleToHeight
+                                    }));
+    } else {
+      var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
+      var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
+      
+      isZeroManaActive ? 
+      powerupMana_ZeroMana.p.sheet = 'icon_mana_active' : powerupMana_ZeroMana.p.sheet = 'icon_mana_inactive';
+
+      isDoubleDmgActive ?
+      powerupAtk_DoubleDmg.p.sheet = 'icon_attack_active' : powerupAtk_DoubleDmg.p.sheet = 'icon_attack_inactive';
+
+      isDoubleMovespeedActive ?
+      powerupMovement_DoubleSpeed.p.sheet = 'icon_movement_active' : powerupMovement_DoubleSpeed.p.sheet = 'icon_movement_inactive';
     }
-    
+
     initHud = false;
 
   });

@@ -1,6 +1,24 @@
 {
-	"powerup_mana": {
-		"sx": 34,
+	"icon_mana_inactive": {
+		"sx": 68,
+		"sy": 34,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+	},
+    
+	"icon_mana_active": {
+		"sx": 68,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+	},
+    
+	"icon_movement_inactive": {
+		"sx": 0,
 		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
@@ -8,49 +26,57 @@
 		"frames": 1
 	},
     
-	"icon_mana": {
-		"sx": 0,
-		"sy": 0,
-		"cols": 1,
-		"tilew": 34,
-		"tileh": 34,
-		"frames": 1
-	},
-    
-	"powerup_movement": {
-		"sx": 0,
-		"sy": 34,
-		"cols": 1,
-		"tilew": 34,
-		"tileh": 34,
-		"frames": 1
-	},
-    
-    "icon_movement": {
+    "icon_movement_active": {
         "sx": 34,
-		"sy": 0,
+		"sy": 34,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
 		"frames": 1
     },
     
-    "powerup_attack": {
-        "sx": 34,
-		"sy": 34,
+    "icon_attack_inactive": {
+        "sx": 0,
+		"sy": 0,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
 		"frames": 1  
     },
     
-    "icon_attack": {
+    "icon_attack_active": {
         "sx": 0,
+		"sy": 34,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+    },
+
+    "powerup_attack": {
+        "sx": 34,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+    },
+
+    "powerup_mana": {
+        "sx": 34,
+		"sy": 68,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+    },
+    
+    "powerup_movement": {
+        "sx": 68,
 		"sy": 68,
 		"cols": 1,
 		"tilew": 34,
 		"tileh": 34,
 		"frames": 1
     }
-       
 }
