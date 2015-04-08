@@ -73,7 +73,14 @@ Q.Sprite.extend("Actor", {
 
     console.log(this.p.name + " died to " + killerName);
 
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "You have killed "+this.p.name});
+    var msg;
+    if(killerId == selfId){
+      msg = "You have killed "+this.p.name;
+    }else{
+      msg = killerName+" has killed "+this.p.name;
+    }
+    
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
     removeActorSprite(this.p.spriteId);
   },
