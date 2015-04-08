@@ -12,7 +12,7 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
 var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
-var PLAYER_DEFAULT_DMG = 2;
+var PLAYER_DEFAULT_DMG = 5;
 var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 // ## Animation
 var PLAYER_ANIMATION = "character";
@@ -221,6 +221,7 @@ Q.Sprite.extend("Player",{
                               sheet : ELEBALL_ELEMENTNAMES[clonedProps.element],
                               shooter : clonedProps.name,
                               shooterId : clonedProps.spriteId,
+                              dmg : this.p.dmg,
                               frame : ELEBALL_FRAME,
                               angle : angleDeg, // angle 0 starts from 3 o'clock then clockwise
                               vx : ELEBALL_DEFAULT_VX * Math.cos(angleRad),
