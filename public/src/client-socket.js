@@ -963,8 +963,6 @@ var displayStatusScreeen = function(msg) {
 };
 
 var displayPlayerHUDScreen = function(){
-  displayScoreScreen();
-  hideScoreScreen();
   Q.stageScene(SCENE_HUD, STAGE_HUD);
 };
 

@@ -64,7 +64,6 @@ var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
 var HUD_INACTIVE_DOUBLE_MOVESPEED = "icon_movement_inactive";
 var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 
-var TAB_BUG_OFFSET = 9;
 var STATS_OFFSET = 25;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
@@ -591,6 +590,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var radius    = this.p.h*0.3;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
+    ctx.textAlign = "center";
 
     //if circles will overlap each other, then adjust based on width instead
     if (radius + lineWidth > this.p.w/15) {
@@ -640,7 +640,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var manaPerShot = currentPlayer.p.manaPerShot;
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(manaPerShot, centerX + STATS_OFFSET + TAB_BUG_OFFSET, centerY - 6);
+    ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
       this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
@@ -661,7 +661,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var damagePerShot = currentPlayer.p.dmg;
     ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(damagePerShot, centerX + STATS_OFFSET + TAB_BUG_OFFSET, centerY - 6);
+    ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
       this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
@@ -682,7 +682,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var moveSpeed   = currentPlayer.p.speed;
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(moveSpeed, centerX + STATS_OFFSET + TAB_BUG_OFFSET, centerY - 6);
+    ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
       this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_MOVESPEED,
@@ -738,7 +738,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.stroke();
 
     ctx.font = WEIGHT_NORMAL+" "+(radius*0.8)+"px "+FONT_FAMILY;
-    ctx.fillText(value, centerX - 2*radius/29 + TAB_BUG_OFFSET, centerY - radius/2);
+    ctx.fillText(value, centerX - 2*radius/29, centerY - radius/2);
   };
 });
 
