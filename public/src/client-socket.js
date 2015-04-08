@@ -15,23 +15,6 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var DEFAULT_GAMESTATE = {
-  level: '',
-  sprites: {PLAYER: {},
-            ACTOR: {},
-            PLAYERELEBALL: {},
-            ENEMYELEBALL: {},
-            ENEMY: {}},
-  kills: {},
-  deaths: {}
-};
-
-var DEFAULT_SPRITES = { PLAYER: {},
-                        ACTOR: {},
-                        PLAYERELEBALL: {},
-                        ENEMYELEBALL: {},
-                        ENEMY: {}};
-
 var sessions = {};
 var selfId;
 var sessionId;
@@ -80,12 +63,35 @@ var getAvgRtt = function() {
 }
 
 var creates = {
-  PLAYER: function(p) { return new Q.Player(p); },
-  ACTOR: function(p) { return new Q.Actor(p); },
-  PLAYERELEBALL: function(p) { return new Q.PlayerEleball(p); },
-  ENEMYELEBALL: function(p) { return new Q.EnemyEleball(p); },
-  ENEMY: function(p) { return new Q.Enemy(p); }
+  PLAYER:         function(p) { return new Q.Player(p); },
+  ACTOR:          function(p) { return new Q.Actor(p); },
+  PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
+  ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
+  ENEMY:          function(p) { return new Q.Enemy(p); },
+  POWERUP:        function(p) { return new Q.Powerup(p); }
 };
+
+var getDefaultSprites = function() {  
+  var defaultSprites = {  PLAYER: {},
+                          ACTOR: {},
+                          PLAYERELEBALL: {},
+                          ENEMYELEBALL: {},
+                          ENEMY: {},
+                          POWERUP: {}
+                        };
+  return defaultSprites;
+}
+
+var getDefaultGameState = function() {
+  var defaultGameState = {
+    level: '',
+    sprites: getDefaultSprites(),
+    kills: {},
+    deaths: {}
+  };
+  
+  return defaultGameState;
+}
 
 var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
@@ -237,12 +243,10 @@ var updateSprite = function(entityType, id, properties){
   if (eType == 'PLAYER' && spriteId == selfId) {
     // Include here the properties of a player that should get updated by the server
     // Health/mana-related
-    spriteToUpdate.p.currentHealth = clonedProps.currentHealth;
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
     // Attack-related
-    spriteToUpdate.p.dmg = clonedProps.dmg;
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -499,9 +503,14 @@ var addEnemyEleballSprite = function(ballId, properties){
 var addPlayerEleballSprite = function(ballId, properties){
   return addSprite('PLAYERELEBALL', ballId, properties);
 };
+
 var addActorSprite = function(actorId, properties){
   return addSprite('ACTOR', actorId, properties);
 };
+
+var addPowerup = function(powerupId, properties) {
+  return addSprite('POWERUP', powerupId, properties);
+}
 
 /*
  Delete and remove sprite from game state and remove it from active stage
@@ -982,6 +991,8 @@ var displayGameScreen = function(level){
   Q.stageScene(level, STAGE_LEVEL);
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
+  // Powerups system
+  Q.stage(STAGE_LEVEL).add("powerupSystem");
 };
 
 // ## Loads the game state.
@@ -989,8 +1000,8 @@ var loadGameSession = function() {
   console.log("Loading game state...");
 
   // load default values
-  gameState = gameState ? gameState : clone(DEFAULT_GAMESTATE);
-  allSprites = clone(DEFAULT_SPRITES);
+  gameState = gameState ? gameState : getDefaultGameState();
+  allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
   
