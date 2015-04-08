@@ -94,15 +94,15 @@ Q.component("nameBar", {
 //  3. Call the draw(ctx) function in the draw function of the entity.
 Q.component("dmgDisplay", {
   added: function() {
-    this.entity.p.dmgDisplayDmgList = [];      // damages to be displayed
-    this.entity.p.dmgDisplayTimeLeftList = [];  // timeLeft for each damage to be displayed
-    this.entity.p.dmgDisplayPosList = [];    // positions x and y of the display for each damage
-    this.entity.p.dmgDisplayVx = 0;    // 
-    this.entity.p.dmgDisplayVy = -1;  // velocities for the display
+    this.dmgDisplayDmgList = [];      // damages to be displayed
+    this.dmgDisplayTimeLeftList = [];  // timeLeft for each damage to be displayed
+    this.dmgDisplayPosList = [];    // positions x and y of the display for each damage
+    this.dmgDisplayVx = 0;    // 
+    this.dmgDisplayVy = -1;  // velocities for the display
     
     this.entity.on('draw', this, 'draw');
     this.entity.on('step', this, 'step');
-    this.entity.on('takeDamage', this, 'addDmg')
+    this.entity.on('takeDamage', this, 'addDmg');
   },
   
   addDmg: function(dmgAndShooter) {
@@ -111,23 +111,23 @@ Q.component("dmgDisplay", {
     }
 
     var dmg = dmgAndShooter.dmg;
-    this.entity.p.dmgDisplayDmgList.push(dmg);
-    this.entity.p.dmgDisplayTimeLeftList.push(1); // display for 1 second
-    this.entity.p.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
+    this.dmgDisplayDmgList.push(dmg);
+    this.dmgDisplayTimeLeftList.push(1); // display for 1 second
+    this.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
   },
   
   step: function(dt) {
-    for (var i = 0; i < this.entity.p.dmgDisplayTimeLeftList.length; i++) {
-      this.entity.p.dmgDisplayTimeLeftList[i] -= dt;
-      if (this.entity.p.dmgDisplayTimeLeftList[i] <= 0) {
+    for (var i = 0; i < this.dmgDisplayTimeLeftList.length; i++) {
+      this.dmgDisplayTimeLeftList[i] -= dt;
+      if (this.dmgDisplayTimeLeftList[i] <= 0) {
         // No need to display anymore, so remove it
-        this.entity.p.dmgDisplayTimeLeftList.splice(i, 1);
-        this.entity.p.dmgDisplayDmgList.splice(i, 1);
-        this.entity.p.dmgDisplayPosList.splice(i, 1);
+        this.dmgDisplayTimeLeftList.splice(i, 1);
+        this.dmgDisplayDmgList.splice(i, 1);
+        this.dmgDisplayPosList.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
-        this.entity.p.dmgDisplayPosList[i][0] += this.entity.p.dmgDisplayVx;
-        this.entity.p.dmgDisplayPosList[i][1] += this.entity.p.dmgDisplayVy;
+        this.dmgDisplayPosList[i][0] += this.dmgDisplayVx;
+        this.dmgDisplayPosList[i][1] += this.dmgDisplayVy;
       }
     }
   },
@@ -136,9 +136,9 @@ Q.component("dmgDisplay", {
     ctx.font = "15px "+FONT_FAMILY;
     ctx.textAlign = "left";
     ctx.fillStyle = 'red';
-    for (var i = 0; i < this.entity.p.dmgDisplayDmgList.length; i++) {
-      ctx.fillText(this.entity.p.dmgDisplayDmgList[i], 
-            this.entity.p.dmgDisplayPosList[i][0], this.entity.p.dmgDisplayPosList[i][1]);
+    for (var i = 0; i < this.dmgDisplayDmgList.length; i++) {
+      ctx.fillText(this.dmgDisplayDmgList[i], 
+            this.dmgDisplayPosList[i][0], this.dmgDisplayPosList[i][1]);
     }
   }
 });
