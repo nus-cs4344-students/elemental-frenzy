@@ -14,7 +14,7 @@ requirejs.config({
             deps: ['helper-functions', 'keyboard-controls',
                   'game-state', 'components',
                   'eleballs', 'player', 'actor', 'enemy-ai',
-                  'tower', 'ladder']//,
+                  'tower', 'ladder', 'powerup']//,
             
             //Once loaded, use the global 'Scenes' as the
             //module value.
@@ -77,7 +77,10 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     character_lightning.png, character_lightning.json, \
     character_water.png, character_water.json, \
     character_fire.png, character_fire.json, \
-    map_tiles.png, ladder.png, ladder.json, hud.png, hud.json", function() {
+    map_tiles.png, \
+    ladder.png, ladder.json, \
+    hud.png, hud.json, \
+    powerups.png, powerups.json", function() {
 
    // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -93,6 +96,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("ladder.png", "ladder.json");
   Q.compileSheets("hud.png", "hud.json");
+  Q.compileSheets("powerups.png", "powerups.json");
   // console.log('Asset loaded');
 
   require([ 'keyboard-controls',
