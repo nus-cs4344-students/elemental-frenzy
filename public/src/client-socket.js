@@ -247,7 +247,7 @@ var updateSprite = function(entityType, id, properties){
   }
   
   gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
-  console.log("Updated "+eType+" id " + spriteId);
+  //console.log("Updated "+eType+" id " + spriteId);
 
   return;
 }
@@ -448,7 +448,7 @@ var addSprite = function(entityType, id, properties) {
     
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function() {
-      console.log("interval for sprite "+sprite.p.spriteId);
+      //console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
           sprite.p.isDead || !_isSessionConnected) {
         // (Defensive) Remove interval because it is gone/not on the client side
