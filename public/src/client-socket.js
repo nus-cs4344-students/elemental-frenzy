@@ -38,6 +38,7 @@ var sessionId;
 var allSprites;
 var gameState;
 var isSession = false;
+var _isJoinSent = false;
 
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
@@ -597,6 +598,11 @@ var updateSessions = function(sessionsInfo){
 var setupEventListeners = function(){
 
   Q.input.on('join', function(data){
+    // prevent join button spamming
+    if(_isJoinSent){
+      return ;
+    }
+
     console.log("join "+getJSON(data));
 
     var sId = data.sessionId;
@@ -611,6 +617,7 @@ var setupEventListeners = function(){
       return;
     }
 
+    _isJoinSent = true;
     // send request to app.js of joining a session
     Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
@@ -1149,6 +1156,8 @@ socket.on('joinFailed', function(data){
   console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
 
   _isSessionConnected = false;
+  _gameLoaded = false;
+  _isJoinSent = false;
   
   displayNotificationScreen("Failed to join session "+data.sessionId+" due to "+data.msg, displayWelcomeScreen);
 });
