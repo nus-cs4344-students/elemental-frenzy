@@ -911,6 +911,8 @@ socket.on('join', function(data) {
     // add player and creates sprite for it
     addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
     
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has joined"});
+
     // add player kills/deaths to Q.state
     Q.state.trigger('playerJoined', pId);
 

@@ -313,17 +313,11 @@ Q.Sprite.extend("Player",{
     var vCharId = this.p.characterId;
     var vSessionId = this.p.sessionId;
 
-    var killedData = {killerEntityType: killerEntityType, 
-                      killerId: killerId,
-                      victimEntityType: vType,
-                      victimId: vId};
-
-    Q.stageScene(SCENE_KILLED_INFO, STAGE_KILLED_INFO, killedData);
-
 
     console.log(this.p.name + " died to " + killerName);
   
     if (this.p.isServerSide) {
+      
       Q.state.trigger("playerDied", {
         victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
@@ -334,7 +328,16 @@ Q.Sprite.extend("Player",{
         killer: {entityType: killerEntityType, spriteId: killerId}
       }});
 
+      // session show player killed info
+      var msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
+            "is killed by "+killerEntityType+" "+killerId+" '"+killerName+"'";
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});  
+
     } else{
+
+      // player side shows its death
+      msg = "You are killed by "+killerName;
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respwaning in"});
 
       // client side trigger respan event
       setTimeout(function(){

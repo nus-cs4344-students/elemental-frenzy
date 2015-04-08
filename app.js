@@ -129,7 +129,10 @@ var removeSession = function(sessionId){
   setTimeout(function() {
     removeSessionFromPlayer(sessionId);
     removeSessionFromSocket(sessionId);
+
     delete sessions[sessionId];
+    
+    sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
   }, delay_s2p * 5);
 };
 
@@ -164,6 +167,11 @@ var removePlayer = function(playerId){
   setTimeout(function() {
     removePlayerFromSocket(playerId);
     removePlayerFromSession(playerId);
+
+    var pSessionId = getSessionIdOfPlayerId(playerId);
+    // inform respective session about the player disconnection
+    !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
+
   }, delay_p2s * 5);
 };
 
@@ -198,12 +206,14 @@ var sendToPlayers = function(players, eventName, eventData) {
   }
 };
 
+// only gives player id to player id mapping
+// app.js has not idea of which player is using which character id
 var getAllPlayers = function(){
   var pList = {};
   for(var p in playerIdToSocketMap){
-    pList[p] = playerId[p];
+    pList[p] = p;
   }
-
+  console.log("get players "+getJSON(pList));
   return pList;
 }
 
@@ -304,15 +314,8 @@ io.on('connection', function (socket) {
       }
 
       removeSession(sId);
-
-      sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
-
     }else if(!sId && pId){
       console.log("Player " + pId + " disconnected!");
-
-      var pSessionId = getSessionIdOfPlayerId(pId);
-      // inform respective session about the player disconnection
-      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
 
       removePlayer(pId);
 
@@ -325,25 +328,7 @@ io.on('connection', function (socket) {
 
   // receive player's packet
   socket.on('player', function(data){
-    switch(data.eventName){
-      case 'join':{
-        // var sId = findAvailableSession();
-
-        // if(sId != -1){
-        //   sendToSession(sId, 'join', data.eventData);
-        //   console.log("Found session "+sId+" for player "+ data.eventData.spriteId);
-        // }else{
-        //   // bounce back join operation failed to the player
-        //   sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'joinFailed', {sessionId: sId});
-        //   console.log("Failed to find a session for player "+ data.eventData.spriteId);
-        // }
-        // break;
-      }
-      default:{
-        sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
-        break;
-      }
-    }    
+    sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
   });
 
   // receive session's packet

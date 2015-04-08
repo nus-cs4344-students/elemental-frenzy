@@ -579,7 +579,7 @@ var insertIntoStage = function(sprite) {
 };
 
 var updateSessions = function(sessionsInfo){
-  // console.log("updated sessions: "+getJSON(sessionsInfo));
+  console.log("updated sessions: "+getJSON(sessionsInfo));
 
   sessions = sessionsInfo;
 
@@ -1314,6 +1314,7 @@ socket.on('sessionDisconnected', function(data){
 
   _isSessionConnected = false;
   _gameLoaded = false;
+  _isJoinSent = false;
   
   // ask player to join a session again
   displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
