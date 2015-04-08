@@ -13,12 +13,12 @@ var SCENE_NOTIFICATION = 'notificationScreen';
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
 var SCENE_SCORE = 'scoreScreen';
-var STAGE_KILLED_INFO = 4;
-var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
 var STAGE_STATUS = 6;
 var SCENE_STATUS = 'statusScreen';
+var STAGE_INFO = 7;
+var SCENE_INFO = 'infoScreen';
 
 
 // ## UI constants
@@ -34,9 +34,9 @@ var welcomeSessionSelected;
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
 
-var killedInfo = [];
-var killedInfoTimeLeft= [];
-var killedInfoPosition = [];
+var infoMsgList = [];
+var infoTimeLeftList= [];
+var infoPositionList = [];
 
 var FONT_FAMILY = "Trebuchet MS";
 var WEIGHT_TITLE = 800;
@@ -724,87 +724,72 @@ Q.scene(SCENE_HUD, function(stage) {
   };
 });
 
+Q.scene(SCENE_INFO ,function(stage) {
 
-Q.scene(SCENE_KILLED_INFO ,function(stage) {
-  var kType = stage.options.killerEntityType;
-  var kId = stage.options.killerId;
-  var vType = stage.options.victimEntityType;
-  var vId = stage.options.victimId;
+  var msg = stage.options.msg;
+  var countdown = stage.options.countdown;
+  var countdownMsg = stage.options.countdownMsg;
 
-  var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
+  if(!msg){
+    console.log("No message passed in when calling info scene");
+    return;
+  }
+
+  var infoHolder = stage.insert(new Q.UI.Text({ x: Q.width/2,
                                           y: Q.height/3,
                                           size: 20,
                                           font: FONT_FAMILY,
                                           align: 'center',
                                           color: 'black',
                                           label: ' ',
-                                          countDown: 5,
+                                          countDown: isNaN(countdown) ? 0 : Number(countdown),
                                           vx: 0,
                                           vy: -0.5
                                         }));
 
-  var msg;
-  if(kType && kId && vType && vId){
-    if(!isSession){
-      // client side
-      if(kId == selfId){
-        msg = "You have killed "+getSprite(vType,vId).p.name;
-      }else{
-        msg = "You are killed by "+getSprite(kType,kId).p.name;
-      }
+  infoMsgList.push(msg);
+  infoTimeLeftList.push(3); // display for 3 second
+  infoPositionList.push([0, -40]);
+
+  infoHolder.on('step', infoHolder, function(dt){
+
+    // if there is a countdown duration
+    if(this.p.countDown <= 0){
+      this.p.label = ' ';
     }else{
-      // session side
-      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
-            "is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
-    }
-  }else{
-    console.log("Insufficient killed info: "+getJSON(stage.options));
-    return;
-  }
-
-
-  killedInfo.push(msg);
-  killedInfoTimeLeft.push(3); // display for 3 second
-  killedInfoPosition.push([0, -40]);
-
-  kInfo.on('step', kInfo, function(dt){
-
-    // do not need to show respawn count down in session and killer player
-    if(!isSession && !getPlayerSprite(selfId)){
-      this.p.label = "Respawning in " + Math.floor(this.p.countDown);
-
-      this.p.countDown -= dt;
-      if(this.p.countDown < 0){
-        this.destroy();
-        return;
+      var cdMsg;
+      if(countdownMsg){
+        cdMsg = countdownMsg + ' ';
       }
+      this.p.label = cdMsg + Math.floor(this.p.countDown);
+      this.p.countDown -= dt;
     }
 
-    for (var i = 0; i < killedInfoTimeLeft.length; i++) {
-      killedInfoTimeLeft[i] -= dt;
+    for (var i = 0; i < infoTimeLeftList.length; i++) {
+      infoTimeLeftList[i] -= dt;
       
-      if (killedInfoTimeLeft[i] <= 0) {
+      if (infoTimeLeftList[i] <= 0) {
         // No need to display anymore, so remove it
-        killedInfoTimeLeft.splice(i, 1);
-        killedInfo.splice(i, 1);
-        killedInfoPosition.splice(i, 1);
+        infoTimeLeftList.splice(i, 1);
+        infoMsgList.splice(i, 1);
+        infoPositionList.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
-        killedInfoPosition[i][0] += this.p.vx;
-        killedInfoPosition[i][1] += this.p.vy;
+        infoPositionList[i][0] += this.p.vx;
+        infoPositionList[i][1] += this.p.vy;
       }
     }
   });
 
-  kInfo.on('draw', kInfo, function(ctx) {
-    ctx.font = this.p.font || "20px "+FONT_FAMILY;
-    ctx.textAlign = this.p.align || "center";
-    ctx.fillStyle = this.p.color || 'red';
+  infoHolder.on('draw', infoHolder, function(ctx) {
+    ctx.font = SIZE_BOLD+"px "+FONT_FAMILY;
+    ctx.textAlign = "center";
+    ctx.fillStyle = this.p.color || 'black';
 
-    for (var i = 0; i < killedInfo.length; i++) {
-      ctx.fillText( killedInfo[i], 
-                    killedInfoPosition[i][0], 
-                    killedInfoPosition[i][1]);
+    for (var i = 0; i < infoMsgList.length; i++) {
+      ctx.fillText( infoMsgList[i], 
+                    infoPositionList[i][0], 
+                    infoPositionList[i][1]);
     }
   });
 });
