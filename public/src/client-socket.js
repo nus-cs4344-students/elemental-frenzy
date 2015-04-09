@@ -53,7 +53,7 @@ var updateAvgRtt = function(oneWayDelay) {
   avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
   //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRtt());
   return avgRtt;
-}
+};
 
 var getAvgRtt = function() {
   if ( !_clockSynchronized) { // cannot accurately get the avgRtt
@@ -61,7 +61,7 @@ var getAvgRtt = function() {
   }
   
   return avgRtt;
-}
+};
 
 var creates = {
   PLAYER:         function(p) { return new Q.Player(p); },
@@ -81,7 +81,7 @@ var getDefaultSprites = function() {
                           POWERUP: {}
                         };
   return defaultSprites;
-}
+};
 
 var getDefaultGameState = function() {
   var defaultGameState = {
@@ -92,15 +92,15 @@ var getDefaultGameState = function() {
   };
   
   return defaultGameState;
-}
+};
 
 var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
-}
+};
 
 var getCurrentTime = function() {
   return (new Date()).getTime();
-}
+};
 
 
 function isCyclic (obj) {
@@ -123,7 +123,7 @@ function isCyclic (obj) {
   }
 
   return detect(obj);
-}
+};
 
 var cloneObject = function (obj){
   var clone = {};
