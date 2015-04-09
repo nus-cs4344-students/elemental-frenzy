@@ -1209,11 +1209,23 @@ socket.on('addSprite', function(data){
     return;
   }
 
-  if (eType == 'PLAYERELEBALL' && props.shooterId != selfId) {
-    // not my eleball! Use local-perception filter
-    props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
-    props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
-    props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+  if (eType == 'PLAYERELEBALL') {
+    if (props.shooterId != selfId) {
+      // not my eleball! Use local-perception filter
+      props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
+      props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
+      props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+    } else {
+      // my eleball! Also use local-perception filter, but slightly different; start the x and y from my position!
+      var player = getPlayerSprite(selfId);
+      
+      props.lpfTimeLeft = 0.5;
+      props.lpfNeededX = props.x + props.vx * 0.5 - player.p.x;
+      props.lpfNeededY = props.y + props.vy * 0.5 - player.p.y;
+      
+      props.x = player.p.x;
+      props.y = player.p.y;
+    }
   }else if(eType == 'PLAYER'){
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
   }
