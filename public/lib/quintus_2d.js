@@ -163,6 +163,10 @@ Quintus["2D"] = function(Q) {
         blockTileW: 10,
         blockTileH: 10,
         type: 1,
+        tileCoordsEmptyAbove: {}, // associative array for arrays containing the tile coordinates of tiles 
+                                  // which have a column of at least x tiles above that are empty.
+                                  // The key is the number x of tiles above that are empty.
+                                  // The value is an array of tile coords.
         renderAlways: true
       });
       if(this.p.dataAsset) {
@@ -270,6 +274,63 @@ Quintus["2D"] = function(Q) {
 
     getTilePropertiesAt: function(tileX, tileY) {
       return this.getTileProperties(this.getTile(tileX, tileY));
+    },
+    
+    // Finds all the tile coordinates which have no tiles above them for at least #numEmptyTilesAbove in a column
+    getTileCoordinatesThatAreEmptyAbove: function(numEmptyTilesAbove) {
+      if (!numEmptyTilesAbove) {
+        numEmptyTilesAbove = 1;
+      } else if (numEmptyTilesAbove <= 0) {
+        // Can't do this!
+        return;
+      } else if (this.p.tileCoordsEmptyAbove[numEmptyTilesAbove]) {
+        return this.p.tileCoordsEmptyAbove[numEmptyTilesAbove]; // computed it before, don't re-compute
+      }
+      
+      var tileCoords = [];
+      // Column-major tile traversal
+      var numEmpty;
+      for (var x = 0; x < this.p.rows; x++) {
+        numEmpty = 10000000; // starting from the top, meaning that there are INFINITE number of empty tiles above
+        for (var y = 0; y < this.p.cols; y++) {
+          var tile = this.getTile(x, y);
+          if (tile) {
+            // Filled tile!
+            if (numEmpty >= numEmptyTilesAbove) {
+              // Has more than the required number of empty tiles above
+              tileCoords.push({x: x, y: y});
+            }
+            numEmpty = 0;
+          } else {
+            // Empty tile!
+            numEmpty++;
+          }
+        }
+      }
+      
+      this.p.tileCoordsEmptyAbove[numEmptyTilesAbove] = tileCoords;
+      
+      return this.p.tileCoordsEmptyAbove[numEmptyTilesAbove];
+    },
+    
+    // Finds a random tile that has at least #numEmptyTilesAbove tiles above which are empty and returns its coordinates (tile coords)
+    getRandomTileCoord: function(numEmptyTilesAbove) {
+      // Get the tiles needed
+      var tileCoords = this.getTileCoordinatesThatAreEmptyAbove(numEmptyTilesAbove);
+      // Randomly return one of those
+      var randomIdx = Math.floor(Math.random() * tileCoords.length); // [0...size]
+      return tileCoords[randomIdx];
+    },
+    
+    // Returns the gameworld coordinates of the top-left corner of the tile specified by (tileX, tileY).
+    convertTileCoordToGameWorldCoord: function(tileX, tileY) {
+      return {x: tileX * this.p.tileW, y: tileY * this.p.tileH};
+    },
+    
+    // Finds a random tile that has at least #numEmptyTilesAbove tiles above which are empty and returns its coordinates (gameworld coords)
+    getRandomTileCoordInGameWorldCoord: function(numEmptyTilesAbove) {
+      var tileCoord = this.getRandomTileCoord(numEmptyTilesAbove);
+      return this.convertTileCoordToGameWorldCoord(tileCoord.x, tileCoord.y);
     },
 
     tileHasProperty: function(tile, prop) {
