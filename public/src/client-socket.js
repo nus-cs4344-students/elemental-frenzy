@@ -1216,12 +1216,13 @@ socket.on('addSprite', function(data){
       props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
       props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
     } else {
-      // my eleball! Also use local-perception filter, but slightly different; start the x and y from my position!
+      // my eleball! Also use local-perception filter, but slightly different; start the x and y from my position,
+      // and set lpfNeededX and lpfNeededY to the difference between the eleball start pos and my pos
       var player = getPlayerSprite(selfId);
       
       props.lpfTimeLeft = 0.5;
-      props.lpfNeededX = props.x + props.vx * 0.5 - player.p.x;
-      props.lpfNeededY = props.y + props.vy * 0.5 - player.p.y;
+      props.lpfNeededX = props.x - player.p.x;
+      props.lpfNeededY = props.y - player.p.y;
       
       props.x = player.p.x;
       props.y = player.p.y;
