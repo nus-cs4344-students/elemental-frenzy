@@ -94,31 +94,32 @@ var getDefaultSprites = function() {
 
 var getDefaultGameState = function() {
   var defaultSprites = getDefaultSprites();
-  defaultSprites.POWERUP = {"1": {p: {
-                              name: POWERUP_CLASS_ATTACK_DOUBLEDMG,
-                              sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,
-                              spriteId: 1,
-                              duration: POWERUP_DURATION_ATTACK_DOUBLEDMG
-                            }},
-                            "2": {p: {
-                              name: POWERUP_CLASS_MANA_ZEROMANACOST,
-                              sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,
-                              spriteId: 2,
-                              duration: POWERUP_DURATION_MANA_ZEROMANACOST
-                            }},
-                            "3": {p: {
-                              name: POWERUP_CLASS_MOVESPEED_150SPEED ,
-                              sheet: POWERUP_SPRITESHEET_MOVESPEED_150SPEED ,
-                              spriteId: 3,
-                              duration: POWERUP_DURATION_MOVESPEED_150SPEED 
-                            }},
-                            "4": {p: {
-                              name: POWERUP_CLASS_HEALTH_HEALTOFULL,
-                              sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
-                              spriteId: 4,
-                              duration: POWERUP_DURATION_HEALTH_HEALTOFULL
-                            }},
-  };
+  
+  // defaultSprites.POWERUP = {"1": {p: {
+                              // name: POWERUP_CLASS_ATTACK_DOUBLEDMG,
+                              // sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,
+                              // spriteId: 1,
+                              // duration: POWERUP_DURATION_ATTACK_DOUBLEDMG
+                            // }},
+                            // "2": {p: {
+                              // name: POWERUP_CLASS_MANA_ZEROMANACOST,
+                              // sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,
+                              // spriteId: 2,
+                              // duration: POWERUP_DURATION_MANA_ZEROMANACOST
+                            // }},
+                            // "3": {p: {
+                              // name: POWERUP_CLASS_MOVESPEED_150SPEED ,
+                              // sheet: POWERUP_SPRITESHEET_MOVESPEED_150SPEED ,
+                              // spriteId: 3,
+                              // duration: POWERUP_DURATION_MOVESPEED_150SPEED 
+                            // }},
+                            // "4": {p: {
+                              // name: POWERUP_CLASS_HEALTH_HEALTOFULL,
+                              // sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
+                              // spriteId: 4,
+                              // duration: POWERUP_DURATION_HEALTH_HEALTOFULL
+                            // }},
+  // };
   var defaultGameState = {
     level: 'level2',
     sprites: defaultSprites,
@@ -476,11 +477,13 @@ var addSprite = function(entityType, id, properties, delayToInsert) {
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
+  // store sprite properties into game state
+  gameState.sprites[eType][spriteId] = {p: sprite.p}; 
+  
+  // Insert into the stage
   setTimeout(function() {
     insertIntoStage(sprite);
   }, delayToInsert);
-  // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: sprite.p}; 
 
   return sprite;
 };
@@ -716,6 +719,23 @@ var displayGameScreen = function(level){
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
+  
+  // Listen to the inserted event to add sprites into the state
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    var eType = item.p.entityType;
+    var spriteId = item.p.spriteId;
+    if (!eType || typeof spriteId === 'undefined') {
+      return;
+    }
+    if( !getSprite(eType,spriteId)){
+      // sprite doesn't exist, add it into the game state
+      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      // store sprite reference
+      allSprites[eType][spriteId] = item;
+      // store sprite properties into game state
+      gameState.sprites[eType][spriteId] = {p: item.p}; 
+    }
+  });
   
   // Powerups system
   Q.stage(STAGE_LEVEL).add("powerupSystem");

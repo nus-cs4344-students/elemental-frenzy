@@ -10,10 +10,10 @@
  
 var POWERUP_COLLISIONTYPE = 64;
 
-var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "PowerupDoubleDmg";
-var POWERUP_CLASS_MANA_ZEROMANACOST           = "PowerupZeroManaCost";
-var POWERUP_CLASS_MOVESPEED_150SPEED          = "PowerupDoubleMoveSpeed";
-var POWERUP_CLASS_HEALTH_HEALTOFULL           = "PowerupHealToFull";
+var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
+var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
+var POWERUP_CLASS_MOVESPEED_150SPEED          = "POWERUP_CLASS_MOVESPEED_150SPEED";
+var POWERUP_CLASS_HEALTH_HEALTOFULL           = "POWERUP_CLASS_HEALTH_HEALTOFULL";
 
 var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
@@ -113,9 +113,9 @@ Q.Sprite.extend("Powerup", {
     this._super(p, { 
       name: 'powerup_nameless',
       sheet: 'powerup_sheetless',
+      entityType: 'POWERUP',
       spriteId: -1,
       duration: 10.0,
-      entityType: 'POWERUP',
       type: Q.SPRITE_PARTICLE,
       collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,
       sensor: true, // so that it doesn't bounce players off
@@ -137,7 +137,7 @@ Q.Sprite.extend("Powerup", {
   taken: function(player) {
     this.givePlayerEffect(player);
     this.trigger('taken', this.p.name);
-    this.destroy;
+    this.destroy();
   }
 });
 
@@ -150,25 +150,25 @@ Q.component('powerupSystem', {
   added: function() {
     // All the powerups of the game
     this.powerups = {
-      POWERUP_CLASS_ATTACK_DOUBLEDMG:   {
+      POWERUP_CLASS_ATTACK_DOUBLEDMG:   { name:           POWERUP_CLASS_ATTACK_DOUBLEDMG,
                                           sheet:          POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG, 
                                           duration:       POWERUP_DURATION_ATTACK_DOUBLEDMG,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG,
                                           existing:       0
                                         },
-      POWERUP_CLASS_HEALTH_HEALTOFULL:  {
+      POWERUP_CLASS_HEALTH_HEALTOFULL:  { name:           POWERUP_CLASS_HEALTH_HEALTOFULL,
                                           sheet:          POWERUP_SPRITESHEET_HEALTH_HEALTOFULL, 
                                           duration:       POWERUP_DURATION_HEALTH_HEALTOFULL,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL,
                                           existing:       0
                                         },
-      POWERUP_CLASS_MANA_ZEROMANACOST:  {
+      POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
                                           sheet:          POWERUP_SPRITESHEET_MANA_ZEROMANACOST, 
                                           duration:       POWERUP_DURATION_MANA_ZEROMANACOST,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MANAZEROMANACOST,
                                           existing:       0
                                         },
-      POWERUP_CLASS_MOVESPEED_150SPEED: {
+      POWERUP_CLASS_MOVESPEED_150SPEED: { name:           POWERUP_CLASS_MOVESPEED_150SPEED,
                                           sheet:          POWERUP_SPRITESHEET_MOVESPEED_150SPEED,
                                           duration:       POWERUP_DURATION_MOVESPEED_150SPEED,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED,
@@ -186,6 +186,7 @@ Q.component('powerupSystem', {
         name: powerupName, 
         sheet: this.powerups[powerupName].sheet, 
         duration: this.powerups[powerupName].duration,
+        spriteId: getNextSpriteId(),
         x: x, 
         y: y
       });
@@ -215,10 +216,10 @@ Q.component('powerupSystem', {
   
   randomlySpawnPowerupsToTheLimit: function() {
     var powerups = this.powerups;
-    for (var powerupName in powerups) {
-      var powerupObj = powerups[powerupName];
+    for (var key in powerups) {
+      var powerupObj = powerups[key];
       while (powerupObj.existing < powerupObj.maxNumAtATime) {
-        this.randomlySpawnPowerup(powerupName);
+        this.randomlySpawnPowerup(powerupObj.name);
       }
     }
   },
