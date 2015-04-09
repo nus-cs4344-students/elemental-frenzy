@@ -719,26 +719,6 @@ var displayGameScreen = function(level){
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
-  
-  // Listen to the inserted event to add sprites into the state
-  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
-    var eType = item.p.entityType;
-    var spriteId = item.p.spriteId;
-    if (!eType || typeof spriteId === 'undefined') {
-      return;
-    }
-    if( !getSprite(eType,spriteId)){
-      // sprite doesn't exist, add it into the game state
-      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
-      // store sprite reference
-      allSprites[eType][spriteId] = item;
-      // store sprite properties into game state
-      gameState.sprites[eType][spriteId] = {p: item.p}; 
-    }
-  });
-  
-  // Powerups system
-  Q.stage(STAGE_LEVEL).add("powerupSystem");
 };
 
 var loadGameSession = function(sessionId) {
@@ -776,6 +756,43 @@ var loadGameSession = function(sessionId) {
       }
     }
   }
+  
+  // Listen to the inserted event to add sprites into the state
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    var eType = item.p.entityType;
+    var spriteId = item.p.spriteId;
+    if (!eType || typeof spriteId === 'undefined') {
+      return;
+    }
+    if( !getSprite(eType,spriteId)){
+      // sprite doesn't exist, add it into the game state
+      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      // store sprite reference
+      allSprites[eType][spriteId] = item;
+      // store sprite properties into game state
+      gameState.sprites[eType][spriteId] = {p: item.p}; 
+      // Tell the clients about this
+      Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: item.p}});
+    }
+  });
+  // Listen to the removed event
+  Q.stage(STAGE_LEVEL).on('removed', function(item) {
+    var eType = item.p.entityType;
+    var spriteId = item.p.spriteId;
+    if (!eType || typeof spriteId === 'undefined') {
+      return;
+    }
+    if( !getSprite(eType,spriteId)){
+      // sprite doesn't exist, add it into the game state
+      console.log("Removing item " + eType + " spriteId " + spriteId + " into state");
+      // store sprite reference
+      delete allSprites[eType][spriteId];
+      // store sprite properties into game state
+      delete gameState.sprites[eType][spriteId];
+    }
+  });
+  
+  Q.stage(STAGE_LEVEL).add("powerupSystem");
 
   for(var i =0; i< spritesToAdd.length; i++){
     addSprite(spritesToAdd[i].entityType, 
@@ -1073,7 +1090,7 @@ socket.on('authoritativeSpriteUpdate', function(data) {
     //console.log("aurhoritativeSpriteUpdate: avgRtt of player " + data.spriteId + " is " + getAvgRttOfPlayer(data.spriteId));
   }
   
-  console.log("authoritativeSpriteUpdate from "+data.spriteId +" characterId "+data.characterId);
+  //console.log("authoritativeSpriteUpdate from "+data.spriteId +" characterId "+data.characterId);
   updateSprite(data.entityType, data.spriteId, data.p);
 });
 
