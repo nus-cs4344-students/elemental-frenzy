@@ -28,9 +28,10 @@ var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
 var timestampOffset;
-var timestampOffsetSum = 0;         // used so as to allow multiple synchronization packets
-var numSyncPacketsReceived = 0;     //
-var NUM_SYNC_PACKETS_TOSEND = 3;    // send this many packets when synchronizeClocks() is called
+var timestampOffsetSum = 0;           // used so as to allow multiple synchronization packets
+var numSyncPacketsReceived = 0;       //
+var NUM_SYNC_PACKETS_TOSEND = 10;     // send this many packets when synchronizeClocks() is called
+var INTERVAL_TIME_SYNCCLOCKS = 60000; // try to sync clocks with server every 60s
 
 // RTT-related
 var avgRtt = 0;
@@ -1118,6 +1119,14 @@ socket.on('joinSuccessful', function(data){
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
   synchronizeClocksWithServer();
+  var interval_syncClocks = setInterval(function() {
+    if (!_isSessionConnected) {
+      // Session disconnected, stop syncing
+      clearInterval(interval_syncClocks);
+      return;
+    }
+    synchronizeClocksWithServer();
+  }, INTERVAL_TIME_SYNCCLOCKS);
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
@@ -1159,6 +1168,7 @@ socket.on('synchronizeClocks', function(data) {
   if (packetNum == 1 || numSyncPacketsReceived == NUM_SYNC_PACKETS_TOSEND) {
     timestampOffset = timestampOffsetSum / numSyncPacketsReceived;
     _clockSynchronized = true;
+    console.log("timestampOffset calculated after syncing clocks with session: " + timestampOffset);
   }
 });
 

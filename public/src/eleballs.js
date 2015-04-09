@@ -57,6 +57,16 @@ Q.Sprite.extend("Eleball", {
       type : Q.SPRITE_PARTICLE,
       collisionMask : Q.SPRITE_ALL
     });  
+    
+    /*
+    var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
+    console.log("width: " + tileLayer.p.w + " height: " + tileLayer.p.h);
+    for (var r = 0; r < tileLayer.p.rows; r++) {
+      for (var c = 0; c < tileLayer.p.cols; c++) {
+        console.log(r + "," + c + " tileprops: " + getJSON(tileLayer.getTile(c, r)));
+      }
+    }
+    */
 
     // Set bounding box smaller
     this.p.points = makeScaledPoints(this.p.w, this.p.h, ELEBALL_BOUNDINGBOX_SF);
