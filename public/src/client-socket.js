@@ -174,7 +174,7 @@ var clone = function(item){
 
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
 var checkGoodSprite = function(eType, spriteId, callerName) {
-  callername = callername || 'nameNotSpecifiedFunction';
+  callerName = callerName || 'nameNotSpecifiedFunction';
   if (typeof eType == 'undefined') {
     console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
     return false;
@@ -247,7 +247,6 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
-    // Attack-related
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -1320,6 +1319,25 @@ socket.on('removeSprite', function(data){
   }
 
   removeSprite(eType, spriteId, props);
+});
+
+socket.on('powerupTaken', function(data) {
+  //console.log("Event: powerupTaken: data: " + getJSON(data));
+  
+  var eType = data.entityType,
+      spriteId = data.spriteId,
+      powerupName = data.powerupName,
+      powerupDuration = data.powerupDuration;
+      
+  if (eType == 'PLAYER' && spriteId != selfId) {
+    eType = 'ACTOR';
+  }
+  if ( !checkGoodSprite(eType, spriteId, "powerupTaken event")) {
+    return;
+  }
+  
+  var sprite = getSprite(eType, spriteId);
+  sprite.addPowerup(powerupName, powerupDuration);
 });
 
 // sprite took damage

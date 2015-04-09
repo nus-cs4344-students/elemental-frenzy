@@ -364,6 +364,7 @@ io.on('connection', function (socket) {
       case 'addSprite':
       case 'updateSprite':
       
+      case 'powerupTaken':
 
       case 'updateEnemy':
       
