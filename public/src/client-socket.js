@@ -1217,15 +1217,33 @@ socket.on('addSprite', function(data){
       props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
     } else {
       // my eleball! Also use local-perception filter, but slightly different; start the x and y from my position,
-      // and set lpfNeededX and lpfNeededY to the difference between the eleball start pos and my pos
+      // and set lpfNeededX and lpfNeededY to the difference between the eleball start pos and the eleball at my pos
       var player = getPlayerSprite(selfId);
       
-      props.lpfTimeLeft = 0.5;
-      props.lpfNeededX = props.x - player.p.x;
-      props.lpfNeededY = props.y - player.p.y;
+      var newX, newY; // newX and newY which will be at my pos
+      var angleDeg = props.angle;
+      // fire ball location offset from player
+      var ballToPlayerY = Math.abs((player.p.h/2 + props.h/2) * Math.sin(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
+      if(angleDeg <= 360 && angleDeg > 180){
+        // deduct ball width due to the direction of the ball is set to be default at right direction
+        newY = player.p.y - ballToPlayerY;
+      } else {
+        newY = player.p.y + ballToPlayerY;
+      }
+
+      var ballToPlayerX = Math.abs((player.p.w/2 + props.w/2) * Math.cos(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
+      if(angleDeg <= 270 && angleDeg > 90){
+        newX = player.p.x - ballToPlayerX;
+      } else {
+        newX = player.p.x + ballToPlayerX;
+      }
       
-      props.x = player.p.x;
-      props.y = player.p.y;
+      props.lpfTimeLeft = 0.5;
+      props.lpfNeededX = props.x - newX;
+      props.lpfNeededY = props.y - newY;
+      
+      props.x = newX;
+      props.y = newY;
     }
   }else if(eType == 'PLAYER'){
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
