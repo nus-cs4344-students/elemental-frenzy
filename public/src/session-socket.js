@@ -107,10 +107,10 @@ var getDefaultGameState = function() {
                               duration: POWERUP_DURATION_MANA_ZEROMANACOST
                             }},
                             "3": {p: {
-                              name: POWERUP_CLASS_MOVESPEED_DOUBLESPEED ,
-                              sheet: POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED ,
+                              name: POWERUP_CLASS_MOVESPEED_150SPEED ,
+                              sheet: POWERUP_SPRITESHEET_MOVESPEED_150SPEED ,
                               spriteId: 3,
-                              duration: POWERUP_DURATION_MOVESPEED_DOUBLESPEED 
+                              duration: POWERUP_DURATION_MOVESPEED_150SPEED 
                             }},
                             "4": {p: {
                               name: POWERUP_CLASS_HEALTH_HEALTOFULL,

@@ -573,7 +573,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var initHud = true;
   var powerupMana_ZeroMana;
   var powerupAtk_DoubleDmg;
-  var powerupMovement_DoubleSpeed;
+  var powerupMovement_150SPEED;
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
@@ -709,7 +709,7 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                   y    : centerY,
                                                                   scale: scaleToHeight
                                     }));
-      powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
+      powerupMovement_150SPEED = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
                                                                   x    : 68 * scaleToHeight,
                                                                   y    : centerY,
                                                                   scale: scaleToHeight
@@ -717,11 +717,11 @@ Q.scene(SCENE_HUD, function(stage) {
     } else {
       var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
+      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
       
       powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
       powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
-      powerupMovement_DoubleSpeed.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
+      powerupMovement_150SPEED.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
     }
 
     initHud = false;
