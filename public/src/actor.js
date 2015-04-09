@@ -70,19 +70,17 @@ Q.Sprite.extend("Actor", {
   die: function(killerEntityType, killerId) {
 
     var killerName = getSprite(killerEntityType, killerId).p.name;    
-    var vType = this.p.entityType;
-    var vId = this.p.spriteId;
-    var vCharId = this.p.characterId;
-    var vSessionId = this.p.sessionId;
-
-    var killedData = {killerEntityType: killerEntityType, 
-                      killerId: killerId,
-                      victimEntityType: vType,
-                      victimId: vId};
 
     console.log(this.p.name + " died to " + killerName);
 
-    Q.stageScene(SCENE_KILLED_INFO, STAGE_KILLED_INFO, killedData);
+    var msg;
+    if(killerId == selfId){
+      msg = "You have killed "+this.p.name;
+    }else{
+      msg = killerName+" has killed "+this.p.name;
+    }
+    
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
     removeActorSprite(this.p.spriteId);
   },

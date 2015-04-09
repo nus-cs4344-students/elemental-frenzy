@@ -470,6 +470,7 @@ var addSprite = function(entityType, id, properties) {
 
     }, interval_updateServer_timeInterval);
   }
+
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
 
@@ -589,7 +590,7 @@ var insertIntoStage = function(sprite) {
 };
 
 var updateSessions = function(sessionsInfo){
-  // console.log("updated sessions: "+getJSON(sessionsInfo));
+  console.log("updated sessions: "+getJSON(sessionsInfo));
 
   sessions = sessionsInfo;
 
@@ -1213,6 +1214,8 @@ socket.on('addSprite', function(data){
     props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
     props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
     props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+  }else if(eType == 'PLAYER'){
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
   }
   addSprite(eType, spriteId, props);
 });
@@ -1335,6 +1338,7 @@ socket.on('sessionDisconnected', function(data){
 
   _isSessionConnected = false;
   _gameLoaded = false;
+  _isJoinSent = false;
   
   // ask player to join a session again
   displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
@@ -1347,6 +1351,8 @@ socket.on('sessionDisconnected', function(data){
 socket.on('playerDisconnected', function(data) {  
   console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
   
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+data.spriteId+" has left"});
+
   // Destroy player and remove him from game state
   removePlayer(data.spriteId);
 });

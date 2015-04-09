@@ -13,12 +13,12 @@ var SCENE_NOTIFICATION = 'notificationScreen';
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
 var SCENE_SCORE = 'scoreScreen';
-var STAGE_KILLED_INFO = 4;
-var SCENE_KILLED_INFO = 'killedScreen';
 var STAGE_HUD = 5;
 var SCENE_HUD = 'hudScreen';
 var STAGE_STATUS = 6;
 var SCENE_STATUS = 'statusScreen';
+var STAGE_INFO = 7;
+var SCENE_INFO = 'infoScreen';
 
 
 // ## UI constants
@@ -34,9 +34,9 @@ var welcomeSessionSelected;
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
 
-var killedInfo = [];
-var killedInfoTimeLeft= [];
-var killedInfoPosition = [];
+var infoMsgList = [];
+var infoTimeLeftList= [];
+var infoPositionList = [];
 
 var FONT_FAMILY = "Trebuchet MS";
 var WEIGHT_TITLE = 800;
@@ -55,6 +55,16 @@ var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
 
 var WIDTH_HUD = 9*Q.width/10;
 var HEIGH_HUD = Q.height/10;
+
+// HUD constants
+var HUD_ACTIVE_DOUBLE_DMG = "icon_attack_active";
+var HUD_ACTIVE_DOUBLE_MOVESPEED = "icon_movement_active";
+var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
+var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
+var HUD_INACTIVE_DOUBLE_MOVESPEED = "icon_movement_inactive";
+var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
+
+var STATS_OFFSET = 25;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -412,8 +422,6 @@ Q.scene(SCENE_HUD, function(stage) {
     return;
   }
 
-  var initHud = true;
-
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
                                                        w: WIDTH_HUD,
@@ -562,9 +570,13 @@ Q.scene(SCENE_HUD, function(stage) {
 
   updateEleSelector(element);
 
-
+  var initHud = true;
+  var powerupMana_ZeroMana;
+  var powerupAtk_DoubleDmg;
+  var powerupMovement_DoubleSpeed;
 
   hudContainer.on('draw', hudContainer, function(ctx) {
+
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
       console.log("Cannot locate current player during HUD player attribute drawing");
@@ -575,27 +587,28 @@ Q.scene(SCENE_HUD, function(stage) {
     ** HP CIRCLE
     ** represented by a hollow circle with text inside
     */
-    var radius = this.p.h*0.3;
+    var radius    = this.p.h*0.3;
     var lineWidth = radius / 2;
     ctx.lineWidth = lineWidth;
+    ctx.textAlign = "center";
 
     //if circles will overlap each other, then adjust based on width instead
     if (radius + lineWidth > this.p.w/15) {
-      radius = this.p.w / 20;
-      lineWidth = radius / 2;
+      radius        = this.p.w / 20;
+      lineWidth     = radius / 2;
       ctx.lineWidth = lineWidth;
     }
 
     var currentHp = currentPlayer.p.currentHealth;
-    var maxHp = currentPlayer.p.maxHealth;
-    var scaledHp = currentHp / maxHp;
+    var maxHp     = currentPlayer.p.maxHealth;
+    var scaledHp  = currentHp / maxHp;
 
     //green -> yellow -> red
-    var color = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
+    var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    var centerX = 3*this.p.w/15;
-    var centerY = 0;
+    ctx.fillStyle   = color;
+    var centerX     = 3*this.p.w/15;
+    var centerY     = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
 
@@ -604,17 +617,17 @@ Q.scene(SCENE_HUD, function(stage) {
     ** represented by a hollow circle with text inside
     */
     var currentMana = Math.round(currentPlayer.p.currentMana);
-    var maxMana =currentPlayer.p.maxMana;
+    var maxMana     = currentPlayer.p.maxMana;
 
-    color = '#3BB9FF'; //blue
+    color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    centerX = 5*this.p.w/15;
-    centerY = 0;
+    ctx.fillStyle   = color;
+    centerX         = 5*this.p.w/15;
+    centerY         = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
 
-    //icon sprites are 34 by 34. ideal case is scale height to this.p.h / 3
+    //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
     var scaleIcons = this.p.h / 3 / 34;
     /*
     ** Mana cost per shot
@@ -622,15 +635,15 @@ Q.scene(SCENE_HUD, function(stage) {
     */
 
     //("inherits" blue color from above, since this is right after drawing mana circle)
-    centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y;
+    centerX         = selector.p.x - eleW / 1.2;
+    centerY         = selector.p.y;
     var manaPerShot = currentPlayer.p.manaPerShot;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(manaPerShot, centerX + 25, centerY - 6);
+    ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -639,20 +652,19 @@ Q.scene(SCENE_HUD, function(stage) {
 
     /*
     ** Attack Damage per shot
-    ** represented by a sword with red text beside
+    ** represented by a sword with orangey text beside
     */
-    color = '#F88017'; //red
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    //centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y - this.p.h / 3;
+    color             = '#F88017'; //orangey
+    ctx.strokeStyle   = color;
+    ctx.fillStyle     = color;
+    centerY           = selector.p.y - this.p.h / 3;
     var damagePerShot = currentPlayer.p.dmg;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(damagePerShot, centerX + 25, centerY - 6);
+    ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_attack',
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
                                     x: centerX,
                                     y: centerY,
                                     scale: scaleIcons
@@ -663,21 +675,20 @@ Q.scene(SCENE_HUD, function(stage) {
     ** Movement Speed
     ** represented by a shoe with green text beside
     */
-    color = '#00FF00'; //green
+    color           = '#00FF00'; //green
     ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    //centerX = selector.p.x - eleW / 1.2;
-    centerY = selector.p.y + this.p.h / 3;
-    var moveSpeed = 30; //currentPlayer.p.moveSpeed???;
-    ctx.font = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+    ctx.fillStyle   = color;
+    centerY         = selector.p.y + this.p.h / 3;
+    var moveSpeed   = currentPlayer.p.speed;
+    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    ctx.fillText(moveSpeed, centerX + 25, centerY - 6);
+    ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_movement',
-                                  x: centerX,
-                                  y: centerY,
-                                  scale: scaleIcons
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_MOVESPEED,
+                                    x    : centerX,
+                                    y    : centerY,
+                                    scale: scaleIcons
                                   }));
     }
     
@@ -687,33 +698,40 @@ Q.scene(SCENE_HUD, function(stage) {
 
     var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
-    // TEMP PLACEHOLDER FOR POWER UPS
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: 'icon_mana',
-                                  x: 0 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
-    this.insert(new Q.UI.Button({ sheet: 'icon_attack',
-                                  x: 34 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
-    this.insert(new Q.UI.Button({ sheet: 'icon_movement',
-                                  x: 68 * scaleToHeight,
-                                  y: centerY,
-                                  scale: scaleToHeight
-                                  }));
+      powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
+                                                                  x    : 0 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight,
+                                    }));
+      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
+                                                                  x    : 34 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight
+                                    }));
+      powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
+                                                                  x    : 68 * scaleToHeight,
+                                                                  y    : centerY,
+                                                                  scale: scaleToHeight
+                                    }));
+    } else {
+      var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
+      var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
+      
+      powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
+      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
+      powerupMovement_DoubleSpeed.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
     }
-    
+
     initHud = false;
 
   });
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
-    var end = Math.PI * 2.0;
-    var start = Math.PI / 2.0;
+    var end         = Math.PI * 2.0;
+    var start       = Math.PI / 2.0;
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, -(start), ((end) * scaledValue) - start, false);
@@ -724,87 +742,72 @@ Q.scene(SCENE_HUD, function(stage) {
   };
 });
 
+Q.scene(SCENE_INFO ,function(stage) {
 
-Q.scene(SCENE_KILLED_INFO ,function(stage) {
-  var kType = stage.options.killerEntityType;
-  var kId = stage.options.killerId;
-  var vType = stage.options.victimEntityType;
-  var vId = stage.options.victimId;
+  var msg = stage.options.msg;
+  var countdown = stage.options.countdown;
+  var countdownMsg = stage.options.countdownMsg;
 
-  var kInfo = stage.insert(new Q.UI.Text({x: Q.width/2,
+  if(!msg){
+    console.log("No message passed in when calling info scene");
+    return;
+  }
+
+  var infoHolder = stage.insert(new Q.UI.Text({ x: Q.width/2,
                                           y: Q.height/3,
                                           size: 20,
                                           font: FONT_FAMILY,
                                           align: 'center',
                                           color: 'black',
                                           label: ' ',
-                                          countDown: 5,
+                                          countDown: isNaN(countdown) ? 0 : Number(countdown),
                                           vx: 0,
                                           vy: -0.5
                                         }));
 
-  var msg;
-  if(kType && kId && vType && vId){
-    if(!isSession){
-      // client side
-      if(kId == selfId){
-        msg = "You have killed "+getSprite(vType,vId).p.name;
-      }else{
-        msg = "You are killed by "+getSprite(kType,kId).p.name;
-      }
+  infoMsgList.push(msg);
+  infoTimeLeftList.push(3); // display for 3 second
+  infoPositionList.push([0, -40]);
+
+  infoHolder.on('step', infoHolder, function(dt){
+
+    // if there is a countdown duration
+    if(this.p.countDown <= 0){
+      this.p.label = ' ';
     }else{
-      // session side
-      msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
-            "is killed by "+kType+" "+kId+" '"+getSprite(kType,kId).p.name+"'";
-    }
-  }else{
-    console.log("Insufficient killed info: "+getJSON(stage.options));
-    return;
-  }
-
-
-  killedInfo.push(msg);
-  killedInfoTimeLeft.push(3); // display for 3 second
-  killedInfoPosition.push([0, -40]);
-
-  kInfo.on('step', kInfo, function(dt){
-
-    // do not need to show respawn count down in session and killer player
-    if(!isSession && !getPlayerSprite(selfId)){
-      this.p.label = "Respawning in " + Math.floor(this.p.countDown);
-
-      this.p.countDown -= dt;
-      if(this.p.countDown < 0){
-        this.destroy();
-        return;
+      var cdMsg;
+      if(countdownMsg){
+        cdMsg = countdownMsg + ' ';
       }
+      this.p.label = cdMsg + Math.floor(this.p.countDown);
+      this.p.countDown -= dt;
     }
 
-    for (var i = 0; i < killedInfoTimeLeft.length; i++) {
-      killedInfoTimeLeft[i] -= dt;
+    for (var i = 0; i < infoTimeLeftList.length; i++) {
+      infoTimeLeftList[i] -= dt;
       
-      if (killedInfoTimeLeft[i] <= 0) {
+      if (infoTimeLeftList[i] <= 0) {
         // No need to display anymore, so remove it
-        killedInfoTimeLeft.splice(i, 1);
-        killedInfo.splice(i, 1);
-        killedInfoPosition.splice(i, 1);
+        infoTimeLeftList.splice(i, 1);
+        infoMsgList.splice(i, 1);
+        infoPositionList.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
-        killedInfoPosition[i][0] += this.p.vx;
-        killedInfoPosition[i][1] += this.p.vy;
+        infoPositionList[i][0] += this.p.vx;
+        infoPositionList[i][1] += this.p.vy;
       }
     }
   });
 
-  kInfo.on('draw', kInfo, function(ctx) {
-    ctx.font = this.p.font || "20px "+FONT_FAMILY;
-    ctx.textAlign = this.p.align || "center";
-    ctx.fillStyle = this.p.color || 'red';
+  infoHolder.on('draw', infoHolder, function(ctx) {
+    ctx.font = SIZE_BOLD+"px "+FONT_FAMILY;
+    ctx.textAlign = "center";
+    ctx.fillStyle = this.p.color || 'black';
 
-    for (var i = 0; i < killedInfo.length; i++) {
-      ctx.fillText( killedInfo[i], 
-                    killedInfoPosition[i][0], 
-                    killedInfoPosition[i][1]);
+    for (var i = 0; i < infoMsgList.length; i++) {
+      ctx.fillText( infoMsgList[i], 
+                    infoPositionList[i][0], 
+                    infoPositionList[i][1]);
     }
   });
 });
@@ -822,7 +825,6 @@ Q.scene(SCENE_SCORE, function(stage) {
   var overlayContainer = stage.insert(new Q.UI.Container({
       fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
       border: 5,
-      //x, y coordinates here are relative to canvas and top left = (0,0)
       x: Q.width/2,
       y: 11*Q.height/50,
       w: WIDTH_HUD
@@ -831,26 +833,17 @@ Q.scene(SCENE_SCORE, function(stage) {
   var nameContainer = stage.insert(new Q.UI.Container({ 
         label: "PLAYER NAME",
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 1*Q.width/12,
-        // y: Q.height*0.23
         x: -overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
 
   var killsContainer = stage.insert(new Q.UI.Container({ 
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 7*Q.width/12,
-        // y: Q.height*0.23
         x: 0,
         y: 0
       }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to canvas, top left = (0,0)
-        // x: 9*Q.width/12,
-        // y: Q.height*0.23
         x: overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
@@ -918,7 +911,6 @@ Q.scene(SCENE_SCORE, function(stage) {
     stage.insert(new Q.UI.Text({ 
         label: name,
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -929,7 +921,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       stage.insert(new Q.UI.Text({ 
         label: kills[name].toString(),
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -940,7 +931,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       stage.insert(new Q.UI.Text({ 
         label: deaths[name].toString(),
         color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
-        //x, y coordinates here are relative to container, center = (0,0)
         x: 0,
         y: line*offsetY,
         size: scoreSize,
