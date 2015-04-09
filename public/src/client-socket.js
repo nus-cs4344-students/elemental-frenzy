@@ -993,8 +993,6 @@ var displayGameScreen = function(level){
   Q.stageScene(level, STAGE_LEVEL);
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
-  // Powerups system
-  Q.stage(STAGE_LEVEL).add("powerupSystem");
 };
 
 // ## Loads the game state.
