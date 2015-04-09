@@ -12,18 +12,18 @@ var POWERUP_COLLISIONTYPE = 64;
 
 var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "PowerupDoubleDmg";
 var POWERUP_CLASS_MANA_ZEROMANACOST           = "PowerupZeroManaCost";
-var POWERUP_CLASS_MOVESPEED_DOUBLESPEED       = "PowerupDoubleMoveSpeed";
+var POWERUP_CLASS_MOVESPEED_150SPEED       = "PowerupDoubleMoveSpeed";
 var POWERUP_CLASS_HEALTH_HEALTOFULL           = "PowerupHealToFull";
 
 var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
-var POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED = 'powerup_movement';
+var POWERUP_SPRITESHEET_MOVESPEED_150SPEED = 'powerup_movement';
 var POWERUP_SPRITESHEET_HEALTH_HEALTOFULL     = 'powerup_red';
 
 var POWERUP_DURATION_ATTACK_DOUBLEDMG    = 10.0;
 var POWERUP_DURATION_HEALTH_HEALTOFULL   = 0.0;
 var POWERUP_DURATION_MANA_ZEROMANACOST   = 10.0;
-var POWERUP_DURATION_MOVESPEED_DOUBLESPEED = 10.0;
+var POWERUP_DURATION_MOVESPEED_150SPEED = 10.0;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
@@ -143,7 +143,7 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_ATTACK_DOUBLEDMG:      {sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,          duration: POWERUP_DURATION_ATTACK_DOUBLEDMG},
       POWERUP_CLASS_HEALTH_HEALTOFULL:     {sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,         duration: POWERUP_DURATION_HEALTH_HEALTOFULL},
       POWERUP_CLASS_MANA_ZEROMANACOST:     {sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,         duration: POWERUP_DURATION_MANA_ZEROMANACOST},
-      POWERUP_CLASS_MOVESPEED_DOUBLESPEED: {sheet: POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED,      duration: POWERUP_DURATION_MOVESPEED_DOUBLESPEED}
+      POWERUP_CLASS_MOVESPEED_150SPEED: {sheet: POWERUP_SPRITESHEET_MOVESPEED_150SPEED,      duration: POWERUP_DURATION_MOVESPEED_150SPEED}
     }
   },
   
@@ -236,7 +236,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = true; 
         break;
-      case POWERUP_CLASS_MOVESPEED_DOUBLESPEED  : this.movespeedMultiplier    += 1.0; 
+      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
         break;
       case POWERUP_CLASS_HEALTH_HEALTOFULL      : entity.p.currentHealth      = entity.p.maxHealth; 
         break;
@@ -252,7 +252,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = false; 
         break;
-      case POWERUP_CLASS_MOVESPEED_DOUBLESPEED  : this.movespeedMultiplier    -= 1.0; 
+      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    -= 0.5; 
         break;
       case POWERUP_CLASS_HEALTH_HEALTOFULL      : // do nothing
         break;
