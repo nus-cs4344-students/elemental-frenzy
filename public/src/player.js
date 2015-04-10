@@ -99,11 +99,6 @@ Q.Sprite.extend("Player",{
 
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
-   
-    // Normally, canFire will be set to true in the fired function, but this is just for precaution
-    if (this.p.firingCooldown <= 0) {
-      this.p.canFire = true;
-    }
     
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
     if (this.p.isDead || !this.p.canFire ||
@@ -363,6 +358,9 @@ Q.Sprite.extend("Player",{
     }
     
     this.p.firingCooldown -= dt;
+    if (this.p.firingCooldown <= 0) {
+      this.p.canFire = true;
+    }
   
     // Update countdown
     //this.p.updateCountdown -= dt;

@@ -2,10 +2,10 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
- 
+
 app.use(express.static(__dirname + '/public'));
- 
-app.get('/', function(req, res){
+
+app.get('/', function (req, res) {
   res.render('/index.html');
 });
 
@@ -32,47 +32,49 @@ var delayVar_s2p = 0.2; // delay variance, in the range [0, 1] (percentage)
 var delayVar_p2s = 0.2; //
 
 // ## Helper functions
-var getSocketOfPlayerId = function(playerId) {
+var getSocketOfPlayerId = function (playerId) {
   return playerIdToSocketMap[playerId];
 };
 
-var getPlayerIdOfSocketId = function(socketconnid) {
+var getPlayerIdOfSocketId = function (socketconnid) {
   return socketIdToPlayerIdMap[socketconnid];
 };
 
-var getSocketOfSessionId = function(sessionId) {
+var getSocketOfSessionId = function (sessionId) {
   return sessionIdToSocketMap[sessionId];
 };
 
-var getSessionIdOfSocketId = function(socketconnid) {
+var getSessionIdOfSocketId = function (socketconnid) {
   return socketIdToSessionIdMap[socketconnid];
 };
 
-var getSessionIdOfPlayerId = function(playerId) {
+var getSessionIdOfPlayerId = function (playerId) {
   return playerIdToSessionIdMap[playerId];
 };
 
-var getPlayerIdsOfSessionId = function(sessionId) {
+var getPlayerIdsOfSessionId = function (sessionId) {
   return sessionIdToPlayerIdMap[sessionId];
 };
 
 /**
  * Finds the size of an object
  */
-var sizeOfObject = function(obj) {
+var sizeOfObject = function (obj) {
   var size = 0;
-  for (var key in obj) {
+  var key;
+  for (key in obj) {
     size++;
   }
   return size;
-}
+};
  
  /**
   * Finds the first session that does not have max players and returns its index.
   * If all ongoing sessions are full or there are no ongoing sessions, returns -1.
   */
-var findAvailableSession = function() {
-  for(var i in sessions){
+var findAvailableSession = function () {
+  var i;
+  for(i in sessions) {
     if (sessions[i] && sessions[i].playerCount < sessions[i].playerMaxCount) {
       return i;
     }
@@ -80,71 +82,69 @@ var findAvailableSession = function() {
   return -1;
 };
 
-var updatePlayerSession = function(sessionId, session){
+var updatePlayerSession = function (sessionId, session) {
   // get previous player list map by sessionId
   var pList = getPlayerIdsOfSessionId(sessionId);
-
-  for(var p in pList){    
+  var p;
+  for(p in pList) {    
     delete playerIdToSessionIdMap[playerId];
   }
   
   // get current player list in updated session
   var cpList = session.players;
-  for(var p in cpList){    
+  for(p in cpList) {    
     playerIdToSessionIdMap[p] = sessionId;
   }
   sessions[sessionId] = session;
 
   // create new session
-  if(!sessionIdToPlayerIdMap[sessionId]){
+  if(!sessionIdToPlayerIdMap[sessionId]) {
     sessionIdToPlayerIdMap[sessionId] = {};
   }
   sessionIdToPlayerIdMap[sessionId] = cpList;
 };
 
-var addPlayerSocket = function(socket, playerId){
+var addPlayerSocket = function (socket, playerId) {
   playerIdToSocketMap[playerId] = socket;
   socketIdToPlayerIdMap[socket.conn.id] = playerId;
 };
 
-var addSessionSocket = function(socket, sessionId){
+var addSessionSocket = function (socket, sessionId) {
   sessionIdToSocketMap[sessionId] = socket;
   socketIdToSessionIdMap[socket.conn.id] = sessionId;
 };
 
-var removeSessionFromPlayer = function(sessionId){
+var removeSessionFromPlayer = function (sessionId) {
   // take note of the order of deletion
   removePlayersFromSession(sessionId);
   delete sessionIdToPlayerIdMap[sessionId];
 };
 
-var removeSessionFromSocket = function(sessionId){
+var removeSessionFromSocket = function (sessionId) {
   // take note of the order of deletion
   var s = getSocketOfSessionId(sessionId);
   delete sessionIdToSocketMap[sessionId];
   delete socketIdToSessionIdMap[s.conn.id];
-}
+};
 
-var removeSession = function(sessionId){
-  setTimeout(function() {
+var removeSession = function (sessionId) {
+  setTimeout(function () {
     removeSessionFromPlayer(sessionId);
     removeSessionFromSocket(sessionId);
-
     delete sessions[sessionId];
-    
-    sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
   }, delay_s2p * 5);
 };
 
-var removePlayersFromSession = function(sessionId){
+var removePlayersFromSession = function (sessionId) {
   var pList = getPlayerIdsOfSessionId(sessionId);
-  for(var p in pList){
+  var p;
+  for(p in pList) {
     removePlayerFromSession(p);
   }
 };
 
 // remove player from session map
-var removePlayerFromSession = function(playerId){
+var removePlayerFromSession = function (playerId) {
   // take note of the order of deletion
   var sId = getSessionIdOfPlayerId(playerId);
   var pList = getPlayerIdsOfSessionId(sId);
@@ -154,7 +154,7 @@ var removePlayerFromSession = function(playerId){
 };
 
 // remove player from socket map
-var removePlayerFromSocket = function(playerId){
+var removePlayerFromSocket = function (playerId) {
   // take note of the order of deletion
   var s = getSocketOfPlayerId(playerId);
   
@@ -163,27 +163,23 @@ var removePlayerFromSocket = function(playerId){
 };
 
 // remove player from socket and session map
-var removePlayer = function(playerId){
-  setTimeout(function() {
+var removePlayer = function (playerId) {
+  setTimeout(function () {
     removePlayerFromSocket(playerId);
     removePlayerFromSession(playerId);
-
-    var pSessionId = getSessionIdOfPlayerId(playerId);
-    // inform respective session about the player disconnection
-    !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: playerId});
-
   }, delay_p2s * 5);
 };
 
-var getJSON = function(obj){
+var getJSON = function (obj) {
   return JSON.stringify(obj, null, 4);
 };
 
 /**
  * Sends to the player socket
  */
-var sendToPlayer = function(playerId, eventName, eventData) {
-  if (!getSocketOfPlayerId(playerId)) {
+var sendToPlayer = function (playerId, eventName, eventData) {
+  var socketToSend = getSocketOfPlayerId(playerId);
+  if (!socketToSend) {
     console.log("Player " + playerId + " has not yet connected...");
     return false;
   }
@@ -192,38 +188,39 @@ var sendToPlayer = function(playerId, eventName, eventData) {
   var artificialDelayVariance = (delay_s2p * (delayVar_s2p * Math.random()));
   artificialDelayVariance = (Math.random() < 0.5 ? -artificialDelayVariance : artificialDelayVariance);
   var artificialS2pDelay = delay_s2p + artificialDelayVariance;
-  setTimeout(function() {
-    if (getSocketOfPlayerId(playerId)) {
-      getSocketOfPlayerId(playerId).emit(eventName, eventData);
+  setTimeout(function () {
+    if (socketToSend) {
+      socketToSend.emit(eventName, eventData);
     }
   }, artificialS2pDelay);
   return true;
 };
 
-var sendToPlayers = function(players, eventName, eventData) {
-  for(var p in players){
+var sendToPlayers = function (players, eventName, eventData) {
+  var p;
+  for(p in players) {
     sendToPlayer(p, eventName, eventData);
   }
 };
 
-// only gives player id to player id mapping
-// app.js has not idea of which player is using which character id
-var getAllPlayers = function(){
+var getAllPlayers = function () {
   var pList = {};
-  for(var p in playerIdToSocketMap){
-    pList[p] = p;
+  var p;
+  for(p in playerIdToSocketMap) {
+    pList[p] = playerId[p];
   }
 
   return pList;
-}
+};
 
 /**
   * Broadcasts to all sockets in the given session
   */
-var broadcastFromSession = function(sessionId, eventName, eventData) {
+var broadcastFromSession = function (sessionId, eventName, eventData) {
   console.log("Broadcast from session "+sessionId+" with event[ "+eventName+"]");
   var pList = getPlayerIdsOfSessionId(sessionId);
-  for(var p in pList){
+  var p;
+  for(p in pList) {
     sendToPlayer(p, eventName, eventData);
   }
 };
@@ -232,8 +229,9 @@ var broadcastFromSession = function(sessionId, eventName, eventData) {
 /**
  * Sends to the session socket (session-cum-client)
  */
-var sendToSession = function(sessionId, eventName, eventData) {
-  if (!getSocketOfSessionId(sessionId)) {
+var sendToSession = function (sessionId, eventName, eventData) {
+  var socketToSend = getSocketOfSessionId(sessionId);
+  if (!socketToSend) {
     console.log("Error in sendToSession(): Session " + sessionId + " has not yet connected... so event [ " + eventName + " ] cannot be sent");
     return false;
   }
@@ -242,9 +240,11 @@ var sendToSession = function(sessionId, eventName, eventData) {
   var artificialDelayVariance = (delay_p2s * (delayVar_p2s * Math.random()));
   artificialDelayVariance = (Math.random() < 0.5 ? -artificialDelayVariance : artificialDelayVariance);
   var artificialP2sDelay = delay_p2s + artificialDelayVariance;
-  setTimeout(function() {
-    if (getSocketOfSessionId(sessionId)) {
-      getSocketOfSessionId(sessionId).emit(eventName, eventData);
+
+
+  setTimeout(function () {
+    if (socketToSend) {
+      socketToSend.emit(eventName, eventData);
     }
   }, artificialP2sDelay);
   return true;
@@ -258,12 +258,12 @@ io.on('connection', function (socket) {
   var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;;
 
   var sessionSize = sizeOfObject(sessions);
-  if(isSession && sessionSize >= SESSION_MAX_COUNT){
+  if(isSession && sessionSize >= SESSION_MAX_COUNT) {
 
     console.log("There is/are already " + sessionSize + " sessions(s) running");
     return;
 
-  } else if(isClient && (!sessions || sessionSize <= 0)){
+  } else if(isClient && (!sessions || sessionSize <= 0)) {
 
     // no session avaiable but player can wait for new session
     console.log("There is no session running");
@@ -282,7 +282,7 @@ io.on('connection', function (socket) {
       sendToPlayer(getPlayerIdOfSocketId(socket.conn.id), 'connected', newPlayerData);
     }, 500);
 
-  }else if(isSession && !getSessionIdOfSocketId(socket.conn.id)){
+  }else if(isSession && !getSessionIdOfSocketId(socket.conn.id)) {
     sessionId++;
     console.log("Session "+sessionId+" has connected");
 
@@ -309,17 +309,24 @@ io.on('connection', function (socket) {
       // inform all players that the session is disconnected
       var pList = getPlayerIdsOfSessionId(sId);
       
-      for(var p in pList){
+      for(var p in pList) {
         sendToPlayer(p, 'sessionDisconnected');
       }
 
       removeSession(sId);
-    }else if(!sId && pId){
+
+      sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
+
+    }else if(!sId && pId) {
       console.log("Player " + pId + " disconnected!");
+
+      var pSessionId = getSessionIdOfPlayerId(pId);
+      // inform respective session about the player disconnection
+      !pSessionId || sendToSession(pSessionId, 'playerDisconnected', {spriteId: pId});
 
       removePlayer(pId);
 
-    }else if(sId && pId){
+    }else if(sId && pId) {
       console.log("Conflicted socket disconnected");
     } else{
       console.log("Unknown socket disconnected");
@@ -327,20 +334,20 @@ io.on('connection', function (socket) {
   });
 
   // receive player's packet
-  socket.on('player', function(data){
-    sendToSession(data.eventData.sessionId, data.eventName, data.eventData);
+  socket.on('player', function (data) {
+    sendToSession(data.eventData.sessionId, data.eventName, data.eventData);   
   });
 
   // receive session's packet
-  socket.on('session', function(data){
+  socket.on('session', function (data) {
     // console.log("session event: "+data.eventName);
 
     var sId = getSessionIdOfSocketId(socket.conn.id);
 
-    switch (data.eventName){
+    switch (data.eventName) {
       case 'updateSession':{
         // update for the session
-        if(sId){
+        if(sId) {
           updatePlayerSession(sId,  data.eventData);
           sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
           console.log("Update session : " + getJSON(data.eventData));
@@ -357,6 +364,7 @@ io.on('connection', function (socket) {
       case 'addSprite':
       case 'updateSprite':
       
+      case 'powerupTaken':
 
       case 'updateEnemy':
       

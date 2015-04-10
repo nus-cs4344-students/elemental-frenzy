@@ -28,9 +28,10 @@ var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
 var timestampOffset;
-var timestampOffsetSum = 0;         // used so as to allow multiple synchronization packets
-var numSyncPacketsReceived = 0;     //
-var NUM_SYNC_PACKETS_TOSEND = 3;    // send this many packets when synchronizeClocks() is called
+var timestampOffsetSum = 0;           // used so as to allow multiple synchronization packets
+var numSyncPacketsReceived = 0;       //
+var NUM_SYNC_PACKETS_TOSEND = 10;     // send this many packets when synchronizeClocks() is called
+var INTERVAL_TIME_SYNCCLOCKS = 60000; // try to sync clocks with server every 60s
 
 // RTT-related
 var avgRtt = 0;
@@ -52,7 +53,7 @@ var updateAvgRtt = function(oneWayDelay) {
   avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
   //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRtt());
   return avgRtt;
-}
+};
 
 var getAvgRtt = function() {
   if ( !_clockSynchronized) { // cannot accurately get the avgRtt
@@ -60,7 +61,7 @@ var getAvgRtt = function() {
   }
   
   return avgRtt;
-}
+};
 
 var creates = {
   PLAYER:         function(p) { return new Q.Player(p); },
@@ -80,7 +81,7 @@ var getDefaultSprites = function() {
                           POWERUP: {}
                         };
   return defaultSprites;
-}
+};
 
 var getDefaultGameState = function() {
   var defaultGameState = {
@@ -91,15 +92,15 @@ var getDefaultGameState = function() {
   };
   
   return defaultGameState;
-}
+};
 
 var getJSON = function(obj){
   return JSON.stringify(obj, null, 4);
-}
+};
 
 var getCurrentTime = function() {
   return (new Date()).getTime();
-}
+};
 
 
 function isCyclic (obj) {
@@ -122,7 +123,7 @@ function isCyclic (obj) {
   }
 
   return detect(obj);
-}
+};
 
 var cloneObject = function (obj){
   var clone = {};
@@ -173,7 +174,7 @@ var clone = function(item){
 
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
 var checkGoodSprite = function(eType, spriteId, callerName) {
-  callername = callername || 'nameNotSpecifiedFunction';
+  callerName = callerName || 'nameNotSpecifiedFunction';
   if (typeof eType == 'undefined') {
     console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
     return false;
@@ -246,7 +247,6 @@ var updateSprite = function(entityType, id, properties){
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
-    // Attack-related
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -992,8 +992,6 @@ var displayGameScreen = function(level){
   Q.stageScene(level, STAGE_LEVEL);
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
-  // Powerups system
-  Q.stage(STAGE_LEVEL).add("powerupSystem");
 };
 
 // ## Loads the game state.
@@ -1119,6 +1117,14 @@ socket.on('joinSuccessful', function(data){
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
   synchronizeClocksWithServer();
+  var interval_syncClocks = setInterval(function() {
+    if (!_isSessionConnected) {
+      // Session disconnected, stop syncing
+      clearInterval(interval_syncClocks);
+      return;
+    }
+    synchronizeClocksWithServer();
+  }, INTERVAL_TIME_SYNCCLOCKS);
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
@@ -1160,6 +1166,7 @@ socket.on('synchronizeClocks', function(data) {
   if (packetNum == 1 || numSyncPacketsReceived == NUM_SYNC_PACKETS_TOSEND) {
     timestampOffset = timestampOffsetSum / numSyncPacketsReceived;
     _clockSynchronized = true;
+    console.log("timestampOffset calculated after syncing clocks with session: " + timestampOffset);
   }
 });
 
@@ -1199,11 +1206,42 @@ socket.on('addSprite', function(data){
     return;
   }
 
-  if (eType == 'PLAYERELEBALL' && props.shooterId != selfId) {
-    // not my eleball! Use local-perception filter
-    props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
-    props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
-    props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+  if (eType == 'PLAYERELEBALL') {
+    if (props.shooterId != selfId) {
+      // not my eleball! Use local-perception filter
+      props.lpfTimeLeft = 0.5; // time left to finish the LPF (decreases to 0)
+      props.lpfNeededX = props.vx * getAvgRtt() / 1000; // extra distance in the x-axis that must be covered
+      props.lpfNeededY = props.vy * getAvgRtt() / 1000; // extra distance in the y-axis that must be covered
+    } else {
+      // my eleball! Also use local-perception filter, but slightly different; start the x and y from my position,
+      // and set lpfNeededX and lpfNeededY to the difference between the eleball start pos and the eleball at my pos
+      var player = getPlayerSprite(selfId);
+      
+      var newX, newY; // newX and newY which will be at my pos
+      var angleDeg = props.angle;
+      // fire ball location offset from player
+      var ballToPlayerY = Math.abs((player.p.h/2 + props.h/2) * Math.sin(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
+      if(angleDeg <= 360 && angleDeg > 180){
+        // deduct ball width due to the direction of the ball is set to be default at right direction
+        newY = player.p.y - ballToPlayerY;
+      } else {
+        newY = player.p.y + ballToPlayerY;
+      }
+
+      var ballToPlayerX = Math.abs((player.p.w/2 + props.w/2) * Math.cos(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
+      if(angleDeg <= 270 && angleDeg > 90){
+        newX = player.p.x - ballToPlayerX;
+      } else {
+        newX = player.p.x + ballToPlayerX;
+      }
+      
+      props.lpfTimeLeft = 0.5;
+      props.lpfNeededX = props.x - newX;
+      props.lpfNeededY = props.y - newY;
+      
+      props.x = newX;
+      props.y = newY;
+    }
   }else if(eType == 'PLAYER'){
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
   }
@@ -1281,6 +1319,25 @@ socket.on('removeSprite', function(data){
   }
 
   removeSprite(eType, spriteId, props);
+});
+
+socket.on('powerupTaken', function(data) {
+  //console.log("Event: powerupTaken: data: " + getJSON(data));
+  
+  var eType = data.entityType,
+      spriteId = data.spriteId,
+      powerupName = data.powerupName,
+      powerupDuration = data.powerupDuration;
+      
+  if (eType == 'PLAYER' && spriteId != selfId) {
+    eType = 'ACTOR';
+  }
+  if ( !checkGoodSprite(eType, spriteId, "powerupTaken event")) {
+    return;
+  }
+  
+  var sprite = getSprite(eType, spriteId);
+  sprite.addPowerup(powerupName, powerupDuration);
 });
 
 // sprite took damage

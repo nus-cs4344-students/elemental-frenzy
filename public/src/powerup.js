@@ -10,20 +10,30 @@
  
 var POWERUP_COLLISIONTYPE = 64;
 
-var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "PowerupDoubleDmg";
-var POWERUP_CLASS_MANA_ZEROMANACOST           = "PowerupZeroManaCost";
-var POWERUP_CLASS_MOVESPEED_DOUBLESPEED       = "PowerupDoubleMoveSpeed";
-var POWERUP_CLASS_HEALTH_HEALTOFULL           = "PowerupHealToFull";
+var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
+var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
+var POWERUP_CLASS_MOVESPEED_150SPEED          = "POWERUP_CLASS_MOVESPEED_150SPEED";
+var POWERUP_CLASS_HEALTH_HEALTOFULL           = "POWERUP_CLASS_HEALTH_HEALTOFULL";
 
 var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
-var POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED = 'powerup_movement';
+var POWERUP_SPRITESHEET_MOVESPEED_150SPEED    = 'powerup_movement';
 var POWERUP_SPRITESHEET_HEALTH_HEALTOFULL     = 'powerup_red';
 
-var POWERUP_DURATION_ATTACK_DOUBLEDMG    = 10.0;
-var POWERUP_DURATION_HEALTH_HEALTOFULL   = 0.0;
-var POWERUP_DURATION_MANA_ZEROMANACOST   = 10.0;
-var POWERUP_DURATION_MOVESPEED_DOUBLESPEED = 10.0;
+var POWERUP_DURATION_ATTACK_DOUBLEDMG     = 10.0;
+var POWERUP_DURATION_HEALTH_HEALTOFULL    = 0.0;
+var POWERUP_DURATION_MANA_ZEROMANACOST    = 10.0;
+var POWERUP_DURATION_MOVESPEED_150SPEED   = 10.0;
+
+var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG   = 5;
+var POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL  = 5;
+var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST   = 5;
+var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED = 5;
+
+var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG   = POWERUP_DURATION_ATTACK_DOUBLEDMG;
+var POWERUP_SPAWNTIME_HEALTH_HEALTOFULL  = 10.0;
+var POWERUP_SPAWNTIME_MANA_ZEROMANACOST   = POWERUP_DURATION_MANA_ZEROMANACOST;
+var POWERUP_SPAWNTIME_MOVESPEED_150SPEED = POWERUP_DURATION_MOVESPEED_150SPEED;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
@@ -47,23 +57,19 @@ Q.component('2dPowerup', {
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
   },
-
-  // Eleballs get destroyed when touching things, and may play a sound if soundIsAnnoying is set to false
-  // Eleballs may also cancel out fireballs
-  // Eleball elements and their indices:
-  // [0: fire, 1: earth, 2: lightning, 3: water]
-  // Logic for eleball collision:
-  //  - Case 1: Both gets destroyed if their elements are the same
-  //  - Case 2: this element of index i destroys the other element of index j
-  //        and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
-  //  - Case 3: Both elements pass through each other if |i-j| == 2
+  
   collision: function(col,last) {    
     var entity = this.entity;
     // Powerups only care about player collisions who are powerupable
     if ( (col.obj.isA('Player') || col.obj.isA('Actor')) && col.obj.has('powerupable')) {
       //console.log("Powerup colliding with player " + col.obj.p.name + "(" + col.obj.p.spriteId + ")");
-      entity.givePlayerEffect(col.obj);
-      entity.destroy();
+      if (col.obj.p.isServerSide) {
+        // Server side will apply the effect
+        entity.taken(col.obj);
+      } else {
+        // Client side will only destroy the powerup
+        entity.destroy();
+      }
     } else if ( !col.obj.isA('Player') && !col.obj.isA('Actor') && !col.obj.has('2dEleball') ) {
       // turn off gravity, shift it up
       entity.p.gravity = 0;
@@ -109,9 +115,9 @@ Q.Sprite.extend("Powerup", {
     this._super(p, { 
       name: 'powerup_nameless',
       sheet: 'powerup_sheetless',
+      entityType: 'POWERUP',
       spriteId: -1,
       duration: 10.0,
-      entityType: 'POWERUP',
       type: Q.SPRITE_PARTICLE,
       collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,
       sensor: true, // so that it doesn't bounce players off
@@ -128,6 +134,23 @@ Q.Sprite.extend("Powerup", {
   givePlayerEffect: function(player) {
     console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
     player.addPowerup(this.p.name, this.p.duration);
+    if (player.p.isServerSide) {
+      // Tell client that powerup was taken
+      Q.input.trigger('broadcastAll', {eventName: 'powerupTaken', eventData: {
+          entityType: 'PLAYER', 
+          spriteId: player.p.spriteId,
+          powerupName: this.p.name,
+          powerupDuration: this.p.duration,
+          powerupId: this.p.spriteId
+        }
+      });
+    }
+  },
+  
+  taken: function(player) {
+    this.givePlayerEffect(player);
+    this.trigger('taken', this.p.name);
+    this.destroy();
   }
 });
 
@@ -140,11 +163,37 @@ Q.component('powerupSystem', {
   added: function() {
     // All the powerups of the game
     this.powerups = {
-      POWERUP_CLASS_ATTACK_DOUBLEDMG:      {sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,          duration: POWERUP_DURATION_ATTACK_DOUBLEDMG},
-      POWERUP_CLASS_HEALTH_HEALTOFULL:     {sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,         duration: POWERUP_DURATION_HEALTH_HEALTOFULL},
-      POWERUP_CLASS_MANA_ZEROMANACOST:     {sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,         duration: POWERUP_DURATION_MANA_ZEROMANACOST},
-      POWERUP_CLASS_MOVESPEED_DOUBLESPEED: {sheet: POWERUP_SPRITESHEET_MOVESPEED_DOUBLESPEED,      duration: POWERUP_DURATION_MOVESPEED_DOUBLESPEED}
-    }
+      POWERUP_CLASS_ATTACK_DOUBLEDMG:   { name:           POWERUP_CLASS_ATTACK_DOUBLEDMG,
+                                          sheet:          POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG, 
+                                          duration:       POWERUP_DURATION_ATTACK_DOUBLEDMG,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG,
+                                          spawnTime:      POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG,
+                                          existing:       0
+                                        },
+      POWERUP_CLASS_HEALTH_HEALTOFULL:  { name:           POWERUP_CLASS_HEALTH_HEALTOFULL,
+                                          sheet:          POWERUP_SPRITESHEET_HEALTH_HEALTOFULL, 
+                                          duration:       POWERUP_DURATION_HEALTH_HEALTOFULL,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL,
+                                          spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEALTOFULL,
+                                          existing:       0
+                                        },
+      POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
+                                          sheet:          POWERUP_SPRITESHEET_MANA_ZEROMANACOST, 
+                                          duration:       POWERUP_DURATION_MANA_ZEROMANACOST,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST,
+                                          spawnTime:      POWERUP_SPAWNTIME_MANA_ZEROMANACOST,
+                                          existing:       0
+                                        },
+      POWERUP_CLASS_MOVESPEED_150SPEED: { name:           POWERUP_CLASS_MOVESPEED_150SPEED,
+                                          sheet:          POWERUP_SPRITESHEET_MOVESPEED_150SPEED,
+                                          duration:       POWERUP_DURATION_MOVESPEED_150SPEED,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED,
+                                          spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150SPEED,
+                                          existing:       0
+                                        }
+    };
+    
+    this.randomlySpawnPowerupsToTheLimit();
   },
   
   // Instantiates the powerup
@@ -154,11 +203,61 @@ Q.component('powerupSystem', {
         name: powerupName, 
         sheet: this.powerups[powerupName].sheet, 
         duration: this.powerups[powerupName].duration,
+        spriteId: getNextSpriteId(),
         x: x, 
         y: y
       });
     } else {
       console.log("Error in createPowerup(): powerupName " + powerupName + " is not recognized!");
+    }
+  },
+  
+  // Randomly spawns the specified powerup above some tile,
+  // keeping track of it in this.powerups
+  randomlySpawnPowerup: function(powerupName) {
+    // Get random spawn position
+    var tileLayer = this.entity._collisionLayers[0];
+    var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    var randomX = randomCoord.x,
+        randomY = randomCoord.y;
+        
+    // Create the powerup
+    var powerup = this.createPowerup(powerupName, randomX, randomY);
+    // Listen in to the taken event of the powerup so that when one powerup is taken 
+    powerup.on('taken', this, 'powerupTaken');
+    // Insert the powerup
+    this.entity.insert(powerup);
+    // Keep track of the powerup
+    this.powerups[powerup.p.name].existing++;
+  },
+  
+  randomlySpawnPowerupsToTheLimit: function() {
+    var powerups = this.powerups;
+    for (var key in powerups) {
+      var powerupObj = powerups[key];
+      while (powerupObj.existing < powerupObj.maxNumAtATime) {
+        this.randomlySpawnPowerup(powerupObj.name);
+      }
+    }
+  },
+  
+  // Called when a powerup is taken, to check if there is a need to spawn more powerups
+  powerupTaken: function(powerupName) {
+    if (this.powerups[powerupName]) {
+      // powerup is recognized
+      var powerupObj = this.powerups[powerupName];
+      powerupObj.existing--; // decrement 
+      if (powerupObj.existing < powerupObj.maxNumAtATime) {
+        // Need to spawn a new one!
+        var that = this;
+        setTimeout(function() {
+          if (that && that.entity && powerupObj.existing < powerupObj.maxNumAtATime) {
+            that.randomlySpawnPowerup(powerupName);
+          }
+        }, powerupObj.spawnTime * 1000);
+      }
+    } else {
+      console.log("Error in powerupTaken(): " + powerupName + " is not a recognized powerup name!");
     }
   },
   
@@ -236,7 +335,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = true; 
         break;
-      case POWERUP_CLASS_MOVESPEED_DOUBLESPEED  : this.movespeedMultiplier    += 1.0; 
+      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
         break;
       case POWERUP_CLASS_HEALTH_HEALTOFULL      : entity.p.currentHealth      = entity.p.maxHealth; 
         break;
@@ -252,7 +351,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = false; 
         break;
-      case POWERUP_CLASS_MOVESPEED_DOUBLESPEED  : this.movespeedMultiplier    -= 1.0; 
+      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    -= 0.5; 
         break;
       case POWERUP_CLASS_HEALTH_HEALTOFULL      : // do nothing
         break;
@@ -263,6 +362,7 @@ Q.component('powerupable', {
   
   extend: {
     addPowerup: function(powerupName, powerupDuration) {
+      //console.log("Adding powerup: " + powerupName + " for duration: " + powerupDuration);
       this.p.powerupsTimeLeft[powerupName] = powerupDuration;
       if ( !this.p.powerupsHeld[powerupName]) {
         this.p.powerupsHeld[powerupName] = true;
