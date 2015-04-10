@@ -414,7 +414,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
   var level = stage.options.level;
 
   if(miniStage && mapStage){
-    return;
+    
     // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
     mapStage.on("postrender", function(ctx){
 
@@ -432,10 +432,28 @@ Q.scene(SCENE_LEVEL, function(stage) {
         vp.screenH = screenH;
 
         // keep minimap in the center-bottom
-        var offsetX = Q.width/2/vpScale - vp.screenW/2/vpScale;
-        var offsetY = 0.95*Q.height/vpScale - vp.screenH/vpScale;
+        var offsetX = Q.width/2/vpScale - screenW/2/vpScale;
+        var offsetY = 0.97*Q.height/vpScale - screenH/vpScale;
         ctx.translate(offsetX, offsetY);
-        // ctx.translate(0, -(Q.height*0.45 - screenH/2));
+
+        // draw background and add title for minimap
+        ctx.save();
+
+        var textSize = Math.floor(SIZE_NORMAL/vpScale);
+        var backgroundStartX = vp.centerX-(screenW/2/vpScale);
+        var backgroundStartY = vp.centerY-(screenH/2/vpScale) - textSize*1.5;
+        var backgroundW = screenW/vpScale;
+        var backgroundH = screenH/vpScale + textSize*1.5;
+
+        ctx.fillStyle = DARK_GREY;
+        ctx.fillRect(backgroundStartX, backgroundStartY, backgroundW, backgroundH);
+
+        ctx.fillStyle = LIGHT_GREY;
+        ctx.font = WEIGHT_BOLD + " " + textSize + "px " + FONT_FAMILY;
+        ctx.textAlign = 'center';
+        ctx.fillText("Mini Map", vp.centerX, backgroundStartY);
+        
+        ctx.restore();
       }
 
       // store viewport
