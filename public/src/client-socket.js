@@ -485,6 +485,12 @@ var addSprite = function(entityType, id, properties) {
     }
 
     Q.stage(STAGE_LEVEL).softFollow(sprite);
+
+    if(!Q.stage(STAGE_MINIMAP).has('viewport')){
+      Q.stage(STAGE_MINIMAP).add('viewport');
+    }
+
+    Q.stage(STAGE_MINIMAP).softFollow(sprite);
   }
 
   return sprite;
@@ -990,9 +996,10 @@ var displayGameScreen = function(level){
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(level, STAGE_LEVEL);
-  // Viewport
-  Q.stage(STAGE_LEVEL).add("viewport");
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
+  
+  Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
+
   // Powerups system
   Q.stage(STAGE_LEVEL).add("powerupSystem");
 };

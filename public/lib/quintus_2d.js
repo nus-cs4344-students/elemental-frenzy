@@ -16,6 +16,8 @@ Quintus["2D"] = function(Q) {
       this.centerX = Q.width/2;
       this.centerY = Q.height/2;
       this.scale = 1;
+      this.screenW = Q.width;
+      this.screenH = Q.height;
     },
 
     extend: {
@@ -83,13 +85,13 @@ Quintus["2D"] = function(Q) {
 
     softCenterOn: function(x,y) {
       if(x !== void 0) {
-        var dx = (x - Q.width / 2 / this.scale - this.x)/3;
+        var dx = (x - this.screenW / 2 / this.scale - this.x)/3;
         if(this.boundingBox) {
           if(this.x + dx < this.boundingBox.minX) {
             this.x = this.boundingBox.minX / this.scale;
           }
-          else if(this.x + dx > (this.boundingBox.maxX - Q.width) / this.scale) {
-            this.x = Math.max(this.boundingBox.maxX - Q.width, this.boundingBox.minX) / this.scale;
+          else if(this.x + dx > (this.boundingBox.maxX - this.screenW) / this.scale) {
+            this.x = Math.max(this.boundingBox.maxX - this.screenW, this.boundingBox.minX) / this.scale;
           }
           else {
             this.x += dx;
@@ -100,13 +102,13 @@ Quintus["2D"] = function(Q) {
         }
       }
       if(y !== void 0) {
-        var dy = (y - Q.height / 2 / this.scale - this.y)/3;
+        var dy = (y - this.screenH / 2 / this.scale - this.y)/3;
         if(this.boundingBox) {
           if(this.y + dy < this.boundingBox.minY) {
             this.y = this.boundingBox.minY / this.scale;
           }
-          else if(this.y + dy > (this.boundingBox.maxY - Q.height) / this.scale) {
-            this.y = Math.max(this.boundingBox.maxY - Q.height, this.boundingBox.minY) / this.scale;
+          else if(this.y + dy > (this.boundingBox.maxY - this.screenH) / this.scale) {
+            this.y = Math.max(this.boundingBox.maxY - this.screenH, this.boundingBox.minY) / this.scale;
           }
           else {
             this.y += dy;
@@ -120,10 +122,10 @@ Quintus["2D"] = function(Q) {
     },
     centerOn: function(x,y) {
       if(x !== void 0) {
-        this.x = x - Q.width / 2 / this.scale;
+        this.x = x - this.screenW / 2 / this.scale;
       }
       if(y !== void 0) {
-        this.y = y - Q.height / 2 / this.scale;
+        this.y = y - this.screenH / 2 / this.scale;
       }
 
     },
@@ -139,17 +141,26 @@ Quintus["2D"] = function(Q) {
 
     },
 
-    prerender: function() {
-      this.centerX = this.x + Q.width / 2 /this.scale;
-      this.centerY = this.y + Q.height / 2 /this.scale;
-      Q.ctx.save();
-      Q.ctx.translate(Math.floor(Q.width/2),Math.floor(Q.height/2));
-      Q.ctx.scale(this.scale,this.scale);
-      Q.ctx.translate(-Math.floor(this.centerX), -Math.floor(this.centerY));
+    prerender: function(ctx) {
+      this.centerX = this.x + this.screenW / 2 /this.scale;
+      this.centerY = this.y + this.screenH / 2 /this.scale;
+      ctx.save();
+      ctx.translate(Math.floor(this.screenW/2),Math.floor(this.screenH/2));
+      ctx.scale(this.scale,this.scale);
+      ctx.translate(-Math.floor(this.centerX), -Math.floor(this.centerY));
+
+      // Quintus Default method
+      // Q.ctx.save();
+      // Q.ctx.translate(Math.floor(Q.width/2),Math.floor(Q.height/2));
+      // Q.ctx.scale(this.scale,this.scale);
+      // Q.ctx.translate(-Math.floor(this.centerX), -Math.floor(this.centerY));
     },
 
-    postrender: function() {
-      Q.ctx.restore();
+    postrender: function(ctx) {
+      ctx.restore();
+
+      // Quintus Default method
+      // Q.ctx.restore();
     }
   });
 
@@ -404,17 +415,31 @@ Quintus["2D"] = function(Q) {
       }
     },
 
-    drawBlock: function(ctx, blockX, blockY) {
-      var p = this.p,
-          startX = Math.floor(blockX * p.blockW + p.x),
-          startY = Math.floor(blockY * p.blockH + p.y);
+    drawBlock: function(ctx, blockX, blockY, startX, startY, endX, endY) {
+      // QUintus default declarations
+      // var p = this.p,
+      //     startX = Math.floor(blockX * p.blockW + p.x),
+      //     startY = Math.floor(blockY * p.blockH + p.y);
 
       if(!this.blocks[blockY] || !this.blocks[blockY][blockX]) {
         this.prerenderBlock(blockX,blockY);
       }
 
       if(this.blocks[blockY]  && this.blocks[blockY][blockX]) {
-        ctx.drawImage(this.blocks[blockY][blockX],startX,startY);
+        var sx = Math.floor(Math.max(blockX * this.p.blockW + this.p.x, startX)),
+            sy = Math.floor(Math.max(blockY * this.p.blockH + this.p.y, startY)),
+            ex = Math.floor(Math.min((blockX + 1) * this.p.blockW, endX)),
+            ey = Math.floor(Math.min((blockY + 1) * this.p.blockH, endY)),
+            w = Math.floor(Math.min(ex-sx), this.p.blockW),
+            h = Math.floor(Math.min(ey-sy), this.p.blockH);
+
+        // console.log("received x "+startX+" "+endX+" y "+startY+" "+endY);
+        // console.log("drawing b["+blockX+"]["+blockY+"] x "+sx+" "+ex+" y "+sy+" "+ey+ " w "+w+" h "+h);
+
+        ctx.drawImage(this.blocks[blockY][blockX], sx%this.p.blockW, sy%this.p.blockH, w, h, sx, sy, w, h);
+
+        // Quintus default method
+        // ctx.drawImage(this.blocks[blockY][blockX], startX, startY);
       }
     },
 
@@ -424,16 +449,28 @@ Quintus["2D"] = function(Q) {
           scale = viewport ? viewport.scale : 1,
           x = viewport ? viewport.x : 0,
           y = viewport ? viewport.y : 0,
-          viewW = Q.width / scale,
-          viewH = Q.height / scale,
-          startBlockX = Math.floor((x - p.x) / p.blockW),
-          startBlockY = Math.floor((y - p.y) / p.blockH),
-          endBlockX = Math.floor((x + viewW - p.x) / p.blockW),
-          endBlockY = Math.floor((y + viewH - p.y) / p.blockH);
+          viewW = (viewport ? viewport.screenW : Q.width) / scale,
+          viewH = (viewport ? viewport.screenH : Q.height) / scale,
+          offsetX = Math.floor(Q.width/2/scale - viewW/2),
+          offsetY = Math.floor(Q.height/2/scale - viewH/2),
+          startX = Math.floor(x - p.x) ,//+ offsetX,
+          startY = Math.floor(y - p.y) ,//+ offsetY,
+          startBlockX = Math.floor(startX / p.blockW),
+          startBlockY = Math.floor(startY / p.blockH),
+          endX = Math.floor(x + viewW - p.x),// + offsetX,
+          endY = Math.floor(y + viewH - p.y),// + offsetY,
+          endBlockX = Math.floor(endX / p.blockW),
+          endBlockY = Math.floor(endY / p.blockH);
+
+      // console.log("viewport screen "+viewport.screenW+" "+viewport.screenH+" view "+viewW+" "+viewH+" x "+x+" y "+y+" center "+viewport.centerX+" "+viewport.centerY);
+      // console.log("scale "+scale+" start "+startX+" "+startY+" end "+endX+" "+endY+" block "+startBlockX+" "+endBlockX+" tile "+this.p.x+" "+this.p.y);
 
       for(var iy=startBlockY;iy<=endBlockY;iy++) {
         for(var ix=startBlockX;ix<=endBlockX;ix++) {
-          this.drawBlock(ctx,ix,iy);
+          this.drawBlock(ctx,ix,iy, startX, startY, endX, endY);
+
+          // Quintus Default method
+          // this.drawBlock(ctx,ix,iy);
         }
       }
     }

@@ -709,7 +709,7 @@ var displayGameScreen = function(level){
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(level, STAGE_LEVEL);
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
 
   // show connected status
   displayStatusScreeen("Connected as 'Session "+session.sessionId+"'");

@@ -5,6 +5,7 @@
 var STAGE_BACKGROUND = 0;
 var SCENE_BACKGROUND = 'background';
 var STAGE_LEVEL = 1;
+var SCENE_LEVEL = 'levelScreen';
 var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
 var STAGE_NOTIFICATION = 2;
@@ -13,12 +14,13 @@ var SCENE_NOTIFICATION = 'notificationScreen';
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
 var SCENE_SCORE = 'scoreScreen';
-var STAGE_HUD = 5;
+var STAGE_HUD = 4;
 var SCENE_HUD = 'hudScreen';
-var STAGE_STATUS = 6;
+var STAGE_STATUS = 5;
 var SCENE_STATUS = 'statusScreen';
-var STAGE_INFO = 7;
+var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
+var STAGE_MINIMAP = 7;
 
 
 // ## UI constants
@@ -395,14 +397,78 @@ Q.scene('level1',function(stage) {
   );
 });
 
-// ## Level2 scene
-// Create a new scene called level 2
 Q.scene('level2',function(stage) {
 
   // Add in a tile layer, and make it the collision layer
   stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
                                             sheet: 'tiles' })
   );
+});
+
+Q.scene(SCENE_LEVEL, function(stage) {
+
+  var backgroundStage = Q.stage(STAGE_BACKGROUND);
+  var miniStage = stage.options.miniStage;
+  var mapStage = Q.stage(miniStage);
+
+  var level = stage.options.level;
+
+  if(miniStage && mapStage){
+    return;
+    // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
+    mapStage.on("postrender", function(ctx){
+
+      // call viewport to push matrix and translate and scale if viewport exists
+      stage.trigger('prerender', ctx);
+
+      var vp = stage.viewport;
+      if(vp) {
+        var vpScale = 0.1;
+        var screenW = Q.width/3;
+        var screenH = Q.height/3;
+
+        vp.scale = vpScale;
+        vp.screenW = screenW;
+        vp.screenH = screenH;
+
+        // keep minimap in the center-bottom
+        var offsetX = Q.width/2/vpScale - vp.screenW/2/vpScale;
+        var offsetY = 0.95*Q.height/vpScale - vp.screenH/vpScale;
+        ctx.translate(offsetX, offsetY);
+        // ctx.translate(0, -(Q.height*0.45 - screenH/2));
+      }
+
+      // store viewport
+      var preVp = mapStage.viewport;
+      if(preVp && vp){
+        // change to minimap viewport
+        mapStage.viewport = vp;   
+      }
+
+      // render miniStage
+      for(var i=0,len=mapStage.items.length;i<len;i++) {
+        var item = mapStage.items[i];
+        // Don't render sprites with containers (sprites do that themselves)
+        // Also don't render if not onscreen
+        if(!item.container && (item.p.renderAlways || item.mark >= mapStage.time)) {
+          item.render(ctx);
+        }
+      }
+
+      // restore viewport
+      mapStage.viewport = preVp;
+      
+      // call viewport to pop matrix if viewport exists
+      stage.trigger('render', ctx);
+
+      
+    });
+  }else{
+    // Add in a tile layer, and make it the collision layer
+    stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
+                                            sheet: 'tiles' })
+  );
+  }
 });
 
 // ## Level3 scene
