@@ -692,25 +692,32 @@ Q.scene(SCENE_HUD, function(stage) {
                                   }));
     }
     
-
+    var powerupIconWidth = 34;
+    var spaceBetweenPowerupIcon = 10;
+    var borderWidth = 2;
+    //create an array of centerX for powerup pos
+    var powerupIconCenterX = [];
+    var powerupIconCenterY = [];
     centerX = 34;
     centerY = 0;
 
     var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
 
     if (initHud) {
+      powerupIconCenterX.push(-1 * powerupIconWidth * scaleToHeight);
+      powerupIconCenterY.push(0);
       powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
-                                                                  x    : 0 * scaleToHeight,
-                                                                  y    : centerY,
+                                                                  x    : powerupIconCenterX[0],
+                                                                  y    : 0,
                                                                   scale: scaleToHeight,
                                     }));
       powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
-                                                                  x    : 34 * scaleToHeight,
+                                                                  x    : 0 * powerupIconWidth * scaleToHeight + spaceBetweenPowerupIcon,
                                                                   y    : centerY,
                                                                   scale: scaleToHeight
                                     }));
       powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
-                                                                  x    : 68 * scaleToHeight,
+                                                                  x    : 1 * powerupIconWidth * scaleToHeight + spaceBetweenPowerupIcon,
                                                                   y    : centerY,
                                                                   scale: scaleToHeight
                                     }));
@@ -722,11 +729,61 @@ Q.scene(SCENE_HUD, function(stage) {
       powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
       powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
       powerupMovement_DoubleSpeed.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
+    
+      var timeLeftForZeroMana        = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
+      var timeLeftForDoubleDmg       = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+      var timeLeftForDoubleMovespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
+
+      drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, centerX, 0, powerupIconWidth + borderWidth, ctx);
+      //POWERUP_DURATION_ATTACK_DOUBLEDMG
+
     }
 
     initHud = false;
 
   });
+  
+  var drawSquareWithRoundedCorners = function (value, maxValue, centerX, centerY, radius, ctx) {
+    if (typeof value === 'undefined') {
+      return;
+    }
+
+    var scaledValue = value / maxValue;
+    var start         = Math.PI * 2.0;
+    var end       = Math.PI / 2.0;
+    var roundedCornerRadius = 3;
+    
+    var length = radius;
+    var startX = centerX - length/2;
+    var startY = centerY - length/2;
+
+    ctx.save();
+
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    //swap the start and end values 
+    ctx.arc(centerX, centerY, radius, ((start) * scaledValue) - end, -(end), true);
+    ctx.clip();
+
+    //this radius refers to the rounded edges of the square
+
+    ctx.beginPath();
+    ctx.moveTo(startX + roundedCornerRadius, startY);
+    ctx.lineTo(startX + length - roundedCornerRadius, startY);
+    ctx.quadraticCurveTo(startX + length, startY, startX + length, startY + roundedCornerRadius);
+    ctx.lineTo(startX + length, startY + length - roundedCornerRadius);
+    ctx.quadraticCurveTo(startX + length, startY + length, startX + length - roundedCornerRadius, startY + length);
+    ctx.lineTo(startX + roundedCornerRadius, startY + length);
+    ctx.quadraticCurveTo(startX, startY + length, startX, startY + length - roundedCornerRadius);
+    ctx.lineTo(startX, startY + roundedCornerRadius);
+    ctx.quadraticCurveTo(startX, startY, startX + roundedCornerRadius, startY);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
