@@ -574,6 +574,8 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupMana_ZeroMana;
   var powerupAtk_DoubleDmg;
   var powerupMovement_DoubleSpeed;
+  var powerupIconCenterX = [];
+  var powerupIconCenterY = [];
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
@@ -634,7 +636,9 @@ Q.scene(SCENE_HUD, function(stage) {
     ** represented by a light blue line with blue text beside
     */
 
-    //("inherits" blue color from above, since this is right after drawing mana circle)
+    color           = '#3BB9FF'; //blue
+    ctx.strokeStyle = color;
+    ctx.fillStyle   = color;
     centerX         = selector.p.x - eleW / 1.2;
     centerY         = selector.p.y;
     var manaPerShot = currentPlayer.p.manaPerShot;
@@ -693,32 +697,33 @@ Q.scene(SCENE_HUD, function(stage) {
     }
     
     var powerupIconWidth = 34;
-    var spaceBetweenPowerupIcon = 10;
+    var spaceBetweenPowerupIcon = 15;
     var borderWidth = 2;
+    var numPowerups = 3;
     //create an array of centerX for powerup pos
-    var powerupIconCenterX = [];
-    var powerupIconCenterY = [];
+    
     centerX = 34;
     centerY = 0;
 
-    var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
+    var scaleToHeight = (this.p.h > (powerupIconWidth + 2*borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2*borderWidth);
 
     if (initHud) {
-      powerupIconCenterX.push(-1 * powerupIconWidth * scaleToHeight);
-      powerupIconCenterY.push(0);
+
+      initialisePowerupPlacementsInHud(numPowerups, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
+
       powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
                                                                   x    : powerupIconCenterX[0],
                                                                   y    : 0,
-                                                                  scale: scaleToHeight,
+                                                                  scale: scaleToHeight
                                     }));
       powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
-                                                                  x    : 0 * powerupIconWidth * scaleToHeight + spaceBetweenPowerupIcon,
-                                                                  y    : centerY,
+                                                                  x    : powerupIconCenterX[1],
+                                                                  y    : 0,
                                                                   scale: scaleToHeight
                                     }));
       powerupMovement_DoubleSpeed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
-                                                                  x    : 1 * powerupIconWidth * scaleToHeight + spaceBetweenPowerupIcon,
-                                                                  y    : centerY,
+                                                                  x    : powerupIconCenterX[2],
+                                                                  y    : 0,
                                                                   scale: scaleToHeight
                                     }));
     } else {
@@ -726,27 +731,44 @@ Q.scene(SCENE_HUD, function(stage) {
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
       var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
       
-      powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
-      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
+      powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
+      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
       powerupMovement_DoubleSpeed.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
     
       var timeLeftForZeroMana        = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
       var timeLeftForDoubleDmg       = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
       var timeLeftForDoubleMovespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
 
-      drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, centerX, 0, powerupIconWidth + borderWidth, ctx);
-      //POWERUP_DURATION_ATTACK_DOUBLEDMG
-
+      drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+                                   powerupIconCenterX[0], 0, powerupIconWidth + borderWidth, ctx);
+      drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+                                   powerupIconCenterX[1], 0, powerupIconWidth + borderWidth, ctx);
+      drawSquareWithRoundedCorners(timeLeftForDoubleMovespeed,POWERUP_DURATION_MOVESPEED_DOUBLESPEED, 
+                                   powerupIconCenterX[2], 0, powerupIconWidth + borderWidth, ctx);
     }
 
     initHud = false;
 
   });
+
+  var initialisePowerupPlacementsInHud = function (numPowerups, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
+    var centerX = -(numPowerups/2) * iconWidth * scale;
+    var centerY = 0;
+    for (var i = 0; i < numPowerups; i++) {
+      arrayX.push(centerX);
+      arrayY.push(centerY);
+      centerX += iconWidth * scale + spaceBetweenIcons;
+    }
+  }
   
   var drawSquareWithRoundedCorners = function (value, maxValue, centerX, centerY, radius, ctx) {
     if (typeof value === 'undefined') {
       return;
     }
+
+    var color           = '#FFFF00'; //yellow
+    ctx.strokeStyle = color;
+    ctx.fillStyle   = color;
 
     var scaledValue = value / maxValue;
     var start         = Math.PI * 2.0;
@@ -759,7 +781,7 @@ Q.scene(SCENE_HUD, function(stage) {
 
     ctx.save();
 
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 3;
 
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
