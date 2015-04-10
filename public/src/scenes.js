@@ -58,10 +58,10 @@ var HEIGH_HUD = Q.height/10;
 
 // HUD constants
 var HUD_ACTIVE_DOUBLE_DMG = "icon_attack_active";
-var HUD_ACTIVE_DOUBLE_MOVESPEED = "icon_movement_active";
+var HUD_ACTIVE_150_MOVESPEED = "icon_movement_active";
 var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
 var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
-var HUD_INACTIVE_DOUBLE_MOVESPEED = "icon_movement_inactive";
+var HUD_INACTIVE_150_MOVESPEED = "icon_movement_inactive";
 var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 
 var STATS_OFFSET = 25;
@@ -573,7 +573,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var initHud = true;
   var powerupMana_ZeroMana;
   var powerupAtk_DoubleDmg;
-  var powerupMovement_150SPEED;
+  var powerupMovement_150Speed;
   var powerupIconCenterX = [];
   var powerupIconCenterY = [];
 
@@ -689,7 +689,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_MOVESPEED,
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
                                     x    : centerX,
                                     y    : centerY,
                                     scale: scaleIcons
@@ -721,7 +721,7 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                   y    : 0,
                                                                   scale: scaleToHeight
                                     }));
-      powerupMovement_150SPEED = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
+      powerupMovement_150Speed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
                                                                   x    : powerupIconCenterX[2],
                                                                   y    : 0,
                                                                   scale: scaleToHeight
@@ -729,21 +729,21 @@ Q.scene(SCENE_HUD, function(stage) {
     } else {
       var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+      var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
       
       powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
       powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
-      powerupMovement_150SPEED.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
+      powerupMovement_150Speed.p.sheet = is150MovespeedActive ? HUD_ACTIVE_150_MOVESPEED : HUD_INACTIVE_150_MOVESPEED;
     
       var timeLeftForZeroMana        = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
       var timeLeftForDoubleDmg       = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var timeLeftForDoubleMovespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_DOUBLESPEED];
+      var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
 
       drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
                                    powerupIconCenterX[0], 0, powerupIconWidth + borderWidth, ctx);
       drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
                                    powerupIconCenterX[1], 0, powerupIconWidth + borderWidth, ctx);
-      drawSquareWithRoundedCorners(timeLeftForDoubleMovespeed,POWERUP_DURATION_MOVESPEED_DOUBLESPEED, 
+      drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
                                    powerupIconCenterX[2], 0, powerupIconWidth + borderWidth, ctx);
     }
 
