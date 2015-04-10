@@ -178,7 +178,7 @@ var clone = function(item){
   }
 };
 
-function isCyclic (obj) {
+var isCyclic =function (obj) {
   var seenObjects = [];
 
   function detect (obj) {

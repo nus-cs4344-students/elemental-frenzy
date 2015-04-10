@@ -103,7 +103,7 @@ var getCurrentTime = function() {
 };
 
 
-function isCyclic (obj) {
+var isCyclic = function (obj) {
   var seenObjects = [];
 
   function detect (obj) {
