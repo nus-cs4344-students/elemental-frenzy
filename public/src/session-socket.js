@@ -625,22 +625,33 @@ var initialization = function(){
   Q.input.on("server_up", function() {
     var x = Q.stage(STAGE_LEVEL).viewport.centerX,
         y = Q.stage(STAGE_LEVEL).viewport.centerY;
+
     Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y-viewportSpeed);
+    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y-viewportSpeed);
   });
+
   Q.input.on("server_down", function() {
     var x = Q.stage(STAGE_LEVEL).viewport.centerX,
         y = Q.stage(STAGE_LEVEL).viewport.centerY;
+  
     Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y+viewportSpeed);
+    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y+viewportSpeed);
   });
+
   Q.input.on("server_left", function() {
     var x = Q.stage(STAGE_LEVEL).viewport.centerX,
         y = Q.stage(STAGE_LEVEL).viewport.centerY;
+  
     Q.stage(STAGE_LEVEL).viewport.softCenterOn(x-viewportSpeed, y);
+    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x-viewportSpeed, y);
   });
+  
   Q.input.on("server_right", function() {
     var x = Q.stage(STAGE_LEVEL).viewport.centerX,
         y = Q.stage(STAGE_LEVEL).viewport.centerY;
+  
     Q.stage(STAGE_LEVEL).viewport.softCenterOn(x+viewportSpeed, y);
+    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x+viewportSpeed, y);
   });
   
   // Allow the session to follow different players
@@ -655,6 +666,7 @@ var initialization = function(){
     
     console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
     Q.stage(STAGE_LEVEL).softFollow(playerToFollow);
+    Q.stage(STAGE_MINIMAP).softFollow(playerToFollow);
   });   
   
   // Allow the session to stop following players
@@ -662,6 +674,7 @@ var initialization = function(){
     console.log("Stop follow");
     
     Q.stage(STAGE_LEVEL).unfollow();
+    Q.stage(STAGE_MINIMAP).unfollow();
   });
 
   Q.input.on('displayScoreScreen', function(){
@@ -711,11 +724,16 @@ var displayGameScreen = function(level){
   // Load the level
   Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
 
+  Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {level: level, miniStage: STAGE_LEVEL});  
+
   // show connected status
   displayStatusScreeen("Connected as 'Session "+session.sessionId+"'");
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
+
+  // minimap
+  Q.stage(STAGE_MINIMAP).add("viewport");
   
   // Powerups system
   Q.stage(STAGE_LEVEL).add("powerupSystem");
@@ -869,6 +887,7 @@ var getOtherPlayers = function(playerId){
   return others;
 };
 
+
 var sendToApp = function(eventName, eventData){
   if(!eventName){
     console.log("Session trying to send to App without event name");
@@ -880,6 +899,7 @@ var sendToApp = function(eventName, eventData){
     return;
   }
   
+
   if(isCyclic(eventData)){
     console.log("Detected cyclic event "+eventName);
     return;

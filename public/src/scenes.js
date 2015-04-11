@@ -422,14 +422,21 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('prerender', ctx);
 
       var vp = stage.viewport;
+      var vpScale = 0.1;
+      var screenW = Q.width/3;
+      var screenH = Q.height/3;
+      var startX, startY, endX, endY;
+
       if(vp) {
-        var vpScale = 0.1;
-        var screenW = Q.width/3;
-        var screenH = Q.height/3;
 
         vp.scale = vpScale;
         vp.screenW = screenW;
         vp.screenH = screenH;
+
+        startX = Math.floor(vp.x);
+        startY = Math.floor(vp.y);
+        endX = Math.floor(vp.x + screenW/vpScale);
+        endY = Math.floor(vp.y + screenH/vpScale);
 
         // keep minimap in the center-bottom
         var offsetX = Q.width/2/vpScale - screenW/2/vpScale;
@@ -464,11 +471,22 @@ Q.scene(SCENE_LEVEL, function(stage) {
       }
 
       // render miniStage
+      var mapVp = mapStage.viewport;
       for(var i=0,len=mapStage.items.length;i<len;i++) {
         var item = mapStage.items[i];
         // Don't render sprites with containers (sprites do that themselves)
         // Also don't render if not onscreen
-        if(!item.container && (item.p.renderAlways || item.mark >= mapStage.time)) {
+
+        var isWithinX;
+        var isWithinY;
+
+        // collision layer (titleLayer will calculate itself int its render() method by taking viewport setting into account)
+        if(item.p && !item.collisionLayer && vp && startX && startY && endX && endY){
+          isWithinX = startX <= item.p.x && endX >= item.p.x;
+          isWithinY = startY <= item.p.y && endY >= item.p.y;
+        }
+
+        if(!item.container && (item.p.renderAlways || item.mark >= mapStage.time ||(isWithinX && isWithinY))) {
           item.render(ctx);
         }
       }
