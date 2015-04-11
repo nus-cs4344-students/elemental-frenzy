@@ -13,7 +13,7 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 // Debugging purpose
 // App.js can be replying too fast that socket.on() event listener is only registered after 'connected' message arrives
 
-//socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
+//socket.on('connected',function (data) {console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var sessions = {};
 var selfId;
@@ -44,19 +44,19 @@ var _clockSynchronized = false;
 var _gameLoaded = false;
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
-var updateAvgRtt = function(oneWayDelay) {
+var updateAvgRtt = function (oneWayDelay) {
   if (typeof oneWayDelay === 'undefined') {
     console.log("Error in updateAvgRtt(): oneWayDelay is undefined");
     return;
   }
-  
-  avgRtt = (rttAlpha * avgRtt) + ((1.0-rttAlpha) * (2*oneWayDelay));
+
+  avgRtt = (rttAlpha * avgRtt) + ((1.0 - rttAlpha) * (2 * oneWayDelay));
   //console.log("sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRtt());
   return avgRtt;
 };
 
-var getAvgRtt = function() {
-  if ( !_clockSynchronized) { // cannot accurately get the avgRtt
+var getAvgRtt = function () {
+  if (!_clockSynchronized) { // cannot accurately get the avgRtt
     return 0;
   }
   
@@ -64,15 +64,15 @@ var getAvgRtt = function() {
 };
 
 var creates = {
-  PLAYER:         function(p) { return new Q.Player(p); },
-  ACTOR:          function(p) { return new Q.Actor(p); },
-  PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
-  ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
-  ENEMY:          function(p) { return new Q.Enemy(p); },
-  POWERUP:        function(p) { return new Q.Powerup(p); }
+  PLAYER:         function (p) { return new Q.Player(p); },
+  ACTOR:          function (p) { return new Q.Actor(p); },
+  PLAYERELEBALL:  function (p) { return new Q.PlayerEleball(p); },
+  ENEMYELEBALL:   function (p) { return new Q.EnemyEleball(p); },
+  ENEMY:          function (p) { return new Q.Enemy(p); },
+  POWERUP:        function (p) { return new Q.Powerup(p); }
 };
 
-var getDefaultSprites = function() {  
+var getDefaultSprites = function () {  
   var defaultSprites = {  PLAYER: {},
                           ACTOR: {},
                           PLAYERELEBALL: {},
@@ -83,22 +83,22 @@ var getDefaultSprites = function() {
   return defaultSprites;
 };
 
-var getDefaultGameState = function() {
+var getDefaultGameState = function () {
   var defaultGameState = {
     level: '',
     sprites: getDefaultSprites(),
     kills: {},
     deaths: {}
   };
-  
+
   return defaultGameState;
 };
 
-var getJSON = function(obj){
+var getJSON = function (obj) {
   return JSON.stringify(obj, null, 4);
 };
 
-var getCurrentTime = function() {
+var getCurrentTime = function () {
   return (new Date()).getTime();
 };
 
@@ -106,7 +106,7 @@ var getCurrentTime = function() {
 var isCyclic = function (obj) {
   var seenObjects = [];
 
-  function detect (obj) {
+  function detect(obj) {
     if (obj && typeof obj === 'object') {
       if (seenObjects.indexOf(obj) !== -1) {
         return true;
@@ -125,11 +125,11 @@ var isCyclic = function (obj) {
   return detect(obj);
 };
 
-var cloneObject = function (obj){
+var cloneObject = function (obj) {
   var clone = {};
-  for(var oKey in obj){
+  for(var oKey in obj) {
     var item = obj[oKey];
-    if(item instanceof Array){
+    if(item instanceof Array) {
       clone[oKey] = cloneArray(item);
     }else if(typeof item === 'object') {
       clone[oKey] = cloneObject(item);
@@ -141,14 +141,14 @@ var cloneObject = function (obj){
   return clone;
 };
 
-var cloneArray = function (arr){
+var cloneArray = function (arr) {
   var clone = [];
-  for(var i = 0; i<arr.length; i++){
+  for(var i = 0; i<arr.length; i++) {
     var item = arr[i];
     if (typeof item === 'undefined') {
       continue;
     }
-    if(item instanceof Array){
+    if(item instanceof Array) {
       clone.push(cloneArray(item));
     }else if(typeof item === 'object') {
       clone.push(cloneObject(item));
@@ -159,11 +159,11 @@ var cloneArray = function (arr){
   return clone;
 };
 
-var clone = function(item){
+var clone = function (item) {
   if (isCyclic(item)) {
     return;
   }
-  if(item instanceof Array){
+  if(item instanceof Array) {
     return cloneArray(item);
   }else if(typeof item === 'object') {
     return cloneObject(item);
@@ -173,7 +173,7 @@ var clone = function(item){
 };
 
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
-var checkGoodSprite = function(eType, spriteId, callerName) {
+var checkGoodSprite = function (eType, spriteId, callerName) {
   callerName = callerName || 'nameNotSpecifiedFunction';
   if (typeof eType == 'undefined') {
     console.log("Error in " + callerName + "(): checkGoodSprite(): undefined eType");
@@ -191,24 +191,24 @@ var checkGoodSprite = function(eType, spriteId, callerName) {
   return true;
 }
 
-var updateSprite = function(entityType, id, properties){
+var updateSprite = function (entityType, id, properties) {
   
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to update sprite without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'PLAYER':{
-      if(spriteId && spriteId != selfId){
+      if(spriteId && spriteId != selfId) {
         eType = 'ACTOR';
       }
       break;
     }
     case 'ACTOR':{
-      if(spriteId && spriteId == selfId){
+      if(spriteId && spriteId == selfId) {
         eType = 'PLAYER';
       }
       break;
@@ -218,7 +218,7 @@ var updateSprite = function(entityType, id, properties){
     }
   }
 
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to update sprite "+eType+" without id");
     return;
   }
@@ -227,12 +227,12 @@ var updateSprite = function(entityType, id, properties){
   //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
   //console.log("Done cloning properties of " + eType + " " + spriteId);
-  if(!clonedProps){
+  if(!clonedProps) {
     console.log("Trying to update sprite "+eType+" id "+spriteId+" with empty properties");
     return;
   }
 
-  if(!isSpriteExists(eType, spriteId)){
+  if(!isSpriteExists(eType, spriteId)) {
     console.log("Trying to update non existing sprite "+eType+" "+spriteId);
     return;
   }
@@ -257,23 +257,23 @@ var updateSprite = function(entityType, id, properties){
   return;
 }
 
-var getSprite = function(entityType, id) {
+var getSprite = function (entityType, id) {
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to get sprite without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'ACTOR':{
-      if(selfId == spriteId){
+      if(selfId == spriteId) {
         eType = 'PLAYER';
       }
       break;
     }
     case 'PLAYER':{
-      if(selfId != spriteId){
+      if(selfId != spriteId) {
         eType = 'ACTOR';
       }
       break;
@@ -283,38 +283,38 @@ var getSprite = function(entityType, id) {
     }
   }
 
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to get sprite "+eType+" without id");
   }
 
   return allSprites[eType][spriteId];
 };
 
-var getPlayerSprite = function(playerId) {
+var getPlayerSprite = function (playerId) {
   return getSprite('PLAYER' , playerId);
 };
 
-var getEnemySprite  = function(enemyId) {
+var getEnemySprite  = function (enemyId) {
   return getSprite('ENEMY' , enemyId);
 };
 
-var getActorSprite = function(actorId) {
+var getActorSprite = function (actorId) {
   return getSprite('ACTOR' , actorId);
 };
 
-var getSpriteProperties = function(entityType, id) {
+var getSpriteProperties = function (entityType, id) {
   // console.log("Getting sprite properties of "+entityType+" id " + id);
   
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to get sprite properties without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'ACTOR':{
-      if(selfId == spriteId){
+      if(selfId == spriteId) {
         eType = 'PLAYER';
       }
       break;
@@ -324,57 +324,57 @@ var getSpriteProperties = function(entityType, id) {
     }
   }
 
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to get sprite properties of "+eType+" without id");
     return;
   }
 
   var s = getSprite(entityType,id);
 
-  if(s){
+  if(s) {
     // console.log("Sprite properties: "+getJSON(s.p));
   }
 
   return s ? s.p : undefined;
 };
 
-var getPlayerProperties = function(playerId) {
+var getPlayerProperties = function (playerId) {
   return getSpriteProperties('PLAYER', playerId);
 };
 
-var getEnemyProperties  = function(enemyId) {
+var getEnemyProperties  = function (enemyId) {
   return getSpriteProperties('ENEMY' , enemyId);
 };
 
-var getEnemyEleballProperties  = function(ballId) {
+var getEnemyEleballProperties  = function (ballId) {
   return getSpriteProperties('ENEMYELEBALL' , enemyId);
 };
 
-var getPlayerEleballProperties  = function(ballId) {
+var getPlayerEleballProperties  = function (ballId) {
   return getSpriteProperties('PLAYERELEBALL' , ballId);
 };
 
-var getActorProperties  = function(actorId) {
+var getActorProperties  = function (actorId) {
   return getSpriteProperties('ACTOR' , actorId);
 };
 
-var isSpriteExists = function(entityType, id){
+var isSpriteExists = function (entityType, id) {
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to check existence of sprite without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'PLAYER':{
-      if(spriteId && spriteId != selfId){
+      if(spriteId && spriteId != selfId) {
         eType = 'ACTOR';
       }
       break;
     }
     case 'ACTOR':{
-      if(spriteId && spriteId == selfId){
+      if(spriteId && spriteId == selfId) {
         eType = 'PLAYER';
       }
       break;
@@ -384,7 +384,7 @@ var isSpriteExists = function(entityType, id){
     }
   }
 
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to check existence of sprite "+eType+" without id");
     return;
   }
@@ -394,23 +394,23 @@ var isSpriteExists = function(entityType, id){
 /*
  Create and add sprite into game state and insert it into active stage
  */
-var addSprite = function(entityType, id, properties) {
+var addSprite = function (entityType, id, properties) {
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to add sprite without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'PLAYER':{
-      if(spriteId && spriteId != selfId){
+      if(spriteId && spriteId != selfId) {
         eType = 'ACTOR';
       }
       break;
     }
     case 'ACTOR':{
-      if(spriteId && spriteId == selfId){
+      if(spriteId && spriteId == selfId) {
         eType = 'PLAYER';
       }
       break;
@@ -420,7 +420,7 @@ var addSprite = function(entityType, id, properties) {
     }
   }
 
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to add sprite "+eType+" without id");
     return;
   }
@@ -428,12 +428,12 @@ var addSprite = function(entityType, id, properties) {
   //console.log("Cloning properties of " + eType + " " + spriteId);
   var clonedProps = clone(properties);
   //console.log("Done cloning properties of " + eType + " " + spriteId);
-  if(!clonedProps){
+  if(!clonedProps) {
     clonedProps = {};
     console.log("Trying to add sprite with default properties");
   }  
 
-  if(isSpriteExists(eType,spriteId)){
+  if(isSpriteExists(eType,spriteId)) {
     // sprite already exists
     console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return;
@@ -452,7 +452,7 @@ var addSprite = function(entityType, id, properties) {
   if (eType == 'PLAYER') {
     
     // Update server about the player's position (player authority on his movement)
-    var interval_updateServer = setInterval(function() {
+    var interval_updateServer = setInterval(function () {
       //console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
           sprite.p.isDead || !_isSessionConnected) {
@@ -477,15 +477,15 @@ var addSprite = function(entityType, id, properties) {
   // store sprite properties into game state
   gameState.sprites[eType][spriteId] = {p: sprite.p};
 
-  if(sprite.p.spriteId == selfId && eType == 'PLAYER'){
+  if(sprite.p.spriteId == selfId && eType == 'PLAYER') {
     
-    if(!Q.stage(STAGE_LEVEL).has('viewport')){
+    if(!Q.stage(STAGE_LEVEL).has('viewport')) {
       Q.stage(STAGE_LEVEL).add('viewport');
     }
 
     Q.stage(STAGE_LEVEL).softFollow(sprite);
 
-    if(!Q.stage(STAGE_MINIMAP).has('viewport')){
+    if(!Q.stage(STAGE_MINIMAP).has('viewport')) {
       Q.stage(STAGE_MINIMAP).add('viewport');
     }
 
@@ -495,50 +495,50 @@ var addSprite = function(entityType, id, properties) {
   return sprite;
 };
 
-var addPlayerSprite = function(playerId, properties){
+var addPlayerSprite = function (playerId, properties) {
   return addSprite('PLAYER', playerId, properties);
 };
 
-var addEnemySprite = function(enemyId, properties){
+var addEnemySprite = function (enemyId, properties) {
   return addSprite('ENEMY', enemyId, properties);
 };
 
-var addEnemyEleballSprite = function(ballId, properties){
+var addEnemyEleballSprite = function (ballId, properties) {
   return addSprite('ENEMYELEBALL', ballId, properties);
 };
 
-var addPlayerEleballSprite = function(ballId, properties){
+var addPlayerEleballSprite = function (ballId, properties) {
   return addSprite('PLAYERELEBALL', ballId, properties);
 };
 
-var addActorSprite = function(actorId, properties){
+var addActorSprite = function (actorId, properties) {
   return addSprite('ACTOR', actorId, properties);
 };
 
-var addPowerup = function(powerupId, properties) {
+var addPowerup = function (powerupId, properties) {
   return addSprite('POWERUP', powerupId, properties);
 }
 
 /*
  Delete and remove sprite from game state and remove it from active stage
  */
-var removeSprite = function(entityType, id){
+var removeSprite = function (entityType, id) {
   var eType = entityType;
-  if(!eType){
+  if(!eType) {
     console.log("Trying to remove sprite without entityType");
     return;
   }
 
   var spriteId = id;
-  switch(eType){
+  switch(eType) {
     case 'PLAYER':{
-      if(spriteId && spriteId != selfId){
+      if(spriteId && spriteId != selfId) {
         eType = 'ACTOR';
       }
       break;
     }
     case 'ACTOR':{
-      if(spriteId && spriteId == selfId){
+      if(spriteId && spriteId == selfId) {
         eType = 'PLAYER';
       }
       break;
@@ -547,12 +547,12 @@ var removeSprite = function(entityType, id){
       break;
     }
   }
-  if(!spriteId){
+  if(!spriteId) {
     console.log("Trying to remove sprite "+eType+" without id");
     return;
   }
 
-  if(!getSprite(eType, spriteId)){
+  if(!getSprite(eType, spriteId)) {
     // sprite does not exists
     console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
@@ -570,65 +570,65 @@ var removeSprite = function(entityType, id){
 };
 
 
-var removePlayerSprite = function(playerId) {
+var removePlayerSprite = function (playerId) {
   return removeSprite('PLAYER', playerId);
 };
 
-var removeEnemySprite = function(enemyId) {
+var removeEnemySprite = function (enemyId) {
   return removeSprite('ENEMY', enemyId);
 };
 
-var removeEnemyEleballSprite = function(ballId) {
+var removeEnemyEleballSprite = function (ballId) {
   return removeSprite('ENEMYELEBALL', ballId);
 };
 
-var removePlayerEleballSprite = function(ballId) {
+var removePlayerEleballSprite = function (ballId) {
   return removeSprite('PLAYERELEBALL', ballId);
 };
 
-var removeActorSprite = function(actorId) {
+var removeActorSprite = function (actorId) {
   return removeSprite('ACTOR', actorId);
 };
 
-var insertIntoStage = function(sprite) {
+var insertIntoStage = function (sprite) {
   return Q.stage(STAGE_LEVEL).insert(sprite);
 };
 
-var updateSessions = function(sessionsInfo){
+var updateSessions = function (sessionsInfo) {
   console.log("updated sessions: "+getJSON(sessionsInfo));
 
   sessions = sessionsInfo;
 
-  if(_isSessionConnected){
+  if(_isSessionConnected) {
     console.log("Sessions updated but bypassing welcome screen session update event"+
                 "when player is connected to one of the sessions");
     return;
   }
 
-  if(_isWelcomeScreenShown){
+  if(_isWelcomeScreenShown) {
     // refresh welcome screen
     displayWelcomeScreen();
   }
 }
 
-var setupEventListeners = function(){
+var setupEventListeners = function () {
 
-  Q.input.on('join', function(data){
+  Q.input.on('join', function (data) {
     // prevent join button spamming
-    if(_isJoinSent){
+    if(_isJoinSent) {
       return ;
     }
 
     console.log("join "+getJSON(data));
 
     var sId = data.sessionId;
-    if(!sId){
+    if(!sId) {
       console.log("Trying to join a session without session id");
       return;
     }
 
     var cId = data.characterId;
-    if(!cId){
+    if(!cId) {
       console.log("Trying to join session "+sId+" without character id");
       return;
     }
@@ -638,24 +638,24 @@ var setupEventListeners = function(){
     Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
   });
 
-  Q.input.on('respawn', function(data){
+  Q.input.on('respawn', function (data) {
     console.log("respawn "+getJSON(data));
 
     var sId = data.sessionId;
     sId = sId ? sId : sessionId; 
-    if(!sId){
+    if(!sId) {
       console.log("Trying to respawn in a session without session id");
       return;
     }
 
     var spriteId = data.spriteId;
-    if(!spriteId){
+    if(!spriteId) {
       console.log("Trying to respawn in session "+sId+" without sprite id");
       return;
     }
 
     var cId = data.characterId;
-    if(!cId){
+    if(!cId) {
       console.log("Trying to respawn in session "+sId+" without character id");
       return;
     }
@@ -665,27 +665,27 @@ var setupEventListeners = function(){
   });
 
     
-  Q.input.on('sessionCast', function(data) {
+  Q.input.on('sessionCast', function (data) {
 
     var sId = data.eventData.sessionId;
     sId = sId ? sId : sessionId; 
 
-    if(!sId){
+    if(!sId) {
       console.log("SessionCast without sessionId");
       return;
     }
 
-    if(!data){
+    if(!data) {
       console.log("SessionCast without data");
       return;
     }
 
-    if(!data.eventName){
+    if(!data.eventName) {
       console.log("SessionCast without eventName");
       return;
     }
 
-    if(!_isSessionConnected && data.eventName != 'join'){
+    if(!_isSessionConnected && data.eventName != 'join') {
       console.log("Session disconnected, event ["+getJSON(data.eventName)+"] is not sent to session");
       return;
     }
@@ -694,16 +694,16 @@ var setupEventListeners = function(){
     sendToApp(data.eventName, data.eventData);
   });
 
-  Q.input.on('appCast', function(data) {
+  Q.input.on('appCast', function (data) {
     sendToApp(data.eventName, data.eventData);
   });
 
 
   // Player inputs event listeners 
-  var actionDispatch = function(actionName) {
-    Q.input.on(actionName, function(){
+  var actionDispatch = function (actionName) {
+    Q.input.on(actionName, function () {
 
-      if(!_isSessionConnected){
+      if(!_isSessionConnected) {
         return;
       }
 
@@ -719,9 +719,9 @@ var setupEventListeners = function(){
 
   each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
-  Q.input.on('displayScoreScreen', function(){
+  Q.input.on('displayScoreScreen', function () {
     
-    if(!_isSessionConnected || !_gameLoaded){
+    if(!_isSessionConnected || !_gameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -729,9 +729,9 @@ var setupEventListeners = function(){
     displayScoreScreen();
   });
 
-  Q.input.on('displayScoreScreenUp', function(){
+  Q.input.on('displayScoreScreenUp', function () {
     
-    if(!_isSessionConnected || !_gameLoaded){
+    if(!_isSessionConnected || !_gameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -745,7 +745,7 @@ var setupEventListeners = function(){
   var deviceOrientation = undefined;
   var prevAccX , prevAccY , prevAccZ, isUpPrev;
 
-  var setDeviceOrientation = function(){
+  var setDeviceOrientation = function () {
     // everytime device orientation changed
     // reset previously recorded x,y,z values
      prevAccX = prevAccY = prevAccZ = undefined;
@@ -781,17 +781,17 @@ var setupEventListeners = function(){
         accY = event.acceleration.y;
         accZ = event.acceleration.z;
 
-        if(deviceOrientation){
+        if(deviceOrientation) {
           // landscape
 
-          if(typeof prevAccY !== 'undefined'){
+          if(typeof prevAccY !== 'undefined') {
 
             diff = Math.abs(prevAccY - accY);
 
             // ensure difference is more than 0.5 to filter off noise
             isUp = diff < 0.7 ? isUp : prevAccY < accY ; 
 
-            if(diff > 1.9 && isUp != isUpPrev){
+            if(diff > 1.9 && isUp != isUpPrev) {
               // console.log("toggle on landscape");
               Q.input.trigger('toggleNextElementUp');
             }
@@ -799,14 +799,14 @@ var setupEventListeners = function(){
         }else{
           // portrait
 
-          if(typeof prevAccX !== 'undefined'){
+          if(typeof prevAccX !== 'undefined') {
 
             diff = Math.abs(prevAccX - accX);
 
             // ensure difference is more than 0.5 to filter off noise
             isUp = diff < 0.7 ? isUp : prevAccX < accX ; 
 
-            if(diff > 2.9 && isUp != isUpPrev){
+            if(diff > 2.9 && isUp != isUpPrev) {
               // console.log("toggle on portrait");
               Q.input.trigger('toggleNextElementUp');
             }
@@ -823,16 +823,16 @@ var setupEventListeners = function(){
 
   }
 
-  Q.input.on('toggleNextElementUp', function(){
+  Q.input.on('toggleNextElementUp', function () {
 
-    if(!_gameLoaded){
+    if(!_gameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
     }
 
     var player = getPlayerSprite(selfId);
-    if(!player || player.p.toggleElementCooldown > 0){
+    if(!player || player.p.toggleElementCooldown > 0) {
       // player is died or cannot located current player sprite
       // player toggleElement is in cooldown
       return;
@@ -852,16 +852,16 @@ var setupEventListeners = function(){
   });
 
 
-  var handleMouseOrTouchEvent = function(e){
+  var handleMouseOrTouchEvent = function (e) {
     
-    if(!_gameLoaded){
+    if(!_gameLoaded) {
       // game state need to be loaded
       return;
     }
 
     var player = getPlayerSprite(selfId);
     if(!player || !player.p.canFire || player.p.isDead
-      || player.p.currentMana < player.p.manaPerShot){
+      || player.p.currentMana < player.p.manaPerShot) {
         //console.log("cannot shoot canFire? " + player.p.canFire);
       return;
     }
@@ -894,7 +894,7 @@ var setupEventListeners = function(){
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
 
     // Trigger the fire animation of the player
-    if(player){
+    if(player) {
       player.trigger('fire', createdEvt);
     } else {
       console.log("Cannot locate current player to perform mouseup");
@@ -902,7 +902,7 @@ var setupEventListeners = function(){
   };
 
   // listening to touch start firing
-  Q.el.addEventListener('touchstart',function(e){
+  Q.el.addEventListener('touchstart',function (e) {
 
     var i, len, tch, key;
     var keypad = Q.input.keypad;
@@ -915,7 +915,7 @@ var setupEventListeners = function(){
       for(var i=0,len=keypad.controls.length;i<len;i++) {
         var minX = i * keypad.unit + keypad.gutter;
         if(pos.x >= minX && pos.x <= (minX+keypad.size) && 
-          (keypad.fullHeight || (pos.y >= minY + keypad.gutter && pos.y <= (minY+keypad.unit - keypad.gutter)))){
+          (keypad.fullHeight || (pos.y >= minY + keypad.gutter && pos.y <= (minY+keypad.unit - keypad.gutter)))) {
           return keypad.controls[i][0];
         }
       }
@@ -940,12 +940,12 @@ var setupEventListeners = function(){
   });
 
   // Event listener for mouse up firing
-  Q.el.addEventListener('mouseup', function(e){
+  Q.el.addEventListener('mouseup', function (e) {
     handleMouseOrTouchEvent(e);
   });
 };
 
-var resetDisplayScreen = function(){
+var resetDisplayScreen = function () {
   // clear all screens
   Q.clearStages();
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
@@ -953,14 +953,14 @@ var resetDisplayScreen = function(){
   _isWelcomeScreenShown = false;
 };
 
-var displayNotificationScreen = function(msg, callback){
+var displayNotificationScreen = function (msg, callback) {
   var stageOptions = {msg: msg,
                       callback: callback};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
 };
 
-var displayStatusScreeen = function(msg) {
-  if(!msg){
+var displayStatusScreeen = function (msg) {
+  if(!msg) {
     console.log("No message passed in when calling displayStatusScreeen");
     return;
   }
@@ -968,21 +968,21 @@ var displayStatusScreeen = function(msg) {
   Q.stageScene(SCENE_STATUS, STAGE_STATUS, {msg: msg});
 };
 
-var displayPlayerHUDScreen = function(){
+var displayPlayerHUDScreen = function () {
   Q.stageScene(SCENE_HUD, STAGE_HUD);
 };
 
-var displayScoreScreen = function(){
+var displayScoreScreen = function () {
   hideScoreScreen();
   Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
 };
 
-var hideScoreScreen = function(){
+var hideScoreScreen = function () {
   Q.clearStage(STAGE_SCORE);
 };
 
 // ## Loads welcome screen
-var displayWelcomeScreen = function(){
+var displayWelcomeScreen = function () {
   resetDisplayScreen();
 
   // character selection
@@ -991,7 +991,7 @@ var displayWelcomeScreen = function(){
   _isWelcomeScreenShown = true;
 };
 
-var displayGameScreen = function(level){
+var displayGameScreen = function (level) {
   resetDisplayScreen();
 
   // Load the level
@@ -1002,7 +1002,7 @@ var displayGameScreen = function(level){
 };
 
 // ## Loads the game state.
-var loadGameSession = function() {
+var loadGameSession = function () {
   console.log("Loading game state...");
 
   // load default values
@@ -1015,7 +1015,7 @@ var loadGameSession = function() {
   var spritesToAdd = [];
   for (var entityType in gameState.sprites) {
     for (var eId in gameState.sprites[entityType]) {
-      if (!gameState.sprites[entityType][eId]){
+      if (!gameState.sprites[entityType][eId]) {
         // Invalid sprite entry
         continue;
       } else if(getSprite(entityType,eId)) {
@@ -1031,7 +1031,7 @@ var loadGameSession = function() {
     }
   }
 
-  for(var i =0; i< spritesToAdd.length; i++){
+  for(var i =0; i< spritesToAdd.length; i++) {
     addSprite(spritesToAdd[i].entityType, 
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
@@ -1046,7 +1046,7 @@ var loadGameSession = function() {
   _gameLoaded = true;
 }
 
-var sendToApp = function(eventName, eventData){
+var sendToApp = function (eventName, eventData) {
   eventData.timestamp = (new Date()).getTime();
   eventData.timestamp += timestampOffset || 0;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
@@ -1054,15 +1054,15 @@ var sendToApp = function(eventName, eventData){
 
 
 // when client is connected to app.js
-socket.on('connected', function(data) {
+socket.on('connected', function (data) {
   var sId = data.spriteId;
-  if(!sId){
+  if(!sId) {
     console.log("Connected as PLAYER without id");
     return;
   }
 
   var s = data.sessions;
-  if(!s){
+  if(!s) {
     console.log("Connected as PLAYER "+selfId + " without session info");
     return;
   }
@@ -1075,7 +1075,7 @@ socket.on('connected', function(data) {
   // setup Quintus event listeners
   setupEventListeners();
 
-  var interval_displayWelcomeScreen = setInterval(function() {
+  var interval_displayWelcomeScreen = setInterval(function () {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the welcome screen. This flag will will be set once assets have been loaded.
       
@@ -1088,10 +1088,10 @@ socket.on('connected', function(data) {
   }, 100);
 });
 
-socket.on('updateSessions', function(data){
+socket.on('updateSessions', function (data) {
 
   var s = data.sessions;
-  if(!s){
+  if(!s) {
     console.log("updateSessions without session info");
     return;
   }
@@ -1099,7 +1099,7 @@ socket.on('updateSessions', function(data){
   updateSessions(s);
 });
 
-socket.on('gameStateChanged', function(data) {
+socket.on('gameStateChanged', function (data) {
   console.log("Received event gameStateChanged");
   if (typeof data.kills === 'undefined') {
     console.log("Error in event gameStateChanged: data.kills is undefined");
@@ -1114,7 +1114,7 @@ socket.on('gameStateChanged', function(data) {
 });
 
 // player successfully joined a session and receive game state + session info 
-socket.on('joinSuccessful', function(data){
+socket.on('joinSuccessful', function (data) {
   console.log("Successfully joined session " + data.sessionId);
 
   sessionId = data.sessionId;
@@ -1124,7 +1124,7 @@ socket.on('joinSuccessful', function(data){
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
   synchronizeClocksWithServer();
-  var interval_syncClocks = setInterval(function() {
+  var interval_syncClocks = setInterval(function () {
     if (!_isSessionConnected) {
       // Session disconnected, stop syncing
       clearInterval(interval_syncClocks);
@@ -1135,7 +1135,7 @@ socket.on('joinSuccessful', function(data){
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
-  var interval_loadGameSession = setInterval(function() {
+  var interval_loadGameSession = setInterval(function () {
     
     // Only load the game after the clock is synchronized
     if (_clockSynchronized) {
@@ -1147,7 +1147,7 @@ socket.on('joinSuccessful', function(data){
   }, 100);
 });
 
-var synchronizeClocksWithServer = function() {
+var synchronizeClocksWithServer = function () {
   timestampOffsetSum = 0;     
   numSyncPacketsReceived = 0;
   for (var i = NUM_SYNC_PACKETS_TOSEND; i >= 1; i--) {
@@ -1158,7 +1158,7 @@ var synchronizeClocksWithServer = function() {
   }
 }
 
-socket.on('synchronizeClocks', function(data) {
+socket.on('synchronizeClocks', function (data) {
   // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
   var clientReceiveTime = getCurrentTime();         // t3
   var sessionSendTime = data.timestamp;             // t2
@@ -1178,7 +1178,7 @@ socket.on('synchronizeClocks', function(data) {
 });
 
 // Failed to join a session
-socket.on('joinFailed', function(data){
+socket.on('joinFailed', function (data) {
   console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
 
   _isSessionConnected = false;
@@ -1189,26 +1189,26 @@ socket.on('joinFailed', function(data){
 });
 
 // add sprite
-socket.on('addSprite', function(data){
+socket.on('addSprite', function (data) {
   var props = data.p;
-  if(!props){
+  if(!props) {
     console.log("addSprite without properties");
     return;
   }
 
   var eType = props.entityType;
-  if(!eType){
+  if(!eType) {
     console.log("addSprite without entityType in properties");
     return;
   }
 
   var spriteId = props.spriteId;
-  if(!spriteId){
+  if(!spriteId) {
     console.log("addSprite without id in properties");
     return;
   }
 
-  if(isSpriteExists(eType, spriteId)){
+  if(isSpriteExists(eType, spriteId)) {
     console.log("addSprite "+eType+" id "+spriteId+" which already exists");
     return;
   }
@@ -1228,7 +1228,7 @@ socket.on('addSprite', function(data){
       var angleDeg = props.angle;
       // fire ball location offset from player
       var ballToPlayerY = Math.abs((player.p.h/2 + props.h/2) * Math.sin(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
-      if(angleDeg <= 360 && angleDeg > 180){
+      if(angleDeg <= 360 && angleDeg > 180) {
         // deduct ball width due to the direction of the ball is set to be default at right direction
         newY = player.p.y - ballToPlayerY;
       } else {
@@ -1236,7 +1236,7 @@ socket.on('addSprite', function(data){
       }
 
       var ballToPlayerX = Math.abs((player.p.w/2 + props.w/2) * Math.cos(angleDeg*Math.PI/180.0)) * ELEBALL_PLAYER_SF;
-      if(angleDeg <= 270 && angleDeg > 90){
+      if(angleDeg <= 270 && angleDeg > 90) {
         newX = player.p.x - ballToPlayerX;
       } else {
         newX = player.p.x + ballToPlayerX;
@@ -1249,14 +1249,14 @@ socket.on('addSprite', function(data){
       props.x = newX;
       props.y = newY;
     }
-  }else if(eType == 'PLAYER'){
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+spriteId+" has joined"});
+  }else if(eType == 'PLAYER') {
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+props.name+" has joined"});
   }
   addSprite(eType, spriteId, props);
 });
 
 // update sprite
-socket.on('updateSprite', function(data){
+socket.on('updateSprite', function (data) {
   if (_clockSynchronized) {
     var receivedTimeStamp = data.timestamp;
     var curTimeStamp = (new Date()).getTime() + timestampOffset;
@@ -1274,24 +1274,24 @@ socket.on('updateSprite', function(data){
   }
 
   var props = data.p;
-  if(!props){
+  if(!props) {
     console.log("updateSprite without properties");
     return;
   }
 
   var eType = props.entityType;
-  if(!eType){
+  if(!eType) {
     console.log("updateSprite without entityType in properties");
     return;
   }
 
   var spriteId = props.spriteId;
-  if(!spriteId){
+  if(!spriteId) {
     console.log("updateSprite without id in properties");
     return;
   }
 
-  if(!isSpriteExists(eType, spriteId)){
+  if(!isSpriteExists(eType, spriteId)) {
     console.log("updateSprite "+eType+" id "+spriteId+" which does not exists");
     addSprite(eType, spriteId, props);
     return;
@@ -1301,26 +1301,26 @@ socket.on('updateSprite', function(data){
 });
 
 // remove sprite
-socket.on('removeSprite', function(data){
+socket.on('removeSprite', function (data) {
   var props = data.p;
-  if(!props){
+  if(!props) {
     console.log("removeSprite without properties");
     return;
   }
 
   var eType = props.entityType;
-  if(!eType){
+  if(!eType) {
     console.log("removeSprite without entityType in properties");
     return;
   }
 
   var spriteId = props.spriteId;
-  if(!spriteId){
+  if(!spriteId) {
     console.log("removeSprite without id in properties");
     return;
   }
 
-  if(!isSpriteExists(eType, spriteId)){
+  if(!isSpriteExists(eType, spriteId)) {
     console.log("removeSprite "+eType+" id "+spriteId+" which does not exists");
     return;
   }
@@ -1328,7 +1328,7 @@ socket.on('removeSprite', function(data){
   removeSprite(eType, spriteId, props);
 });
 
-socket.on('powerupTaken', function(data) {
+socket.on('powerupTaken', function (data) {
   //console.log("Event: powerupTaken: data: " + getJSON(data));
   
   var eType = data.entityType,
@@ -1348,7 +1348,7 @@ socket.on('powerupTaken', function(data) {
 });
 
 // sprite took damage
-socket.on('spriteTookDmg', function(data) {
+socket.on('spriteTookDmg', function (data) {
   
   console.log("Event: spriteTookDmg: data: " + getJSON(data));
 
@@ -1369,7 +1369,7 @@ socket.on('spriteTookDmg', function(data) {
 });
 
 // sprite died
-socket.on('spriteDied', function(data) {
+socket.on('spriteDied', function (data) {
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,
@@ -1387,7 +1387,7 @@ socket.on('spriteDied', function(data) {
 
 
 // when session is disconnected
-socket.on('sessionDisconnected', function(data){
+socket.on('sessionDisconnected', function (data) {
   console.log("Session disconnected");
 
   _isSessionConnected = false;
@@ -1402,17 +1402,19 @@ socket.on('sessionDisconnected', function(data){
 });
 
 // when one or more players disconnected from app.js
-socket.on('playerDisconnected', function(data) {  
+socket.on('playerDisconnected', function (data) {  
   console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
   
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+data.spriteId+" has left"});
+  var player = getPlayerSprite(data.spriteId);
+  var msg = "Player "+ (player ? player.p.name : data.spriteId)+" has left";
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
   // Destroy player and remove him from game state
   removePlayer(data.spriteId);
 });
 
 // when app.js is disconnected
-socket.on('disconnect', function(){
+socket.on('disconnect', function () {
   console.log("App.js disconnected");
 
   _isSessionConnected = false;
