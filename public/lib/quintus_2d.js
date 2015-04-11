@@ -477,7 +477,7 @@ Quintus["2D"] = function(Q) {
     },
 
     drawBlock: function(ctx, blockX, blockY, startX, startY, endX, endY) {
-      // QUintus default declarations
+      // Quintus default declarations
       // var p = this.p,
       //     startX = Math.floor(blockX * p.blockW + p.x),
       //     startY = Math.floor(blockY * p.blockH + p.y);
@@ -512,14 +512,12 @@ Quintus["2D"] = function(Q) {
           y = viewport ? viewport.y : 0,
           viewW = (viewport ? viewport.screenW : Q.width) / scale,
           viewH = (viewport ? viewport.screenH : Q.height) / scale,
-          offsetX = Math.floor(Q.width/2/scale - viewW/2),
-          offsetY = Math.floor(Q.height/2/scale - viewH/2),
-          startX = Math.floor(x - p.x) ,//+ offsetX,
-          startY = Math.floor(y - p.y) ,//+ offsetY,
+          startX = Math.floor(x - p.x) ,
+          startY = Math.floor(y - p.y) ,
           startBlockX = Math.floor(startX / p.blockW),
           startBlockY = Math.floor(startY / p.blockH),
-          endX = Math.floor(x + viewW - p.x),// + offsetX,
-          endY = Math.floor(y + viewH - p.y),// + offsetY,
+          endX = Math.floor(x + viewW - p.x),
+          endY = Math.floor(y + viewH - p.y),
           endBlockX = Math.floor(endX / p.blockW),
           endBlockY = Math.floor(endY / p.blockH);
 
