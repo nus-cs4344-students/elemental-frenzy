@@ -60,10 +60,10 @@ var HEIGH_HUD = Q.height/10;
 
 // HUD constants
 var HUD_ACTIVE_DOUBLE_DMG = "icon_attack_active";
-var HUD_ACTIVE_DOUBLE_MOVESPEED = "icon_movement_active";
+var HUD_ACTIVE_150_MOVESPEED = "icon_movement_active";
 var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
 var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
-var HUD_INACTIVE_DOUBLE_MOVESPEED = "icon_movement_inactive";
+var HUD_INACTIVE_150_MOVESPEED = "icon_movement_inactive";
 var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 
 var STATS_OFFSET = 25;
@@ -675,7 +675,9 @@ Q.scene(SCENE_HUD, function(stage) {
   var initHud = true;
   var powerupMana_ZeroMana;
   var powerupAtk_DoubleDmg;
-  var powerupMovement_150SPEED;
+  var powerupMovement_150Speed;
+  var powerupIconCenterX = [];
+  var powerupIconCenterY = [];
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
@@ -736,7 +738,9 @@ Q.scene(SCENE_HUD, function(stage) {
     ** represented by a light blue line with blue text beside
     */
 
-    //("inherits" blue color from above, since this is right after drawing mana circle)
+    color           = '#3BB9FF'; //blue
+    ctx.strokeStyle = color;
+    ctx.fillStyle   = color;
     centerX         = selector.p.x - eleW / 1.2;
     centerY         = selector.p.y;
     var manaPerShot = currentPlayer.p.manaPerShot;
@@ -787,48 +791,123 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
     if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_MOVESPEED,
+      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
                                     x    : centerX,
                                     y    : centerY,
                                     scale: scaleIcons
                                   }));
     }
     
-
+    var powerupIconWidth = 34;
+    var spaceBetweenPowerupIcon = 15;
+    var borderWidth = 2;
+    var numPowerups = 3;
+    //create an array of centerX for powerup pos
+    
     centerX = 34;
     centerY = 0;
 
-    var scaleToHeight = this.p.h > 34 ? 1 : this.p.h / 34;
+    var scaleToHeight = (this.p.h > (powerupIconWidth + 2*borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2*borderWidth);
 
     if (initHud) {
+
+      initialisePowerupPlacementsInHud(numPowerups, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
+
       powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
-                                                                  x    : 0 * scaleToHeight,
-                                                                  y    : centerY,
-                                                                  scale: scaleToHeight,
-                                    }));
-      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
-                                                                  x    : 34 * scaleToHeight,
-                                                                  y    : centerY,
+                                                                  x    : powerupIconCenterX[0],
+                                                                  y    : 0,
                                                                   scale: scaleToHeight
                                     }));
-      powerupMovement_150SPEED = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_MOVESPEED,
-                                                                  x    : 68 * scaleToHeight,
-                                                                  y    : centerY,
+      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
+                                                                  x    : powerupIconCenterX[1],
+                                                                  y    : 0,
+                                                                  scale: scaleToHeight
+                                    }));
+      powerupMovement_150Speed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
+                                                                  x    : powerupIconCenterX[2],
+                                                                  y    : 0,
                                                                   scale: scaleToHeight
                                     }));
     } else {
       var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var isDoubleMovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+      var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
       
-      powerupMana_ZeroMana.p.sheet        = isZeroManaActive ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
-      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
-      powerupMovement_150SPEED.p.sheet = isDoubleMovespeedActive ? HUD_ACTIVE_DOUBLE_MOVESPEED : HUD_INACTIVE_DOUBLE_MOVESPEED;
+      powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
+      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
+      powerupMovement_150Speed.p.sheet = is150MovespeedActive ? HUD_ACTIVE_150_MOVESPEED : HUD_INACTIVE_150_MOVESPEED;
+    
+      var timeLeftForZeroMana        = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
+      var timeLeftForDoubleDmg       = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+      var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
+
+      drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+                                   powerupIconCenterX[0], 0, powerupIconWidth + borderWidth, ctx);
+      drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+                                   powerupIconCenterX[1], 0, powerupIconWidth + borderWidth, ctx);
+      drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+                                   powerupIconCenterX[2], 0, powerupIconWidth + borderWidth, ctx);
     }
 
     initHud = false;
 
   });
+
+  var initialisePowerupPlacementsInHud = function (numPowerups, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
+    var centerX = -(numPowerups/2) * iconWidth * scale;
+    var centerY = 0;
+    for (var i = 0; i < numPowerups; i++) {
+      arrayX.push(centerX);
+      arrayY.push(centerY);
+      centerX += iconWidth * scale + spaceBetweenIcons;
+    }
+  }
+  
+  var drawSquareWithRoundedCorners = function (value, maxValue, centerX, centerY, radius, ctx) {
+    if (typeof value === 'undefined') {
+      return;
+    }
+
+    var color           = '#FFFF00'; //yellow
+    ctx.strokeStyle = color;
+    ctx.fillStyle   = color;
+
+    var scaledValue = value / maxValue;
+    var start         = Math.PI * 2.0;
+    var end       = Math.PI / 2.0;
+    var roundedCornerRadius = 3;
+    
+    var length = radius;
+    var startX = centerX - length/2;
+    var startY = centerY - length/2;
+
+    ctx.save();
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    //swap the start and end values 
+    ctx.arc(centerX, centerY, radius, ((start) * scaledValue) - end, -(end), true);
+    ctx.clip();
+
+    //this radius refers to the rounded edges of the square
+
+    ctx.beginPath();
+    ctx.moveTo(startX + roundedCornerRadius, startY);
+    ctx.lineTo(startX + length - roundedCornerRadius, startY);
+    ctx.quadraticCurveTo(startX + length, startY, startX + length, startY + roundedCornerRadius);
+    ctx.lineTo(startX + length, startY + length - roundedCornerRadius);
+    ctx.quadraticCurveTo(startX + length, startY + length, startX + length - roundedCornerRadius, startY + length);
+    ctx.lineTo(startX + roundedCornerRadius, startY + length);
+    ctx.quadraticCurveTo(startX, startY + length, startX, startY + length - roundedCornerRadius);
+    ctx.lineTo(startX, startY + roundedCornerRadius);
+    ctx.quadraticCurveTo(startX, startY, startX + roundedCornerRadius, startY);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
