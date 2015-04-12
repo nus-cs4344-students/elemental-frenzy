@@ -680,12 +680,14 @@ Q.scene(SCENE_HUD, function(stage) {
   if(isSession){
     return;
   }
+  var isScreenWidthTooSmall = Q.width < 480 ? true : false;
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
                                                        w: WIDTH_HUD,
                                                        h: HEIGH_HUD,
-                                                       fill: DARK_GREY
+                                                       fill: DARK_GREY,
+                                                       radius: 0 //0 = no rounded corners
                                                       }));
 
 
@@ -969,22 +971,32 @@ Q.scene(SCENE_HUD, function(stage) {
     var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
     if (initHud) {
+      if (isScreenWidthTooSmall) {
+        var powerupContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                       y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
+                                                       w: WIDTH_HUD,
+                                                       h: HEIGH_HUD,
+                                                       fill: DARK_GREY,
+                                                       radius: 0 //0 = no rounded corners
+                                                      }));
+      }
+      
 
       initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
 
       powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
                                                                   x    : powerupIconCenterX[0],
-                                                                  y    : 0,
+                                                                  y    : powerupIconCenterY[0],
                                                                   scale: scaleToHeight
                                     }));
       powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
                                                                   x    : powerupIconCenterX[1],
-                                                                  y    : 0,
+                                                                  y    : powerupIconCenterY[1],
                                                                   scale: scaleToHeight
                                     }));
       powerupMovement_150Speed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
                                                                   x    : powerupIconCenterX[2],
-                                                                  y    : 0,
+                                                                  y    : powerupIconCenterY[2],
                                                                   scale: scaleToHeight
                                     }));
     } else {
@@ -1028,7 +1040,7 @@ Q.scene(SCENE_HUD, function(stage) {
       timerText = stage.insert(new Q.UI.Text({
       label : minLeft + ":" + secLeft,
       x: Q.width/2,
-      y: 10*Q.height/50,
+      y: 13*Q.height/50,
       size: SIZE_NORMAL,
       font: FONT_FAMILY
       }));
@@ -1057,7 +1069,7 @@ Q.scene(SCENE_HUD, function(stage) {
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
     var centerX = -(numPowerupsType/2) * iconWidth * scale;
-    var centerY = 0;
+    var centerY = isScreenWidthTooSmall ? hudContainer.p.h : 0;
     for (var i = 0; i < numPowerupsType; i++) {
       arrayX.push(centerX);
       arrayY.push(centerY);
