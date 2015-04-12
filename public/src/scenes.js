@@ -698,18 +698,14 @@ Q.scene(SCENE_HUD, function(stage) {
     
     var powerupIconWidth = 34;
     var spaceBetweenPowerupIcon = 15;
-    var borderWidth = 2;
-    var numPowerups = 3;
-    //create an array of centerX for powerup pos
-    
-    centerX = 34;
-    centerY = 0;
+    var borderWidth = 4;
+    var numPowerupsType = 3;
 
-    var scaleToHeight = (this.p.h > (powerupIconWidth + 2*borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2*borderWidth);
+    var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
     if (initHud) {
 
-      initialisePowerupPlacementsInHud(numPowerups, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
+      initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
 
       powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
                                                                   x    : powerupIconCenterX[0],
@@ -731,66 +727,79 @@ Q.scene(SCENE_HUD, function(stage) {
       var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
       var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
       
-      powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST          : HUD_INACTIVE_ZERO_MANA_COST;
-      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG             : HUD_INACTIVE_DOUBLE_DMG;
-      powerupMovement_150Speed.p.sheet = is150MovespeedActive ? HUD_ACTIVE_150_MOVESPEED : HUD_INACTIVE_150_MOVESPEED;
-    
-      var timeLeftForZeroMana        = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-      var timeLeftForDoubleDmg       = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
+      powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
+      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
+      powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
+      
+      if (isZeroManaActive) {
+        var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
+        drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+                                   powerupIconCenterX[0], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+      }
 
-      drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
-                                   powerupIconCenterX[0], 0, powerupIconWidth + borderWidth, ctx);
-      drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
-                                   powerupIconCenterX[1], 0, powerupIconWidth + borderWidth, ctx);
-      drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
-                                   powerupIconCenterX[2], 0, powerupIconWidth + borderWidth, ctx);
+      if (isDoubleDmgActive) {
+        var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+        drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+                                   powerupIconCenterX[1], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+      }
+
+      if (is150MovespeedActive) {
+        var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
+        drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+                                   powerupIconCenterX[2], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+      }
     }
 
     initHud = false;
 
   });
 
-  var initialisePowerupPlacementsInHud = function (numPowerups, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
-    var centerX = -(numPowerups/2) * iconWidth * scale;
+  var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
+    var centerX = -(numPowerupsType/2) * iconWidth * scale;
     var centerY = 0;
-    for (var i = 0; i < numPowerups; i++) {
+    for (var i = 0; i < numPowerupsType; i++) {
       arrayX.push(centerX);
       arrayY.push(centerY);
       centerX += iconWidth * scale + spaceBetweenIcons;
     }
   }
   
-  var drawSquareWithRoundedCorners = function (value, maxValue, centerX, centerY, radius, ctx) {
+  /*
+  ** This function fils a solid circle accordingly to value and maxValue, much like the HP circle.
+  ** Then, once the circle is filled, it is clipped. A full square with rounded corners is drawn but
+  ** only on the clipped area.
+  */
+  var drawSquareWithRoundedCorners = function (value, maxValue, centerX, centerY, radius, borderLineWidth, scale, ctx) {
     if (typeof value === 'undefined') {
       return;
     }
 
-    var color           = '#FFFF00'; //yellow
+    var color       = '#FFFF00'; //yellow
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
 
-    var scaledValue = value / maxValue;
-    var start         = Math.PI * 2.0;
-    var end       = Math.PI / 2.0;
+    var scaledValue         = value / maxValue;
+    var start               = Math.PI * 2.0;
+    var end                 = Math.PI / 2.0;
     var roundedCornerRadius = 3;
-    
+
+    radius += borderLineWidth;
+    radius *= scale;
+
     var length = radius;
     var startX = centerX - length/2;
     var startY = centerY - length/2;
 
     ctx.save();
+    ctx.lineWidth = borderLineWidth * scale;
 
-    ctx.lineWidth = 3;
-
+    //draw a circle then clip it
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
-    //swap the start and end values 
     ctx.arc(centerX, centerY, radius, ((start) * scaledValue) - end, -(end), true);
     ctx.clip();
 
-    //this radius refers to the rounded edges of the square
-
+    //draw a full rounded square
     ctx.beginPath();
     ctx.moveTo(startX + roundedCornerRadius, startY);
     ctx.lineTo(startX + length - roundedCornerRadius, startY);
