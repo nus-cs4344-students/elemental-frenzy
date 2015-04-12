@@ -1101,7 +1101,7 @@ socket.on('updateSessions', function (data) {
 });
 
 socket.on('gameStateChanged', function (data) {
-  console.log("Received event gameStateChanged");
+  //console.log("Received event gameStateChanged");
   if (typeof data.kills === 'undefined') {
     console.log("Error in event gameStateChanged: data.kills is undefined");
     return;
@@ -1110,8 +1110,14 @@ socket.on('gameStateChanged', function (data) {
     console.log("Error in event gameStateChanged: data.deaths is undefined");
     return;
   }
+  if (typeof data.timeLeft === 'undefined') {
+    console.log("Error in event gameStateChanged: data.timeLeft is undefined");
+    return;
+  }
   
-  Q.state.set({kills: data.kills, deaths: data.deaths});
+  //console.log("timeleft: " + data.timeLeft);
+  
+  Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft});
 });
 
 // player successfully joined a session and receive game state + session info 

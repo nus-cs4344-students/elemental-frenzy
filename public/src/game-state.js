@@ -3,7 +3,8 @@
 // ## Game State
 Q.state.reset({
   kills : {},
-  deaths : {}
+  deaths : {},
+  timeLeft : 0 // time left for a round in seconds
 });
 
 var addNewPlayerToState = function(playerId) {

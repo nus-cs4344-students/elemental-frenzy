@@ -20,6 +20,7 @@ var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}},
                        "2": {p: {x: 800, y: 0, enemyId: 2, isServerSide: true}}};
 */
 
+var TIME_PER_ROUND = 300; // 5 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,
@@ -755,6 +756,14 @@ var loadGameSession = function(sessionId) {
   allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
+  
+  // Set the timer (timer tick starts only when the first player joins, and pauses when there are no players left or has reached 0)
+  Q.state.set("timeLeft", TIME_PER_ROUND);
+  setInterval(function() {
+    if (session.playerCount > 0 && Q.state.get('timeLeft') > 0) {
+      Q.state.dec("timeLeft", 1);
+    }
+  }, 1000);
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -824,12 +833,16 @@ var loadGameSession = function(sessionId) {
   Q.state.on('change', function() {
     gameState.kills = Q.state.get('kills');
     gameState.deaths = Q.state.get('deaths');
+    gameState.timeLeft = Q.state.get('timeLeft');
+    
+    //console.log("timeleft: " + gameState.timeLeft);
 
     Q.input.trigger('broadcastAll', {
       eventName: 'gameStateChanged', 
       eventData: {
         kills: gameState.kills,
-        deaths: gameState.deaths
+        deaths: gameState.deaths,
+        timeLeft: gameState.timeLeft
       }
     });
   });
