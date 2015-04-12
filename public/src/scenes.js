@@ -24,8 +24,9 @@ var STAGE_MINIMAP = 7;
 
 
 // ## UI constants
-var UI_OVERLAY_ALPHA_VALUE = 0.3;
-var UI_TEXT_ALPHA_VALUE = 0.7;
+var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
+var SCOREBOARD_TEXT_COLOR = "rgba(1,1,1,0.7)";
+var SCOREBOARD_HIGHLIGHT_SELF = "blue";
 var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.4)";
@@ -1141,11 +1142,13 @@ Q.scene(SCENE_SCORE, function(stage) {
   //every line takes about 30 pixels
   var offsetY = scoreSize*1.5;
 
+  var currentPlayer = getPlayerSprite(selfId);
+
   /*
   ** Set up UI containers
   */
   var overlayContainer = stage.insert(new Q.UI.Container({
-      fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
+      fill: SCOREBOARD_OVERLAY_COLOR,
       border: 5,
       x: Q.width/2,
       y: 11*Q.height/50,
@@ -1153,8 +1156,6 @@ Q.scene(SCENE_SCORE, function(stage) {
     }));
   
   var nameContainer = stage.insert(new Q.UI.Container({ 
-        label: "PLAYER NAME",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         x: -overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
@@ -1165,7 +1166,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         x: overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
@@ -1187,7 +1187,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   var nameTitle = stage.insert(new Q.UI.Text({ 
         label: "PLAYER NAME",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1197,7 +1197,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   var killsTitle = stage.insert(new Q.UI.Text({ 
         label: "KILLS",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1208,7 +1208,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   var deathsTitle = stage.insert(new Q.UI.Text({ 
         label: "DEATHS",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1220,19 +1220,34 @@ Q.scene(SCENE_SCORE, function(stage) {
   /*
   ** Loop through total number of players and add their scores line by line
   */
-  var kills = Q.state.p.kills;
+  var kills = Q.state.p.kills;  
   var deaths = Q.state.p.deaths;
   
-  var line = 1;
+  //push to an array first, then sort. because javascript cannot directly sort Object by value
+  var sortedByKillsAndDeaths = [];
   for (var name in kills) {
+    sortedByKillsAndDeaths.push([name, kills[name] - deaths[name]]);
+  }
+  sortedByKillsAndDeaths.sort(function(a, b) {return b[1] - a[1]});
+  
+  var line = 1;
+  for (var key in sortedByKillsAndDeaths) {
+    //don't need the values of sorted array, just need the name. 
+    //values will be retrieved from original Object
+    name = sortedByKillsAndDeaths[key][0];
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
       continue;
     }
 
+    var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
+    if (currentPlayer.p.name == name) {
+      scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
+    }
+
     stage.insert(new Q.UI.Text({ 
         label: name,
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -1242,7 +1257,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       stage.insert(new Q.UI.Text({ 
         label: kills[name].toString(),
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -1252,7 +1267,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       stage.insert(new Q.UI.Text({ 
         label: deaths[name].toString(),
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
