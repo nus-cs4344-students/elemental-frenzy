@@ -285,6 +285,18 @@ Q.component('2dEleball', {
   step: function(dt) {
     var p = this.entity.p,
     dtStep = dt;
+    
+    // If eleball goes out of the game world too far, destroy it immediately
+    var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
+    var gameWorldWidth = tileLayer.p.w;
+    var gameWorldHeight = tileLayer.p.h;
+    var MARGIN_OUTOFBOUNDS = 500;
+    if (p.x < -MARGIN_OUTOFBOUNDS || p.y < -MARGIN_OUTOFBOUNDS ||
+        p.x > (gameWorldWidth + MARGIN_OUTOFBOUNDS) || p.y > (gameWorldHeight + MARGIN_OUTOFBOUNDS) ) {
+      //console.log("Removing eleball because it exceeded gameworld bounds");
+      removeSprite(p.entityType, p.spriteId);
+    }
+    
     // TODO: check the entity's magnitude of vx and vy,
     // reduce the max dtStep if necessary to prevent
     // skipping through objects.
