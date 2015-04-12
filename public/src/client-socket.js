@@ -244,6 +244,7 @@ var updateSprite = function (entityType, id, properties) {
   if (eType == 'PLAYER' && spriteId == selfId) {
     // Include here the properties of a player that should get updated by the server
     // Health/mana-related
+    spriteToUpdate.p.currentHealth = clonedProps.currentHealth;
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
