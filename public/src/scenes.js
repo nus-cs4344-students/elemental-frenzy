@@ -855,6 +855,13 @@ Q.scene(SCENE_HUD, function(stage) {
     initHud = false;
 
   });
+  
+  //reset hud powerup icons when player dies
+  currentPlayer.on('destroyed', function() {
+    powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
+    powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
+    powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
+  });
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
     var centerX = -(numPowerupsType/2) * iconWidth * scale;
