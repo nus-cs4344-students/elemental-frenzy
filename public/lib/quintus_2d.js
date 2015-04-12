@@ -287,6 +287,62 @@ Quintus["2D"] = function(Q) {
       return this.getTileProperties(this.getTile(tileX, tileY));
     },
     
+    // Finds all the vertical tile-to-tile paths which are empty (no tiles on the paths) which have at least #leastPathLength empty tiles
+    // which connect a tile directly below the path to a tile at the top of the path on its left/right
+    getVerticalTileToTileEmptyPaths: function(leastPathLength) {
+      if (!leastPathLength) {
+        leastPathLength = 1;
+      } else if (numEmptyTilesAbove <= 0) {
+        // Can't do this!
+        return;
+      }
+      
+      var verticalTilePaths = [];
+      // Column-major tile traversal
+      var foundLeftOrRightTile; // left or right tile must be empty on top by at least 2 tiles (because the player must be able to fit)
+      var currentPath; // holds the current path as we iterate
+      for (var x = 0; x < this.p.cols; x++) {
+        foundLeftOrRightTile = false;
+        currentPath = [];
+        for (var y = 0; y < this.p.rows; y++) {
+          var leftTile, curTile, rightTile;
+          curTile = this.getTile(x, y);
+          if (x > 0) {
+            leftTile = this.getTile(x-1, y);
+          }
+          if (x < this.p.cols-1) {
+            rightTile = this.getTile(x+1, y);
+          }
+          if (tile) {
+            // hit a tile! Check if we have >= #leastPathlength tiles above
+            if (currentPath.length >= leastPathLength) {
+              // good path! Add it!
+              verticalTilePaths.push(currentPath);
+            }
+            foundLeftOrRightTile = false;
+            currentPath = [];
+          } else if ( foundLeftOrRightTile ){
+            // Already found a left/right tile above to connect to, keep adding on to our path length!
+            currentPath.push({x: x*this.p.tileW/2, y: y*this.p.tileH/2});
+          } else if (leftTile) {
+            // There is a left tile, check if it has at least 2 empty tile spaces above it.
+            // If so then we have found a good left tile!
+            var isLeftUpOneEmpty = (y < 1 || !this.getTile(x-1, y-1));
+            var isLeftUpTwoEmpty = (y < 2 || !this.getTile(x-1, y-2));
+            foundLeftOrRightTile = isLeftUpOneEmpty && isLeftUpTwoEmpty;
+          } else if (rightTile) {
+            // There is a right tile, check if it has at least 2 empty tile spaces above it.
+            // If so then we have found a good right tile!
+            var isRightUpOneEmpty = (y < 1 || !this.getTile(x+1, y-1));
+            var isRightUpTwoEmpty = (y < 2 || !this.getTile(x+1, y-2));
+            foundRightOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty;
+          }
+        }
+      }
+      
+      return verticalTilePaths;
+    },
+    
     // Finds all the tile coordinates which have no tiles above them for at least #numEmptyTilesAbove in a column
     getTileCoordinatesThatAreEmptyAbove: function(numEmptyTilesAbove) {
       if (!numEmptyTilesAbove) {
@@ -301,9 +357,9 @@ Quintus["2D"] = function(Q) {
       var tileCoords = [];
       // Column-major tile traversal
       var numEmpty;
-      for (var x = 0; x < this.p.rows; x++) {
+      for (var x = 0; x < this.p.cols; x++) {
         numEmpty = 10000000; // starting from the top, meaning that there are INFINITE number of empty tiles above
-        for (var y = 0; y < this.p.cols; y++) {
+        for (var y = 0; y < this.p.rows; y++) {
           var tile = this.getTile(x, y);
           if (tile) {
             // Filled tile!
