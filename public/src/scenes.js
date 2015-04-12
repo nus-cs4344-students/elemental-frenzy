@@ -835,6 +835,9 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupMovement_150Speed;
   var powerupIconCenterX = [];
   var powerupIconCenterY = [];
+  var timerText;
+  var timeLeft = Q.state.p.totalTime;
+
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
@@ -955,6 +958,9 @@ Q.scene(SCENE_HUD, function(stage) {
                                   }));
     }
     
+    /*
+    ** Power ups
+    */
     var powerupIconWidth = 34;
     var spaceBetweenPowerupIcon = 15;
     var borderWidth = 4;
@@ -1009,15 +1015,44 @@ Q.scene(SCENE_HUD, function(stage) {
       }
     }
 
+    /*
+    ** Timer
+    */
+    var secLeft = Math.floor(timeLeft % 60);
+    var minLeft = Math.floor(timeLeft / 60);
+
+    minLeft = minLeft < 10 ? "0" + minLeft : minLeft;
+    secLeft = secLeft < 10 ? "0" + secLeft : secLeft;
+
+    if (initHud) {
+      timerText = stage.insert(new Q.UI.Text({
+      label : minLeft + ":" + secLeft,
+      x: Q.width/2,
+      y: 10*Q.height/50,
+      size: SIZE_NORMAL,
+      font: FONT_FAMILY
+      }));
+
+    } else {
+      timerText.p.label = minLeft + ":" + secLeft;
+      timerText.p.color = minLeft == "00" ? 'red' : 'black'; 
+    }
+
     initHud = false;
 
   });
   
+  
+
   //reset hud powerup icons when player dies
   currentPlayer.on('destroyed', function() {
     powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
     powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
     powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
+  });
+
+  Q.state.on('change.timeLeft', function() {
+   timeLeft = Q.state.p.timeLeft;
   });
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
@@ -1174,8 +1209,8 @@ Q.scene(SCENE_SCORE, function(stage) {
   var offsetY = scoreSize*1.5;
 
   var maxSizeOfRankIcons = offsetY - 3; //allow some space between icons
-  var rankIconSize = 34;
-  var scaleRankIcons = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
+  var rankIconSize       = 34;
+  var scaleRankIcons     = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
 
   var currentPlayer = getPlayerSprite(selfId);
 
@@ -1183,32 +1218,32 @@ Q.scene(SCENE_SCORE, function(stage) {
   ** Set up UI containers
   */
   var overlayContainer = stage.insert(new Q.UI.Container({
-      fill: SCOREBOARD_OVERLAY_COLOR,
-      border: 5,
-      x: Q.width/2,
-      y: 20*Q.height/50,
-      w: WIDTH_HUD
-    }));
+    fill  : SCOREBOARD_OVERLAY_COLOR,
+    border: 5,
+    x     : Q.width/2,
+    y     : 20*Q.height/50,
+    w     : WIDTH_HUD
+  }));
   
   var rankContainer = stage.insert(new Q.UI.Container({
-        x: -overlayContainer.p.w/3,
-        y: 0
-      }), overlayContainer)
+    x: -overlayContainer.p.w/3,
+    y: 0
+  }), overlayContainer)
 
   var nameContainer = stage.insert(new Q.UI.Container({ 
-        x: -overlayContainer.p.w/3 + rankIconSize * scaleRankIcons,
-        y: 0
-      }),overlayContainer);
+    x: -overlayContainer.p.w/3 + rankIconSize * scaleRankIcons,
+    y: 0
+  }),overlayContainer);
 
   var killsContainer = stage.insert(new Q.UI.Container({ 
-        x: 0,
-        y: 0
-      }),overlayContainer);
+    x: 0,
+    y: 0
+  }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
-        x: overlayContainer.p.w/3,
-        y: 0
-      }),overlayContainer);
+    x: overlayContainer.p.w/3,
+    y: 0
+  }),overlayContainer);
 
   /*
   ** Set up Titles
@@ -1216,62 +1251,62 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   // placeholder to set up the overlay
   stage.insert(new Q.UI.Text({ 
-        //invisible placeholder
-        label: "i",
-        color: "rgba(1,1,1,0)",
-        x: 0,
-        y: 0,
-        font: FONT_FAMILY,
-        align: "center"
-      }), overlayContainer);
+    //invisible placeholder
+    label: "i",
+    color: "rgba(1,1,1,0)",
+    x    : 0,
+    y    : 0,
+    font : FONT_FAMILY,
+    align: "center"
+  }), overlayContainer);
 
   var rankTitle = stage.insert(new Q.UI.Text({ 
         //invisible placeholder
-        label: "R",
-        color: "rgba(1,1,1,0)",
-        x: 0,
-        y: 0,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "right"
-      }), rankContainer);
+    label: "R",
+    color: "rgba(1,1,1,0)",
+    x    : 0,
+    y    : 0,
+    size : scoreSize,
+    font : FONT_FAMILY,
+    align: "right"
+  }), rankContainer);
 
   var nameTitle = stage.insert(new Q.UI.Text({ 
-        label: "NAME",
-        color: SCOREBOARD_TEXT_COLOR,
-        x: 0,
-        y: 0,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "left"
-      }), nameContainer);
+    label: "NAME",
+    color: SCOREBOARD_TEXT_COLOR,
+    x    : 0,
+    y    : 0,
+    size : scoreSize,
+    font : FONT_FAMILY,
+    align: "left"
+  }), nameContainer);
 
   var killsTitle = stage.insert(new Q.UI.Text({ 
-        label: "KILLS",
-        color: SCOREBOARD_TEXT_COLOR,
-        x: 0,
-        y: 0,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "center"
-      }), killsContainer);
+    label: "KILLS",
+    color: SCOREBOARD_TEXT_COLOR,
+    x    : 0,
+    y    : 0,
+    size : scoreSize,
+    font : FONT_FAMILY,
+    align: "center"
+  }), killsContainer);
   
 
   var deathsTitle = stage.insert(new Q.UI.Text({ 
-        label: "DEATHS",
-        color: SCOREBOARD_TEXT_COLOR,
-        x: 0,
-        y: 0,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "right"
-      }), deathsContainer);
+    label: "DEATHS",
+    color: SCOREBOARD_TEXT_COLOR,
+    x    : 0,
+    y    : 0,
+    size : scoreSize,
+    font : FONT_FAMILY,
+    align: "right"
+  }), deathsContainer);
 
 
   /*
   ** Loop through total number of players and add their scores line by line
   */
-  var kills = Q.state.p.kills;  
+  var kills  = Q.state.p.kills;  
   var deaths = Q.state.p.deaths;
   
   //push to an array first, then sort. because javascript cannot directly sort Object by value
@@ -1311,41 +1346,41 @@ Q.scene(SCENE_SCORE, function(stage) {
 
     stage.insert(new Q.UI.Button({
       sheet: SCOREBOARD_SHEET[line-1],
-      x: 0,
-      y: line * offsetY + rankIconOffset,
+      x    : 0,
+      y    : line * offsetY + rankIconOffset,
       scale: scaleRankIcons,
       align: "right"
     }), rankContainer);
 
     stage.insert(new Q.UI.Text({ 
-        label: name,
-        color: scoreboardTextColor,
-        x: 0,
-        y: line*offsetY,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "left"
-      }), nameContainer);
+      label: name,
+      color: scoreboardTextColor,
+      x    : 0,
+      y    : line*offsetY,
+      size : scoreSize,
+      font : FONT_FAMILY,
+      align : "left"
+    }), nameContainer);
 
-      stage.insert(new Q.UI.Text({ 
-        label: kills[name].toString(),
-        color: scoreboardTextColor,
-        x: 0,
-        y: line*offsetY,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "center"
-      }), killsContainer);
+    stage.insert(new Q.UI.Text({ 
+      label: kills[name].toString(),
+      color: scoreboardTextColor,
+      x    : 0,
+      y    : line*offsetY,
+      size : scoreSize,
+      font : FONT_FAMILY,
+      align: "center"
+    }), killsContainer);
 
-      stage.insert(new Q.UI.Text({ 
-        label: deaths[name].toString(),
-        color: scoreboardTextColor,
-        x: 0,
-        y: line*offsetY,
-        size: scoreSize,
-        font: FONT_FAMILY,
-        align: "right"
-      }), deathsContainer);
+    stage.insert(new Q.UI.Text({ 
+      label: deaths[name].toString(),
+      color: scoreboardTextColor,
+      x    : 0,
+      y    : line*offsetY,
+      size : scoreSize,
+      font : FONT_FAMILY,
+      align: "right"
+    }), deathsContainer);
 
       ++line;
   }
