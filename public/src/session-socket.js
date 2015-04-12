@@ -741,6 +741,17 @@ var displayGameScreen = function(level){
   
 };
 
+
+// Set the timer (timer tick starts only when the first player joins, and pauses when there are no players left or has reached 0)
+var setRoundTimer = function() {
+  Q.state.set({totalTime: TIME_PER_ROUND, timeLeft: TIME_PER_ROUND});
+  setInterval(function() {
+    if (session.playerCount > 0 && Q.state.get('timeLeft') > 0) {
+      Q.state.dec("timeLeft", 1);
+    }
+  }, 1000);
+};
+
 var loadGameSession = function(sessionId) {
   if(!sessionId){
     console.log("Trying to load game session without session id");
@@ -757,13 +768,7 @@ var loadGameSession = function(sessionId) {
 
   displayGameScreen(gameState.level);
   
-  // Set the timer (timer tick starts only when the first player joins, and pauses when there are no players left or has reached 0)
-  Q.state.set("timeLeft", TIME_PER_ROUND);
-  setInterval(function() {
-    if (session.playerCount > 0 && Q.state.get('timeLeft') > 0) {
-      Q.state.dec("timeLeft", 1);
-    }
-  }, 1000);
+  setRoundTimer();
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -834,14 +839,16 @@ var loadGameSession = function(sessionId) {
     gameState.kills = Q.state.get('kills');
     gameState.deaths = Q.state.get('deaths');
     gameState.timeLeft = Q.state.get('timeLeft');
+    gameState.totalTime = Q.state.get('totalTime');
     
-    //console.log("timeleft: " + gameState.timeLeft);
+    //console.log("timeleft: " + gameState.timeLeft + " totaltime = " + gameState.totalTime);
 
     Q.input.trigger('broadcastAll', {
       eventName: 'gameStateChanged', 
       eventData: {
         kills: gameState.kills,
         deaths: gameState.deaths,
+        totalTime: gameState.totalTime,
         timeLeft: gameState.timeLeft
       }
     });
