@@ -648,31 +648,31 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
   );
-      
-      stage.insert(new Q.Ladder({x:1457, y:720}));
-      stage.insert(new Q.Ladder({x:1457, y:658}));
-      stage.insert(new Q.Ladder({x:1457, y:596}));
-      stage.insert(new Q.Ladder({x:1457, y:534}));
-      stage.insert(new Q.Ladder({x:1457, y:472}));
-      stage.insert(new Q.Ladder({x:1457, y:410}));
-      stage.insert(new Q.Ladder({x:1457, y:348}));
-      stage.insert(new Q.Ladder({x:1457, y:286}));
-      stage.insert(new Q.Ladder({x:1457, y:224}));
-      
-      stage.insert(new Q.Ladder({x:500, y:764}));
-      stage.insert(new Q.Ladder({x:500, y:702}));
-      stage.insert(new Q.Ladder({x:500, y:640}));
-      
-      stage.insert(new Q.Ladder({x:465, y:480}));
-      stage.insert(new Q.Ladder({x:465, y:542}));
-      
-      stage.insert(new Q.Ladder({x:272, y:288}));
-      stage.insert(new Q.Ladder({x:272, y:350}));
-      stage.insert(new Q.Ladder({x:272, y:412}));
-      stage.insert(new Q.Ladder({x:272, y:474}));
+       stage.insert(new Q.Ladder({x:1457, y:720}));
+    stage.insert(new Q.Ladder({x:1457, y:658}));
+    stage.insert(new Q.Ladder({x:1457, y:596}));
+    stage.insert(new Q.Ladder({x:1457, y:534}));
+    stage.insert(new Q.Ladder({x:1457, y:472}));
+    stage.insert(new Q.Ladder({x:1457, y:410}));
+    stage.insert(new Q.Ladder({x:1457, y:348}));
+    stage.insert(new Q.Ladder({x:1457, y:286}));
+    stage.insert(new Q.Ladder({x:1457, y:224}));
+
+    stage.insert(new Q.Ladder({x:500, y:764}));
+    stage.insert(new Q.Ladder({x:500, y:702}));
+    stage.insert(new Q.Ladder({x:500, y:640}));
+
+    stage.insert(new Q.Ladder({x:465, y:480}));
+    stage.insert(new Q.Ladder({x:465, y:542}));
+
+    stage.insert(new Q.Ladder({x:272, y:288}));
+    stage.insert(new Q.Ladder({x:272, y:350}));
+    stage.insert(new Q.Ladder({x:272, y:412}));
+    stage.insert(new Q.Ladder({x:272, y:474}));
+    
+   
   }
 });
-
 
 Q.scene(SCENE_HUD, function(stage) {
   
