@@ -376,13 +376,42 @@ var updateSprite = function(eType, spriteId, updateProps) {
   
   updateProps.isServerSide = true;
   var spriteToUpdate = getSprite(eType, spriteId);
-  spriteToUpdate.p.x = updateProps.x;
-  spriteToUpdate.p.y = updateProps.y;
   spriteToUpdate.p.vx = updateProps.vx;
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
   spriteToUpdate.p.ay = updateProps.ay;
   spriteToUpdate.p.element = updateProps.element;
+  
+  // Special cases to apply to players only
+  if (eType == 'PLAYER') {
+    // Linear convergence using LPF component to reduce jerkiness
+    if (!spriteToUpdate.has('localPerceptionFilter')) {
+      spriteToUpdate.add('localPerceptionFilter');
+    }
+    spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0.1;
+    spriteToUpdate.p.lpfNeededX = updateProps.x - spriteToUpdate.p.x;
+    spriteToUpdate.p.lpfNeededY = updateProps.y - spriteToUpdate.p.y;
+    // Don't LPF if the difference is too minute, and don't LPF if it is too large!
+    var THRESHOLD_BELOWTHISNONEEDLPF = 5; // below this no need to lpf, because teleportation is not obvious
+    var THRESHOLD_ABOVETHISNONEEDLPF = 40; // above this there is high chance of going out of sync and never coming back again (if tiles block)
+    var euclidDist = Math.sqrt(spriteToUpdate.p.lpfNeededX*spriteToUpdate.p.lpfNeededX + spriteToUpdate.p.lpfNeededY*spriteToUpdate.p.lpfNeededY);
+    if (euclidDist < THRESHOLD_BELOWTHISNONEEDLPF || euclidDist > THRESHOLD_ABOVETHISNONEEDLPF) {
+      spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0;
+      spriteToUpdate.p.x = updateProps.x;
+      spriteToUpdate.p.y = updateProps.y;
+    } 
+    // Release the player's appropriate keys to avoid player-twitching-bug
+    if (updateProps.vx == 0 && updateProps.ax == 0) {
+      spriteToUpdate.inputs['left'] = spriteToUpdate.inputs['right'] = 0;
+    }
+    if (updateProps.vy == 0 && updateProps.ay == 0) {
+      spriteToUpdate.inputs['up'] = spriteToUpdate.inputs['down'] = 0;
+    }
+  } else {
+    // If not a player just update the position
+    spriteToUpdate.p.x = updateProps.x;
+    spriteToUpdate.p.y = updateProps.y;
+  }
 }
 
 var isSpriteExists = function(entityType, id){
