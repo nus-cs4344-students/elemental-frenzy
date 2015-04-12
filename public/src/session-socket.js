@@ -382,6 +382,15 @@ var updateSprite = function(eType, spriteId, updateProps) {
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
   spriteToUpdate.p.ay = updateProps.ay;
+  // Stop player twitching (some weird bug where key releases are not received)
+  if (eType == 'PLAYER') {
+    if (updateProps.vx == 0 && updateProps.ax == 0) {
+      spriteToUpdate.inputs['left'] = spriteToUpdate.inputs['right'] = 0;
+    }
+    if (updateProps.vy == 0 && updateProps.ay == 0) {
+      spriteToUpdate.inputs['up'] = spriteToUpdate.inputs['down'] = 0;
+    }
+  }
   spriteToUpdate.p.element = updateProps.element;
 }
 
