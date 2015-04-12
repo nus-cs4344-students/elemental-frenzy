@@ -837,7 +837,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    var centerX     = 3*this.p.w/15;
+    var centerX     = 4*this.p.w/15;
     var centerY     = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
@@ -852,7 +852,7 @@ Q.scene(SCENE_HUD, function(stage) {
     color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    centerX         = 5*this.p.w/15;
+    centerX         = 6*this.p.w/15;
     centerY         = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
@@ -1186,7 +1186,7 @@ Q.scene(SCENE_SCORE, function(stage) {
       }), overlayContainer);
 
   var nameTitle = stage.insert(new Q.UI.Text({ 
-        label: "PLAYER NAME",
+        label: "NAME",
         color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
@@ -1224,17 +1224,28 @@ Q.scene(SCENE_SCORE, function(stage) {
   var deaths = Q.state.p.deaths;
   
   //push to an array first, then sort. because javascript cannot directly sort Object by value
-  var sortedByKillsAndDeaths = [];
+  var sortedByKillsAndDeath = [];
   for (var name in kills) {
-    sortedByKillsAndDeaths.push([name, kills[name] - deaths[name]]);
+    sortedByKillsAndDeath.push([name, kills[name]]);
   }
-  sortedByKillsAndDeaths.sort(function(a, b) {return b[1] - a[1]});
-  
+
+  //sort by kills
+  sortedByKillsAndDeath.sort(function(a, b) {
+    var returnValue = b[1] - a[1];
+
+    //if kills are same, use deaths
+    if (returnValue == 0) {
+      returnValue = deaths[a[0]] - deaths[b[0]];
+    }
+    
+    return returnValue;
+  });
+
   var line = 1;
-  for (var key in sortedByKillsAndDeaths) {
+  for (var item in sortedByKillsAndDeath) {
     //don't need the values of sorted array, just need the name. 
     //values will be retrieved from original Object
-    name = sortedByKillsAndDeaths[key][0];
+    name = sortedByKillsAndDeath[item][0];
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
       continue;
