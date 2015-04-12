@@ -26,7 +26,7 @@ var STAGE_MINIMAP = 7;
 // ## UI constants
 var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
 var SCOREBOARD_TEXT_COLOR = "rgba(1,1,1,0.7)";
-var SCOREBOARD_HIGHLIGHT_SELF = "blue";
+var SCOREBOARD_HIGHLIGHT_SELF = "rgba(255, 255, 194, 0.7)"; //light yellowish
 var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.4)";
@@ -34,7 +34,7 @@ var DARKER_GREY = "rgba(0,0,0,0.5)";
 var DARKEST_GREY = "rgba(0,0,0,0.7)";
 
 var welcomeCharSelected;
-var welcomeSessionSelected;
+var welcomeSessionSelected; 
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
 
@@ -69,6 +69,9 @@ var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
 var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
 var HUD_INACTIVE_150_MOVESPEED = "icon_movement_inactive";
 var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
+
+//Scoreboard constants
+var SCOREBOARD_SHEET = ["scoreboard_first", "scoreboard_second", "scoreboard_third", "scoreboard_fourth"];
 
 var STATS_OFFSET = 25;
 
@@ -837,7 +840,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    var centerX     = 3*this.p.w/15;
+    var centerX     = 4*this.p.w/15;
     var centerY     = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
@@ -852,7 +855,7 @@ Q.scene(SCENE_HUD, function(stage) {
     color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    centerX         = 5*this.p.w/15;
+    centerX         = 6*this.p.w/15;
     centerY         = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
@@ -1139,8 +1142,12 @@ Q.scene(SCENE_INFO ,function(stage) {
 Q.scene(SCENE_SCORE, function(stage) {
   
   var scoreSize = SIZE_BOLD;
-  //every line takes about 30 pixels
+  //every line takes about offsetY pixels
   var offsetY = scoreSize*1.5;
+
+  var maxSizeOfRankIcons = offsetY - 3; //allow some space between icons
+  var rankIconSize = 34;
+  var scaleRankIcons = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
 
   var currentPlayer = getPlayerSprite(selfId);
 
@@ -1151,12 +1158,17 @@ Q.scene(SCENE_SCORE, function(stage) {
       fill: SCOREBOARD_OVERLAY_COLOR,
       border: 5,
       x: Q.width/2,
-      y: 11*Q.height/50,
+      y: 20*Q.height/50,
       w: WIDTH_HUD
     }));
   
-  var nameContainer = stage.insert(new Q.UI.Container({ 
+  var rankContainer = stage.insert(new Q.UI.Container({
         x: -overlayContainer.p.w/3,
+        y: 0
+      }), overlayContainer)
+
+  var nameContainer = stage.insert(new Q.UI.Container({ 
+        x: -overlayContainer.p.w/3 + rankIconSize * scaleRankIcons,
         y: 0
       }),overlayContainer);
 
@@ -1185,8 +1197,19 @@ Q.scene(SCENE_SCORE, function(stage) {
         align: "center"
       }), overlayContainer);
 
+  var rankTitle = stage.insert(new Q.UI.Text({ 
+        //invisible placeholder
+        label: "R",
+        color: "rgba(1,1,1,0)",
+        x: 0,
+        y: 0,
+        size: scoreSize,
+        font: FONT_FAMILY,
+        align: "right"
+      }), rankContainer);
+
   var nameTitle = stage.insert(new Q.UI.Text({ 
-        label: "PLAYER NAME",
+        label: "NAME",
         color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
@@ -1224,17 +1247,28 @@ Q.scene(SCENE_SCORE, function(stage) {
   var deaths = Q.state.p.deaths;
   
   //push to an array first, then sort. because javascript cannot directly sort Object by value
-  var sortedByKillsAndDeaths = [];
+  var sortedByKillsAndDeath = [];
   for (var name in kills) {
-    sortedByKillsAndDeaths.push([name, kills[name] - deaths[name]]);
+    sortedByKillsAndDeath.push([name, kills[name]]);
   }
-  sortedByKillsAndDeaths.sort(function(a, b) {return b[1] - a[1]});
-  
+
+  //sort by kills
+  sortedByKillsAndDeath.sort(function(a, b) {
+    var returnValue = b[1] - a[1];
+
+    //if kills are same, use deaths
+    if (returnValue == 0) {
+      returnValue = deaths[a[0]] - deaths[b[0]];
+    }
+
+    return returnValue;
+  });
+
   var line = 1;
-  for (var key in sortedByKillsAndDeaths) {
+  for (var item in sortedByKillsAndDeath) {
     //don't need the values of sorted array, just need the name. 
     //values will be retrieved from original Object
-    name = sortedByKillsAndDeaths[key][0];
+    name = sortedByKillsAndDeath[item][0];
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
       continue;
@@ -1244,6 +1278,16 @@ Q.scene(SCENE_SCORE, function(stage) {
     if (currentPlayer.p.name == name) {
       scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
     }
+
+    var rankIconOffset = scaleRankIcons * rankIconSize / 2 + 2;
+
+    stage.insert(new Q.UI.Button({
+      sheet: SCOREBOARD_SHEET[line-1],
+      x: 0,
+      y: line * offsetY + rankIconOffset,
+      scale: scaleRankIcons,
+      align: "right"
+    }), rankContainer);
 
     stage.insert(new Q.UI.Text({ 
         label: name,
@@ -1279,6 +1323,7 @@ Q.scene(SCENE_SCORE, function(stage) {
   }
   
   //padding between stuff in container and border of container
+  rankContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
