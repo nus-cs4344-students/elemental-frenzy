@@ -4,23 +4,23 @@
 		"sy": 0,
 		"cols": 1,
 		"tilew": 32,
-		"tileh": 63,
+		"tileh": 32,
 		"frames": 1
 	},
 	"ladder_wood": {
 		"sx": 32,
-		"sy": 1,
+		"sy": 0,
 		"cols": 1,
 		"tilew": 32,
-		"tileh": 63,
+		"tileh": 32,
 		"frames": 1
 	},
 	"rope": {
 		"sx": 64,
 		"sy": 0,
 		"cols": 1,
-		"tilew": 6,
-		"tileh": 63,
+		"tilew": 8,
+		"tileh": 32,
 		"frames": 1
 	}
 }
