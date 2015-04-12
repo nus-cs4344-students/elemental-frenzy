@@ -301,9 +301,9 @@ Quintus["2D"] = function(Q) {
       var tileCoords = [];
       // Column-major tile traversal
       var numEmpty;
-      for (var x = 0; x < this.p.rows; x++) {
+      for (var x = 0; x < this.p.cols; x++) {
         numEmpty = 10000000; // starting from the top, meaning that there are INFINITE number of empty tiles above
-        for (var y = 0; y < this.p.cols; y++) {
+        for (var y = 0; y < this.p.rows; y++) {
           var tile = this.getTile(x, y);
           if (tile) {
             // Filled tile!
