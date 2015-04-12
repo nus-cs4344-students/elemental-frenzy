@@ -191,6 +191,8 @@ Q.component('localPerceptionFilter', {
       
       entity.p.x += dx;
       entity.p.y += dy;
+    } else {
+      entity.p.lpfTimeLeft = 0;
     }
   }
 });
