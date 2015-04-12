@@ -883,6 +883,7 @@ var loadGameSession = function(sessionId) {
   });
   
   Q.stage(STAGE_LEVEL).add("powerupSystem");
+  Q.stage(STAGE_LEVEL).add("ladderSystem");
 
   for(var i =0; i< spritesToAdd.length; i++){
     addSprite(spritesToAdd[i].entityType, 

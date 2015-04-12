@@ -346,6 +346,7 @@ Q.Sprite.extend("Player",{
   climbLadder: function(col){
       if(col.obj.isA("Ladder")) { 
         this.p.onLadder = true;
+        this.p.sensor = true;
         this.p.ladderX = col.obj.p.x;
       }
   },
@@ -383,6 +384,7 @@ Q.Sprite.extend("Player",{
       }
     }else{
       this.p.gravity = 1;
+      this.p.sensor = false;
     }
 
     if(!this.p.onLadder && this.has('animation')){

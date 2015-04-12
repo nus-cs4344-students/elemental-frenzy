@@ -143,24 +143,6 @@ Q.component("dmgDisplay", {
   }
 });
 
-Q.component('2dLadder', {
-  added: function(){  
-    var entity = this.entity;
-    Q._defaults(entity.p,{
-      type: Q.SPRITE_UI, // ladder is ui element
-      collisionMask: Q.SPRITE_ACTIVE // ladder only collides with player
-    });
-    entity.on('hit',this,"collision");
-  },
-
-  collision: function(col,last) {
-    if(col.obj.isA("Ladder")){
-      var entity = this.entity;
-      entity.trigger("onLadder", col);
-    }
-  }
-});
-
 // Implements a local perception filter using 4 variables:
 // 1. lpfNeededX - (unchanging) the total extra distance in the x-axis that needs to be covered
 // 2. lpfNeededY - (unchanging) the total extra distance in the y-axis that needs to be covered
