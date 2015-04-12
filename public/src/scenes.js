@@ -646,7 +646,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
   }else{
     // Add in a tile layer, and make it the collision layer
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
-                                            sheet: 'tiles' })
+                                            sheet: 'map_tiles' })
   );
       
       stage.insert(new Q.Ladder({x:1457, y:720}));
