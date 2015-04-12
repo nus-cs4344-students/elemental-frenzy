@@ -376,8 +376,26 @@ var updateSprite = function(eType, spriteId, updateProps) {
   
   updateProps.isServerSide = true;
   var spriteToUpdate = getSprite(eType, spriteId);
-  spriteToUpdate.p.x = updateProps.x;
-  spriteToUpdate.p.y = updateProps.y;
+  // LPF the player to reduce jerk (doesn't seem to work well atm))
+  if (eType == 'PLAYER') {
+    if (!spriteToUpdate.has('localPerceptionFilter')) {
+      spriteToUpdate.add('localPerceptionFilter');
+    }
+    spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0.1;
+    spriteToUpdate.p.lpfNeededX = updateProps.x - spriteToUpdate.p.x;
+    spriteToUpdate.p.lpfNeededY = updateProps.y - spriteToUpdate.p.y;
+    var THRESHOLD_BELOWTHISNONEEDLPF = 5; // below this no need to lpf, because teleportation is not obvious
+    var THRESHOLD_ABOVETHISNONEEDLPF = 40; // above this there is high chance of going out of sync and never coming back again (if tiles block)
+    var euclidDist = Math.sqrt(spriteToUpdate.p.lpfNeededX*spriteToUpdate.p.lpfNeededX + spriteToUpdate.p.lpfNeededY*spriteToUpdate.p.lpfNeededY);
+    if (euclidDist < THRESHOLD_BELOWTHISNONEEDLPF || euclidDist > THRESHOLD_ABOVETHISNONEEDLPF) {
+      spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0;
+      spriteToUpdate.p.x = updateProps.x;
+      spriteToUpdate.p.y = updateProps.y;
+    }
+  } else {
+    spriteToUpdate.p.x = updateProps.x;
+    spriteToUpdate.p.y = updateProps.y;
+  }
   spriteToUpdate.p.vx = updateProps.vx;
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
