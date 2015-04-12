@@ -24,15 +24,17 @@ var STAGE_MINIMAP = 7;
 
 
 // ## UI constants
-var UI_OVERLAY_ALPHA_VALUE = 0.3;
-var UI_TEXT_ALPHA_VALUE = 0.7;
+var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
+var SCOREBOARD_TEXT_COLOR = "rgba(1,1,1,0.7)";
+var SCOREBOARD_HIGHLIGHT_SELF = "rgba(255, 255, 194, 0.7)"; //light yellowish
 var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
-var DARK_GREY = "rgba(0,0,0,0.5)";
-
+var DARK_GREY = "rgba(0,0,0,0.4)";
+var DARKER_GREY = "rgba(0,0,0,0.5)";
+var DARKEST_GREY = "rgba(0,0,0,0.7)";
 
 var welcomeCharSelected;
-var welcomeSessionSelected;
+var welcomeSessionSelected; 
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
 
@@ -51,6 +53,8 @@ var SIZE_BOLD = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
 SIZE_BOLD -= SIZE_BOLD%2;
 var SIZE_NORMAL = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
 SIZE_NORMAL -= SIZE_NORMAL%2;
+var SIZE_SMALL = Math.max(Math.ceil(Q.height/60),Math.ceil(Q.width/140));
+SIZE_SMALL -= SIZE_SMALL%2;
 
 var FONT_BOLD = WEIGHT_BOLD +' '+SIZE_BOLD+'px '+FONT_FAMILY;
 var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
@@ -65,6 +69,9 @@ var HUD_ACTIVE_ZERO_MANA_COST = "icon_mana_active";
 var HUD_INACTIVE_DOUBLE_DMG = "icon_attack_inactive";
 var HUD_INACTIVE_150_MOVESPEED = "icon_movement_inactive";
 var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
+
+//Scoreboard constants
+var SCOREBOARD_SHEET = ["scoreboard_first", "scoreboard_second", "scoreboard_third", "scoreboard_fourth"];
 
 var STATS_OFFSET = 25;
 
@@ -89,10 +96,10 @@ Q.scene(SCENE_WELCOME,function(stage) {
   // join button
   var isShow = !isWelcomeSelectedSessionFull && welcomeSessionSelected && !isWelcomeSelectedCharInUse && welcomeCharSelected;
 
-  var buttonJoin = stage.insert(new Q.UI.Button({ fill: DARK_GREY,
+  var buttonJoin = stage.insert(new Q.UI.Button({ fill: 'limegreen',
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
-                                                  y: 11*Q.height/13,
+                                                  y: 12*Q.height/13,
                                                   w: Q.width/10,
                                                   h: Q.height/20,
                                                   label: 'Join',
@@ -149,10 +156,10 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                          y: 7*Q.height/11,
+                                                          y: 6.3*Q.height/11,
                                                           w: 3*Q.width/4,
-                                                          h: Q.height/3,
-                                                          fill: DARK_GREY
+                                                          h: Q.height/4,
+                                                          fill: DARKER_GREY
                                                         }));
 
   var sSpriteW = 3*sessionsSection.p.w/5;
@@ -374,6 +381,128 @@ Q.scene(SCENE_WELCOME,function(stage) {
   }
 
   characterSection.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+
+
+
+  //control panel
+  var controlsContainer = stage.insert(new Q.UI.Container({    x   : Q.width/2, 
+                                                               y   : 8.55*Q.height/11,
+                                                               w   : 3*Q.width/4,
+                                                               h   : Q.height/8,
+                                                               fill: DARKER_GREY
+                                                        }));
+
+  //controls in text form
+  var changeElementTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Change to next element'
+                                              }));
+
+  var changeElementText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nSPACE'
+                                              }));
+
+  var movementTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Movement'
+                                              }));
+
+  var movementText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nW,A,S,D'
+                                              }));
+
+  var shootTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Shoot'
+                                              }));
+
+  var shootText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nMouse Click'
+                                              }));
+
+  var scoreboardTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Scoreboard'
+                                              }));
+
+  var scoreboardText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nHold TAB'
+                                              }));
+
+  //instrctions panel
+  var instructionsContainer = stage.insert(new Q.UI.Container({
+                                                              x   : Q.width/2, 
+                                                              y   : 9.6*Q.height/11,
+                                                              w   : 3*Q.width/4,
+                                                              h   : Q.height/28,
+                                                              fill: DARKEST_GREY
+                                                        }));
+
+  var instructionText = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionsContainer.p.x,
+                                                  y     : instructionsContainer.p.y - (2*instructionsContainer.p.h/5),
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'hotpink',
+                                                  label : 'Remember, Fire > Earth > Lightning > Water > Fire!'
+                                              }));
+
+  controlsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+  instructionsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 });
 
 
@@ -739,7 +868,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    var centerX     = 3*this.p.w/15;
+    var centerX     = 4*this.p.w/15;
     var centerY     = 0;
     
     drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
@@ -754,7 +883,7 @@ Q.scene(SCENE_HUD, function(stage) {
     color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
-    centerX         = 5*this.p.w/15;
+    centerX         = 6*this.p.w/15;
     centerY         = 0;
 
     drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
@@ -882,6 +1011,13 @@ Q.scene(SCENE_HUD, function(stage) {
 
     initHud = false;
 
+  });
+  
+  //reset hud powerup icons when player dies
+  currentPlayer.on('destroyed', function() {
+    powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
+    powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
+    powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
   });
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
@@ -1034,24 +1170,33 @@ Q.scene(SCENE_INFO ,function(stage) {
 Q.scene(SCENE_SCORE, function(stage) {
   
   var scoreSize = SIZE_BOLD;
-  //every line takes about 30 pixels
+  //every line takes about offsetY pixels
   var offsetY = scoreSize*1.5;
+
+  var maxSizeOfRankIcons = offsetY - 3; //allow some space between icons
+  var rankIconSize = 34;
+  var scaleRankIcons = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
+
+  var currentPlayer = getPlayerSprite(selfId);
 
   /*
   ** Set up UI containers
   */
   var overlayContainer = stage.insert(new Q.UI.Container({
-      fill: "rgba(1,1,1,"+UI_OVERLAY_ALPHA_VALUE+")",
+      fill: SCOREBOARD_OVERLAY_COLOR,
       border: 5,
       x: Q.width/2,
-      y: 11*Q.height/50,
+      y: 20*Q.height/50,
       w: WIDTH_HUD
     }));
   
-  var nameContainer = stage.insert(new Q.UI.Container({ 
-        label: "PLAYER NAME",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+  var rankContainer = stage.insert(new Q.UI.Container({
         x: -overlayContainer.p.w/3,
+        y: 0
+      }), overlayContainer)
+
+  var nameContainer = stage.insert(new Q.UI.Container({ 
+        x: -overlayContainer.p.w/3 + rankIconSize * scaleRankIcons,
         y: 0
       }),overlayContainer);
 
@@ -1061,7 +1206,6 @@ Q.scene(SCENE_SCORE, function(stage) {
       }),overlayContainer);
 
   var deathsContainer = stage.insert(new Q.UI.Container({ 
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
         x: overlayContainer.p.w/3,
         y: 0
       }),overlayContainer);
@@ -1081,9 +1225,20 @@ Q.scene(SCENE_SCORE, function(stage) {
         align: "center"
       }), overlayContainer);
 
+  var rankTitle = stage.insert(new Q.UI.Text({ 
+        //invisible placeholder
+        label: "R",
+        color: "rgba(1,1,1,0)",
+        x: 0,
+        y: 0,
+        size: scoreSize,
+        font: FONT_FAMILY,
+        align: "right"
+      }), rankContainer);
+
   var nameTitle = stage.insert(new Q.UI.Text({ 
-        label: "PLAYER NAME",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        label: "NAME",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1093,7 +1248,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   var killsTitle = stage.insert(new Q.UI.Text({ 
         label: "KILLS",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1104,7 +1259,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
   var deathsTitle = stage.insert(new Q.UI.Text({ 
         label: "DEATHS",
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: SCOREBOARD_TEXT_COLOR,
         x: 0,
         y: 0,
         size: scoreSize,
@@ -1116,19 +1271,55 @@ Q.scene(SCENE_SCORE, function(stage) {
   /*
   ** Loop through total number of players and add their scores line by line
   */
-  var kills = Q.state.p.kills;
+  var kills = Q.state.p.kills;  
   var deaths = Q.state.p.deaths;
   
-  var line = 1;
+  //push to an array first, then sort. because javascript cannot directly sort Object by value
+  var sortedByKillsAndDeath = [];
   for (var name in kills) {
+    sortedByKillsAndDeath.push([name, kills[name]]);
+  }
+
+  //sort by kills
+  sortedByKillsAndDeath.sort(function(a, b) {
+    var returnValue = b[1] - a[1];
+
+    //if kills are same, use deaths
+    if (returnValue == 0) {
+      returnValue = deaths[a[0]] - deaths[b[0]];
+    }
+
+    return returnValue;
+  });
+
+  var line = 1;
+  for (var item in sortedByKillsAndDeath) {
+    //don't need the values of sorted array, just need the name. 
+    //values will be retrieved from original Object
+    name = sortedByKillsAndDeath[item][0];
 
     if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
       continue;
     }
 
+    var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
+    if (currentPlayer.p.name == name) {
+      scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
+    }
+
+    var rankIconOffset = scaleRankIcons * rankIconSize / 2 + 2;
+
+    stage.insert(new Q.UI.Button({
+      sheet: SCOREBOARD_SHEET[line-1],
+      x: 0,
+      y: line * offsetY + rankIconOffset,
+      scale: scaleRankIcons,
+      align: "right"
+    }), rankContainer);
+
     stage.insert(new Q.UI.Text({ 
         label: name,
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -1138,7 +1329,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       stage.insert(new Q.UI.Text({ 
         label: kills[name].toString(),
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -1148,7 +1339,7 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       stage.insert(new Q.UI.Text({ 
         label: deaths[name].toString(),
-        color: "rgba(1,1,1,"+UI_TEXT_ALPHA_VALUE+")",
+        color: scoreboardTextColor,
         x: 0,
         y: line*offsetY,
         size: scoreSize,
@@ -1160,6 +1351,7 @@ Q.scene(SCENE_SCORE, function(stage) {
   }
   
   //padding between stuff in container and border of container
+  rankContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);

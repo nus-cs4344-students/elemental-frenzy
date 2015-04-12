@@ -1,0 +1,37 @@
+{
+	"scoreboard_first": {
+		"sx": 0,
+		"sy": 34,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+	},
+    
+	"scoreboard_second": {
+		"sx": 34,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+	},
+    
+	"scoreboard_third": {
+		"sx": 34,
+		"sy": 34,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+	},
+    
+    "scoreboard_fourth": {
+        "sx": 0,
+		"sy": 0,
+		"cols": 1,
+		"tilew": 34,
+		"tileh": 34,
+		"frames": 1
+    }
+}

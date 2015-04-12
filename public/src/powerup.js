@@ -65,7 +65,9 @@ Q.component('2dPowerup', {
       //console.log("Powerup colliding with player " + col.obj.p.name + "(" + col.obj.p.spriteId + ")");
       if (col.obj.p.isServerSide) {
         // Server side will apply the effect
-        entity.taken(col.obj);
+        if ( !entity.p.isTaken) {
+          entity.taken(col.obj);
+        }
       } else {
         // Client side will only destroy the powerup
         entity.destroy();
@@ -117,6 +119,7 @@ Q.Sprite.extend("Powerup", {
       sheet: 'powerup_sheetless',
       entityType: 'POWERUP',
       spriteId: -1,
+      isTaken: false,
       duration: 10.0,
       type: Q.SPRITE_PARTICLE,
       collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,
@@ -148,6 +151,7 @@ Q.Sprite.extend("Powerup", {
   },
   
   taken: function(player) {
+    this.p.isTaken = true;
     this.givePlayerEffect(player);
     this.trigger('taken', this.p.name);
     this.destroy();
@@ -218,6 +222,11 @@ Q.component('powerupSystem', {
     // Get random spawn position
     var tileLayer = this.entity._collisionLayers[0];
     var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
+    while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
+      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    }
     var randomX = randomCoord.x,
         randomY = randomCoord.y;
         
@@ -252,6 +261,7 @@ Q.component('powerupSystem', {
         var that = this;
         setTimeout(function() {
           if (that && that.entity && powerupObj.existing < powerupObj.maxNumAtATime) {
+            console.log("Randomly spawning powerup " + powerupName + " because existing = " + powerupObj.existing + " but maxNum = " + powerupObj.maxNumAtATime);
             that.randomlySpawnPowerup(powerupName);
           }
         }, powerupObj.spawnTime * 1000);

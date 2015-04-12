@@ -20,6 +20,7 @@ var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}},
                        "2": {p: {x: 800, y: 0, enemyId: 2, isServerSide: true}}};
 */
 
+var TIME_PER_ROUND = 300; // 5 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,
@@ -375,13 +376,42 @@ var updateSprite = function(eType, spriteId, updateProps) {
   
   updateProps.isServerSide = true;
   var spriteToUpdate = getSprite(eType, spriteId);
-  spriteToUpdate.p.x = updateProps.x;
-  spriteToUpdate.p.y = updateProps.y;
   spriteToUpdate.p.vx = updateProps.vx;
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
   spriteToUpdate.p.ay = updateProps.ay;
   spriteToUpdate.p.element = updateProps.element;
+  
+  // Special cases to apply to players only
+  if (eType == 'PLAYER') {
+    // Linear convergence using LPF component to reduce jerkiness
+    if (!spriteToUpdate.has('localPerceptionFilter')) {
+      spriteToUpdate.add('localPerceptionFilter');
+    }
+    spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0.1;
+    spriteToUpdate.p.lpfNeededX = updateProps.x - spriteToUpdate.p.x;
+    spriteToUpdate.p.lpfNeededY = updateProps.y - spriteToUpdate.p.y;
+    // Don't LPF if the difference is too minute, and don't LPF if it is too large!
+    var THRESHOLD_BELOWTHISNONEEDLPF = 5; // below this no need to lpf, because teleportation is not obvious
+    var THRESHOLD_ABOVETHISNONEEDLPF = 40; // above this there is high chance of going out of sync and never coming back again (if tiles block)
+    var euclidDist = Math.sqrt(spriteToUpdate.p.lpfNeededX*spriteToUpdate.p.lpfNeededX + spriteToUpdate.p.lpfNeededY*spriteToUpdate.p.lpfNeededY);
+    if (euclidDist < THRESHOLD_BELOWTHISNONEEDLPF || euclidDist > THRESHOLD_ABOVETHISNONEEDLPF) {
+      spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0;
+      spriteToUpdate.p.x = updateProps.x;
+      spriteToUpdate.p.y = updateProps.y;
+    } 
+    // Release the player's appropriate keys to avoid player-twitching-bug
+    if (updateProps.vx == 0 && updateProps.ax == 0) {
+      spriteToUpdate.inputs['left'] = spriteToUpdate.inputs['right'] = 0;
+    }
+    if (updateProps.vy == 0 && updateProps.ay == 0) {
+      spriteToUpdate.inputs['up'] = spriteToUpdate.inputs['down'] = 0;
+    }
+  } else {
+    // If not a player just update the position
+    spriteToUpdate.p.x = updateProps.x;
+    spriteToUpdate.p.y = updateProps.y;
+  }
 }
 
 var isSpriteExists = function(entityType, id){
@@ -740,6 +770,17 @@ var displayGameScreen = function(level){
   
 };
 
+
+// Set the timer (timer tick starts only when the first player joins, and pauses when there are no players left or has reached 0)
+var setRoundTimer = function() {
+  Q.state.set({totalTime: TIME_PER_ROUND, timeLeft: TIME_PER_ROUND});
+  setInterval(function() {
+    if (session.playerCount > 0 && Q.state.get('timeLeft') > 0) {
+      Q.state.dec("timeLeft", 1);
+    }
+  }, 1000);
+};
+
 var loadGameSession = function(sessionId) {
   if(!sessionId){
     console.log("Trying to load game session without session id");
@@ -755,6 +796,8 @@ var loadGameSession = function(sessionId) {
   allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
+  
+  setRoundTimer();
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -824,12 +867,18 @@ var loadGameSession = function(sessionId) {
   Q.state.on('change', function() {
     gameState.kills = Q.state.get('kills');
     gameState.deaths = Q.state.get('deaths');
+    gameState.timeLeft = Q.state.get('timeLeft');
+    gameState.totalTime = Q.state.get('totalTime');
+    
+    //console.log("timeleft: " + gameState.timeLeft + " totaltime = " + gameState.totalTime);
 
     Q.input.trigger('broadcastAll', {
       eventName: 'gameStateChanged', 
       eventData: {
         kills: gameState.kills,
-        deaths: gameState.deaths
+        deaths: gameState.deaths,
+        totalTime: gameState.totalTime,
+        timeLeft: gameState.timeLeft
       }
     });
   });
