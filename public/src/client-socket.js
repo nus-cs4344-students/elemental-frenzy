@@ -1114,8 +1114,12 @@ socket.on('gameStateChanged', function (data) {
     console.log("Error in event gameStateChanged: data.timeLeft is undefined");
     return;
   }
+  if (typeof data.totalTime === 'undefined') {
+    console.log("Error in event gameStateChanged: data.totalTime is undefined");
+    return;
+  }
   
-  //console.log("timeleft: " + data.timeLeft);
+  //console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
   
   Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft});
 });
