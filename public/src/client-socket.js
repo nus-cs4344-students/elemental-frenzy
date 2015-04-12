@@ -1121,7 +1121,7 @@ socket.on('gameStateChanged', function (data) {
   
   //console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
   
-  Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft});
+  Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
 });
 
 // player successfully joined a session and receive game state + session info 
