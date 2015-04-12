@@ -121,7 +121,7 @@ var getDefaultGameState = function() {
                             // }},
   // };
   var defaultGameState = {
-    level: 'level2',
+    level: 'level3',
     sprites: defaultSprites,
     kills: {},
     deaths: {}
