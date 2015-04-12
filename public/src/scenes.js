@@ -51,6 +51,8 @@ var SIZE_BOLD = Math.max(Math.ceil(Q.height/40), Math.ceil(Q.width/80));
 SIZE_BOLD -= SIZE_BOLD%2;
 var SIZE_NORMAL = Math.max(Math.ceil(Q.height/50),Math.ceil(Q.width/100));
 SIZE_NORMAL -= SIZE_NORMAL%2;
+var SIZE_SMALL = Math.max(Math.ceil(Q.height/60),Math.ceil(Q.width/140));
+SIZE_SMALL -= SIZE_SMALL%2;
 
 var FONT_BOLD = WEIGHT_BOLD +' '+SIZE_BOLD+'px '+FONT_FAMILY;
 var FONT_NORMAL = WEIGHT_NORMAL+' '+SIZE_NORMAL+'px '+FONT_FAMILY;
@@ -92,7 +94,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
   var buttonJoin = stage.insert(new Q.UI.Button({ fill: DARK_GREY,
                                                   opacity: isShow ? 1 : 0,
                                                   x: Q.width/2,
-                                                  y: 11*Q.height/13,
+                                                  y: 12*Q.height/13,
                                                   w: Q.width/10,
                                                   h: Q.height/20,
                                                   label: 'Join',
@@ -149,9 +151,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                          y: 7*Q.height/11,
+                                                          y: 6.5*Q.height/11,
                                                           w: 3*Q.width/4,
-                                                          h: Q.height/3,
+                                                          h: Q.height/4,
                                                           fill: DARK_GREY
                                                         }));
 
@@ -374,6 +376,106 @@ Q.scene(SCENE_WELCOME,function(stage) {
   }
 
   characterSection.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+
+
+
+  //instructions panel
+
+  var instructionContainer = stage.insert(new Q.UI.Container({ x   : Q.width/2, 
+                                                               y   : 9*Q.height/11,
+                                                               w   : 3*Q.width/4,
+                                                               h   : Q.height/8,
+                                                               fill: DARK_GREY
+                                                        }));
+  var changeElementTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x - 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Change to next element'
+                                              }));
+
+  var changeElementText = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x - 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nSPACE'
+                                              }));
+
+  var movementTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x - 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y - (2*instructionContainer.p.h/5),
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Movement'
+                                              }));
+
+  var movementText = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x - 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y - (2*instructionContainer.p.h/5),
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nW,A,S,D'
+                                              }));
+
+  var shootTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x + 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y - (2*instructionContainer.p.h/5),
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Shoot'
+                                              }));
+
+  var shootText = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x + 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y - (2*instructionContainer.p.h/5),
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nMouse Click'
+                                              }));
+
+  var scoreboardTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x + 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'black',
+                                                  label : 'Scoreboard'
+                                              }));
+
+  var scoreboardText = stage.insert(new Q.UI.Text({ 
+                                                  x     : instructionContainer.p.x + 2* instructionContainer.p.w / 12,
+                                                  y     : instructionContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : 'white',
+                                                  label : '\nHold TAB'
+                                              }));
+
+  //instructionContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 });
 
 
