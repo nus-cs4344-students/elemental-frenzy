@@ -380,10 +380,6 @@ var updateSprite = function(eType, spriteId, updateProps) {
   spriteToUpdate.p.vy = updateProps.vy;
   spriteToUpdate.p.ax = updateProps.ax;
   spriteToUpdate.p.ay = updateProps.ay;
-  // Stop player twitching (some weird bug where key releases are not received)
-  if (eType == 'PLAYER') {
-    
-  }
   spriteToUpdate.p.element = updateProps.element;
   
   // Special cases to apply to players only
@@ -403,7 +399,7 @@ var updateSprite = function(eType, spriteId, updateProps) {
       spriteToUpdate.p.lpfTimeLeft = spriteToUpdate.p.lpfTotalTime = 0;
       spriteToUpdate.p.x = updateProps.x;
       spriteToUpdate.p.y = updateProps.y;
-    }
+    } 
     // Release the player's appropriate keys to avoid player-twitching-bug
     if (updateProps.vx == 0 && updateProps.ax == 0) {
       spriteToUpdate.inputs['left'] = spriteToUpdate.inputs['right'] = 0;
