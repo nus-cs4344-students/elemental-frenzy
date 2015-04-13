@@ -289,6 +289,7 @@ Quintus["2D"] = function(Q) {
     
     // Finds all the vertical tile-to-tile paths which are empty (no tiles on the paths) which have at least #leastPathLength empty tiles
     // which connect a tile directly below the path to a tile at the top of the path on its left/right
+    // Retuns coords of the center of each tile
     getVerticalTileToTileEmptyPaths: function(leastPathLength) {
       if (!leastPathLength) {
         leastPathLength = 1;
@@ -322,9 +323,6 @@ Quintus["2D"] = function(Q) {
             }
             foundLeftOrRightTile = false;
             currentPath = [];
-          } else if ( foundLeftOrRightTile ){
-            // Already found a left/right tile above to connect to, keep adding on to our path length!
-            currentPath.push({x: x*this.p.tileW, y: y*this.p.tileH});
           } else if (leftTile) {
             // There is a left tile, check if it has at least 2 empty tile spaces above it.
             // If so then we have found a good left tile!
@@ -337,6 +335,11 @@ Quintus["2D"] = function(Q) {
             var isRightUpOneEmpty = (y < 1 || !this.getTile(x+1, y-1));
             var isRightUpTwoEmpty = (y < 2 || !this.getTile(x+1, y-2));
             foundLeftOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty;
+          }
+          
+          if ( foundLeftOrRightTile ){
+            // Already found a left/right tile above to connect to, keep adding on to our path length!
+            currentPath.push({x: x*this.p.tileW+this.p.tileW/2, y: y*this.p.tileH+this.p.tileH/2});
           }
         }
       }
