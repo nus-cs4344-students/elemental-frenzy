@@ -393,9 +393,9 @@ Quintus["2D"] = function(Q) {
       return tileCoords[randomIdx];
     },
     
-    // Returns the gameworld coordinates of the top-left corner of the tile specified by (tileX, tileY).
+    // Returns the gameworld coordinates of the center of the tile specified by (tileX, tileY).
     convertTileCoordToGameWorldCoord: function(tileX, tileY) {
-      return {x: tileX * this.p.tileW, y: tileY * this.p.tileH};
+      return {x: tileX * this.p.tileW + this.p.tileW/2, y: tileY * this.p.tileH + this.p.tileH/2};
     },
     
     // Finds a random tile that has at least #numEmptyTilesAbove tiles above which are empty and returns its coordinates (gameworld coords)
