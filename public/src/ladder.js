@@ -31,7 +31,9 @@ Q.component('2dLadder', {
 
   collision: function(col,last) {
     // only when player collide with ladder, then player will trigger 'onLadder'
-    if(col.obj.isA("Ladder")){
+    var entity = this.entity;
+    if(col.obj.isA("Ladder") && 
+    entity.p.x <= (col.obj.p.x + col.obj.p.cx) && entity.p.x >= (col.obj.p.x - col.obj.p.cx) ){
       var entity = this.entity;
       entity.climbLadder(col);
     }
@@ -104,6 +106,18 @@ Q.component('ladderSystem',{
       }
 
       // for loop for inserting one ladder
+      // insert one extra tile on top
+      var x = path[0].x;
+      var y = path[0].y - ladderH;
+      var ladder = new Q.Ladder({
+        name: 'ladder_'+ladderCount,
+        spriteId: getNextSpriteId(),
+        x: x,
+        y: y
+      });
+
+      // Insert the ladder
+      this.entity.insert(ladder);
       for(var p in path){
         var x = path[p].x;
         var y = path[p].y;
