@@ -857,6 +857,17 @@ Q.scene(SCENE_HUD, function(stage) {
   var timerText;
   var timeLeft = Q.state.p.totalTime;
 
+  var powerupContainer = null;
+  if (isScreenWidthTooSmall) {
+    powerupContainer = stage.insert(new Q.UI.Container({ 
+                                                     x: Q.width/2, 
+                                                     y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
+                                                     w: WIDTH_HUD,
+                                                     h: HEIGH_HUD,
+                                                     fill: DARK_GREY,
+                                                     radius: 0 //0 = no rounded corners
+                                                    }));
+}
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
@@ -988,16 +999,6 @@ Q.scene(SCENE_HUD, function(stage) {
     var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
     if (initHud) {
-      if (isScreenWidthTooSmall) {
-        var powerupContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                       y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
-                                                       w: WIDTH_HUD,
-                                                       h: HEIGH_HUD,
-                                                       fill: DARK_GREY,
-                                                       radius: 0 //0 = no rounded corners
-                                                      }));
-      }
-      
 
       initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
 
@@ -1011,7 +1012,7 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                   y    : powerupIconCenterY[1],
                                                                   scale: scaleToHeight
                                     }));
-      powerupMovement_150Speed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
+      powerupMovement_150Speed    = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
                                                                   x    : powerupIconCenterX[2],
                                                                   y    : powerupIconCenterY[2],
                                                                   scale: scaleToHeight
@@ -1028,19 +1029,19 @@ Q.scene(SCENE_HUD, function(stage) {
       if (isZeroManaActive) {
         var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
         drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
-                                   powerupIconCenterX[0], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+                                   powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
       }
 
       if (isDoubleDmgActive) {
         var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
         drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
-                                   powerupIconCenterX[1], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+                                   powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
       }
 
       if (is150MovespeedActive) {
         var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
         drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
-                                   powerupIconCenterX[2], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+                                   powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
       }
     }
 
