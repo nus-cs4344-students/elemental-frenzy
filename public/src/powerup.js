@@ -229,10 +229,11 @@ Q.component('powerupSystem', {
       randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
     }
     var randomX = randomCoord.x,
-        randomY = randomCoord.y;
+        randomY = randomCoord.y - tileLayer.p.tileH;
         
     // Create the powerup
     var powerup = this.createPowerup(powerupName, randomX, randomY);
+    powerup.p.scale = Math.min(tileLayer.p.tileW/powerup.p.w, tileLayer.p.tileH/powerup.p.h);
     // Listen in to the taken event of the powerup so that when one powerup is taken 
     powerup.on('taken', this, 'powerupTaken');
     // Insert the powerup
