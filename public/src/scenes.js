@@ -654,15 +654,26 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
   );
-       stage.insert(new Q.Ladder({x:1457, y:720}));
-    stage.insert(new Q.Ladder({x:1457, y:658}));
-    stage.insert(new Q.Ladder({x:1457, y:596}));
-    stage.insert(new Q.Ladder({x:1457, y:534}));
-    stage.insert(new Q.Ladder({x:1457, y:472}));
-    stage.insert(new Q.Ladder({x:1457, y:410}));
-    stage.insert(new Q.Ladder({x:1457, y:348}));
-    stage.insert(new Q.Ladder({x:1457, y:286}));
-    stage.insert(new Q.Ladder({x:1457, y:224}));
+  /*
+    stage.insert(new Q.Ladder({x:1457, y:784}));
+    stage.insert(new Q.Ladder({x:1457, y:752}));
+    stage.insert(new Q.Ladder({x:1457, y:720}));
+    stage.insert(new Q.Ladder({x:1457, y:688}));
+    stage.insert(new Q.Ladder({x:1457, y:656}));
+    stage.insert(new Q.Ladder({x:1457, y:624}));
+    stage.insert(new Q.Ladder({x:1457, y:592}));
+    stage.insert(new Q.Ladder({x:1457, y:560}));
+    stage.insert(new Q.Ladder({x:1457, y:528}));
+    stage.insert(new Q.Ladder({x:1457, y:496}));
+    stage.insert(new Q.Ladder({x:1457, y:464}));
+    stage.insert(new Q.Ladder({x:1457, y:432}));
+    stage.insert(new Q.Ladder({x:1457, y:400}));
+    stage.insert(new Q.Ladder({x:1457, y:368}));
+    stage.insert(new Q.Ladder({x:1457, y:336}));
+    stage.insert(new Q.Ladder({x:1457, y:304}));
+    stage.insert(new Q.Ladder({x:1457, y:272}));
+    stage.insert(new Q.Ladder({x:1457, y:240}));
+    stage.insert(new Q.Ladder({x:1457, y:208}));
 
     stage.insert(new Q.Ladder({x:500, y:764}));
     stage.insert(new Q.Ladder({x:500, y:702}));
@@ -676,7 +687,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.insert(new Q.Ladder({x:272, y:412}));
     stage.insert(new Q.Ladder({x:272, y:474}));
     
-   
+   */
   }
 });
 
