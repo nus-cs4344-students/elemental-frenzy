@@ -100,6 +100,12 @@ Q.Sprite.extend("Player",{
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
     
+    if (this.p.firingCooldown <= 0) {
+      if (!this.p.canFire) console.log("Setting canFire to true in fire");
+      this.p.canFire = true;
+      this.p.firingCooldown = 0;
+    }
+    
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
     if (this.p.isDead || !this.p.canFire ||
         this.p.currentMana < this.p.manaPerShot) {
@@ -351,9 +357,6 @@ Q.Sprite.extend("Player",{
     }
     
     this.p.firingCooldown -= dt;
-    if (this.p.firingCooldown <= 0) {
-      this.p.canFire = true;
-    }
   
     // Update countdown
     //this.p.updateCountdown -= dt;
