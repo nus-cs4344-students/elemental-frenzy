@@ -249,13 +249,16 @@ Q.component('powerupSystem', {
     // Get random spawn position
     var tileLayer = this.entity._collisionLayers[0];
     var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
-    var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
-    while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
-      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
-      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
-    }
     var randomX = randomCoord.x,
         randomY = randomCoord.y - tileLayer.p.tileH;
+    var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
+    while (randomX <= MARGIN || randomX >= (tileLayer.p.w - MARGIN) || Q.stage(STAGE_LEVEL).locate(randomX, randomY)) {
+      // near the borders or already has a sprite there
+      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+      randomX = randomCoord.x;
+      randomY = randomCoord.y - tileLayer.p.tileH;
+      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    }
         
     // Create the powerup
     var powerup = this.createPowerup(powerupName, randomX, randomY);
