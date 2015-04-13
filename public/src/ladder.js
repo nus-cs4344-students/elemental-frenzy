@@ -36,12 +36,42 @@ Q.component('2dLadder', {
   }
 });
 
+function shuffleArray(array) {
+  if (typeof array === 'undefined') {
+    console.log("Error in shuffleArray(): array is undefined");
+    return;
+  }
+  if ( !(array.constructor === Array) ) {
+    console.log("Error in shuffleArray(): array given is NOT an array");
+    return;
+  }
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+    
+    console.log("Shuffling index randomIndex " + randomIndex + " and currentIndex " + currentIndex);
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
 // To be added to stage
 Q.component('ladderSystem',{
   added: function(){
     // Get random spawn position
     var tileLayer = this.entity._collisionLayers[0];
     var randomLadderPaths = tileLayer.getVerticalTileToTileEmptyPaths(3);
+    randomLadderPaths = shuffleArray(randomLadderPaths);
     var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
 
 
@@ -66,7 +96,7 @@ Q.component('ladderSystem',{
         var x = path[p].x;
         var y = path[p].y;
 
-        console.log("Insert ladder at "+x+" "+y);
+        console.log("Insert ladder " + ladderCount + " at "+x+" "+y);
         
         // Creates ladder
         var ladder = new Q.Ladder({
