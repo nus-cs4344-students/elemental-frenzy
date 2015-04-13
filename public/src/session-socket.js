@@ -1133,8 +1133,24 @@ socket.on('respawn', function(data) {
     return;
   }
 
+  
   // respawn player and creates sprite for it
-  addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
+  // Get random spawn position
+  var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
+  var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+  var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
+  while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
+    randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+  }
+  var randomX = randomCoord.x,
+      randomY = randomCoord.y - tileLayer.p.tileH;
+  addPlayerSprite(pId, {
+    sheet: PLAYER_CHARACTERS[cId], 
+    name: PLAYER_NAMES[cId], 
+    characterId: cId,
+    x: randomX,
+    y: randomY
+  });
 });
 
 // when one or more players disconnected from app.js
