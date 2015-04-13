@@ -565,11 +565,17 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('prerender', ctx);
 
       var vp = stage.viewport;
+      var cLayer = mapStage._collisionLayers[0];
       var vpScale = 0.1;
-      var screenW = Q.width/3;
       var screenH = Q.height/3;
+      var screenW = Q.width/3;
       var startX, startY, endX, endY;
 
+      if(cLayer) {
+        vpScale = Math.max(0.1, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
+        vpScale = Math.round(vpScale * 100) / 100;
+      }
+      
       if(vp) {
 
         vp.scale = vpScale;

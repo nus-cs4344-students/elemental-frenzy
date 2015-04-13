@@ -79,7 +79,8 @@ var creates = {
   PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
   ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
   ENEMY:          function(p) { return new Q.Enemy(p); },
-  POWERUP:        function(p) { return new Q.Powerup(p); }
+  POWERUP:        function(p) { return new Q.Powerup(p); },
+  LADDER:         function(p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function() {  
@@ -88,7 +89,8 @@ var getDefaultSprites = function() {
                           PLAYERELEBALL: {},
                           ENEMYELEBALL: {},
                           ENEMY: {},
-                          POWERUP: {}
+                          POWERUP: {},
+                          LADDER: {}
                         };
   return defaultSprites;
 }
@@ -656,35 +658,63 @@ var initialization = function(){
   // To move viewports
   var viewportSpeed = 50;
   Q.input.on("server_up", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
 
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y-viewportSpeed);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y-viewportSpeed);
+    sLevel.viewport.softCenterOn(x, y-(viewportSpeed*scale));
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini, yMini-(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_down", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y+viewportSpeed);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y+viewportSpeed);
+    sLevel.viewport.softCenterOn(x, y+(viewportSpeed*scale));
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini, yMini+(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_left", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x-viewportSpeed, y);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x-viewportSpeed, y);
+    sLevel.viewport.softCenterOn(x-(viewportSpeed*scale), y);
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini-(viewportSpeed*scaleMini), yMini);
   });
   
   Q.input.on("server_right", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x+viewportSpeed, y);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x+viewportSpeed, y);
+    sLevel.viewport.softCenterOn(x+(viewportSpeed*scale), y);
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini+(viewportSpeed*scaleMini), yMini);
   });
   
   // Allow the session to follow different players
@@ -824,6 +854,7 @@ var loadGameSession = function(sessionId) {
     var eType = item.p.entityType;
     var spriteId = item.p.spriteId;
     if (!eType || typeof spriteId === 'undefined') {
+      console.log("Error in inserted event listener: entityType of spriteId is undefined");
       return;
     }
     if( !getSprite(eType,spriteId)){
@@ -855,6 +886,7 @@ var loadGameSession = function(sessionId) {
   });
   
   Q.stage(STAGE_LEVEL).add("powerupSystem");
+  Q.stage(STAGE_LEVEL).add("ladderSystem");
 
   for(var i =0; i< spritesToAdd.length; i++){
     addSprite(spritesToAdd[i].entityType, 
@@ -1187,9 +1219,11 @@ socket.on('mouseup', function(data) {
   var now = (new Date()).getTime();
   var oneWayDelay = now - data.timestamp;
   var timeBeforeShooting = (1000*PLAYER_FIRE_ANIMATION_TIME) - (2 * oneWayDelay);
+  
   console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
               " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
   player.trigger('fire', e);
+
   setTimeout(function() {
     // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
     if (player) {
@@ -1222,7 +1256,7 @@ each(['left','right','up', 'down'], function(actionName) {
       console.log("Player without sprite pressed the key");
       return;
     }
-    console.log("session received "+actionName);
+
     player.inputs[actionName] = true;
   });
 
