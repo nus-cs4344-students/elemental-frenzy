@@ -7,6 +7,7 @@ Q.Sprite.extend("Ladder", {
     this._super(p, { 
       sheet: 'ladder_metal',
       type: Q.SPRITE_DEFAULT,
+      entityType: 'LADDER',
       collisonMask: Q.SPRITE_ACTIVE,
       sensor: true
     });

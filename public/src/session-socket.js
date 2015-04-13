@@ -79,7 +79,8 @@ var creates = {
   PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
   ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
   ENEMY:          function(p) { return new Q.Enemy(p); },
-  POWERUP:        function(p) { return new Q.Powerup(p); }
+  POWERUP:        function(p) { return new Q.Powerup(p); },
+  LADDER:         function(p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function() {  
@@ -88,7 +89,8 @@ var getDefaultSprites = function() {
                           PLAYERELEBALL: {},
                           ENEMYELEBALL: {},
                           ENEMY: {},
-                          POWERUP: {}
+                          POWERUP: {},
+                          LADDER: {}
                         };
   return defaultSprites;
 }
@@ -852,6 +854,7 @@ var loadGameSession = function(sessionId) {
     var eType = item.p.entityType;
     var spriteId = item.p.spriteId;
     if (!eType || typeof spriteId === 'undefined') {
+      console.log("Error in inserted event listener: entityType of spriteId is undefined");
       return;
     }
     if( !getSprite(eType,spriteId)){
