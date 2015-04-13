@@ -45,13 +45,13 @@ Q.component('ladderSystem',{
     var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
 
 
-    var maxLadderCount = 2;
+    var maxLadderCount = 20;
     var ladderCount = 0;
     var ladderW = tileLayer.p.tileW;
     var ladderH = tileLayer.p.tileH;
 
     for(var i in randomLadderPaths){
-      if(i >= maxLadderCount){
+      if(ladderCount >= maxLadderCount){
         break;
       }
 
@@ -72,8 +72,8 @@ Q.component('ladderSystem',{
         var ladder = new Q.Ladder({
             name: 'ladder_'+ladderCount,
             spriteId: getNextSpriteId(),
-            x: Math.floor(x-ladderW/2), 
-            y: Math.floor(y-ladderH/2)
+            x: x,
+            y: y
           });
 
         // Insert the ladder
