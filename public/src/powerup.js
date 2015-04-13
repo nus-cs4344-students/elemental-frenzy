@@ -56,10 +56,36 @@ Q.component('2dPowerup', {
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
+    entity.on('sensor', this, 'sensorCollision');
   },
   
-  collision: function(col,last) {    
-    
+  sensorCollision: function(obj) {
+    console.log("sensor collision");
+    var entity = this.entity;
+    // Powerups only care about player collisions who are powerupable
+    if ( (obj.isA('Player') || obj.isA('Actor')) && obj.has('powerupable')) {
+      //console.log("Powerup colliding with player " + obj.p.name + "(" + obj.p.spriteId + ")");
+      if (obj.p.isServerSide) {
+        // Server side will apply the effect
+        if ( !entity.p.isTaken) {
+          entity.taken(obj);
+        }
+      } else {
+        // Client side will only destroy the powerup
+        entity.destroy();
+      }
+    } else if ( !obj.isA('Player') && !obj.isA('Actor') && !obj.has('2dEleball') && !obj.isA('Ladder')) {
+      // turn off gravity, shift it up
+      entity.p.gravity = 0;
+      entity.p.vx = entity.p.ax = 0;
+      entity.p.vy = entity.p.ay = 0;
+      entity.p.y -= separate[1];
+      entity.p.constantY = entity.p.y- entity.p.bounceAmount;
+      //console.log("separate[1]: " + separate[1] + " bounceAmount: " + entity.p.bounceAmount);
+    }
+  },
+  
+  collision: function(col,last) {
     var entity = this.entity;
     // Powerups only care about player collisions who are powerupable
     if ( (col.obj.isA('Player') || col.obj.isA('Actor')) && col.obj.has('powerupable')) {
@@ -223,13 +249,16 @@ Q.component('powerupSystem', {
     // Get random spawn position
     var tileLayer = this.entity._collisionLayers[0];
     var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
-    var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
-    while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
-      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
-      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
-    }
     var randomX = randomCoord.x,
         randomY = randomCoord.y - tileLayer.p.tileH;
+    var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
+    while (randomX <= MARGIN || randomX >= (tileLayer.p.w - MARGIN) || Q.stage(STAGE_LEVEL).locate(randomX, randomY)) {
+      // near the borders or already has a sprite there
+      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+      randomX = randomCoord.x;
+      randomY = randomCoord.y - tileLayer.p.tileH;
+      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    }
         
     // Create the powerup
     var powerup = this.createPowerup(powerupName, randomX, randomY);
