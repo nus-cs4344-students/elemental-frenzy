@@ -23,7 +23,8 @@ Q.component('2dLadder', {
     var entity = this.entity;
     Q._defaults(entity.p,{
       type: Q.SPRITE_UI,             // ladder is ui element
-      collisionMask: Q.SPRITE_ACTIVE // ladder only collides with player
+      collisionMask: Q.SPRITE_ACTIVE, // ladder only collides with player
+      onLadder: false
     });
     entity.on('hit',this,"collision");
   },
@@ -32,7 +33,17 @@ Q.component('2dLadder', {
     // only when player collide with ladder, then player will trigger 'onLadder'
     if(col.obj.isA("Ladder")){
       var entity = this.entity;
-      entity.trigger("onLadder", col);
+      entity.climbLadder(col);
+    }
+  },
+  
+  extend: {
+    climbLadder: function(col){
+        if(col.obj.isA("Ladder")) { 
+          this.p.onLadder = true;
+          this.p.sensor = true;
+          this.p.ladderX = col.obj.p.x;
+        }
     }
   }
 });

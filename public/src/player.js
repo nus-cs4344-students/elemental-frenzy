@@ -342,14 +342,6 @@ Q.Sprite.extend("Player",{
 
     removePlayerSprite(vId);
   },
-  
-  climbLadder: function(col){
-      if(col.obj.isA("Ladder")) { 
-        this.p.onLadder = true;
-        this.p.sensor = true;
-        this.p.ladderX = col.obj.p.x;
-      }
-  },
 
   step: function(dt) {
     // stop interval when player can take damage
@@ -365,8 +357,7 @@ Q.Sprite.extend("Player",{
   
     // Update countdown
     //this.p.updateCountdown -= dt;
-
-
+    
     if(this.p.onLadder) {
       this.p.gravity = 0;
 
