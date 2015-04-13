@@ -59,6 +59,7 @@ Q.component('2dPowerup', {
   },
   
   collision: function(col,last) {    
+    
     var entity = this.entity;
     // Powerups only care about player collisions who are powerupable
     if ( (col.obj.isA('Player') || col.obj.isA('Actor')) && col.obj.has('powerupable')) {
@@ -72,7 +73,7 @@ Q.component('2dPowerup', {
         // Client side will only destroy the powerup
         entity.destroy();
       }
-    } else if ( !col.obj.isA('Player') && !col.obj.isA('Actor') && !col.obj.has('2dEleball') ) {
+    } else if ( !col.obj.isA('Player') && !col.obj.isA('Actor') && !col.obj.has('2dEleball') && !col.obj.isA('Ladder')) {
       // turn off gravity, shift it up
       entity.p.gravity = 0;
       entity.p.vx = entity.p.ax = 0;

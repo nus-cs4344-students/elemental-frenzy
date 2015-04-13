@@ -213,8 +213,8 @@ Q.component('2dEleball', {
       return;
     }
     
-    // Don't collide with powerups
-    if (col.obj.isA('Powerup')) {
+    // Don't collide with powerups and ladders
+    if (col.obj.isA('Powerup') || col.obj.isA('Ladder')) {
       return;
     }
     
