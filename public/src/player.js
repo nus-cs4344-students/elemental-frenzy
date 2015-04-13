@@ -378,7 +378,6 @@ Q.Sprite.extend("Player",{
       }
     }else{
       this.p.gravity = 1;
-      this.p.sensor = false;
     }
 
     if(!this.p.onLadder && this.has('animation')){

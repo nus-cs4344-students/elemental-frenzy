@@ -43,7 +43,6 @@ Q.component('2dLadder', {
     climbLadder: function(col){
         if(col.obj.isA("Ladder")) { 
           this.p.onLadder = true;
-          this.p.sensor = true;
           this.p.ladderX = col.obj.p.x;
         }
     }
