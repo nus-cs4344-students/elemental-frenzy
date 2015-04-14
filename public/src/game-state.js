@@ -74,19 +74,18 @@ Q.state.on("playerDied", function(data) {
 });
 
 // # When player disconnects, remove it from the gamestate
-Q.state.on('playerDisconnected', function(playerId) {
+Q.state.on('playerDisconnected', function(playerName) {
   console.log("Gamestate playerDisconnected event triggered");
-  var playerSprite = getSprite('PLAYER', playerId);
-  if (typeof playerSprite === 'undefined') {
-    console.log("Error in event in gamestate: playerDisconnected: player " + playerId + " is undefined");
+  if (typeof playerName === 'undefined') {
+    console.log("Error in event in gamestate: playerDisconnected: player name is undefined");
     return;
   }
   var newState = {
     kills: Q.state.get('kills'),
     deaths: Q.state.get('deaths')
   }
-  delete newState.kills[playerSprite.p.name];
-  delete newState.deaths[playerSprite.p.name];
+  delete newState.kills[playerName];
+  delete newState.deaths[playerName];
   Q.state.set(newState);
 });
 
