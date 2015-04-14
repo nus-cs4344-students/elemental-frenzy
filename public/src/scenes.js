@@ -10,6 +10,7 @@ var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
 var STAGE_NOTIFICATION = 2;
 var SCENE_NOTIFICATION = 'notificationScreen';
+var STAGE_END_GAME = 2;
 
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
@@ -21,6 +22,7 @@ var SCENE_STATUS = 'statusScreen';
 var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
 var STAGE_MINIMAP = 7;
+var SCENE_END_GAME = SCENE_SCORE;
 
 
 // ## UI constants
@@ -858,7 +860,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupIconCenterY = [];
 
   var timerText;
-  var timeLeft           = Q.state.p.totalTime;
+  var timeLeft = Q.state.p.totalTime;
 
   var secondHudContainer = null;
   if (isScreenWidthTooSmall && initHud2) {
@@ -1122,15 +1124,14 @@ Q.scene(SCENE_HUD, function(stage) {
     /*
     ** Timer
     */
-    var secLeft = Math.floor(timeLeft % 60);
-    var minLeft = Math.floor(timeLeft / 60);
-
-    minLeft = minLeft < 10 ? "0" + minLeft : minLeft;
-    secLeft = secLeft < 10 ? "0" + secLeft : secLeft;
+    var timeLeft = Q.state.get('timeLeft');
+    if(timeLeft === undefined){
+      timeLeft = Q.state.get('totalTime');
+     }
 
     if (initHud) {
       timerText = stage.insert(new Q.UI.Text({
-      label : minLeft + ":" + secLeft,
+      label : getTimeFormat(timeLeft),
       x: Q.width/2,
       y: 13*Q.height/50,
       size: SIZE_NORMAL,
@@ -1138,23 +1139,17 @@ Q.scene(SCENE_HUD, function(stage) {
       }));
 
     } else {
-      timerText.p.label = minLeft + ":" + secLeft;
-      timerText.p.color = minLeft == "00" ? 'red' : 'black'; 
+      timerText.p.label = getTimeFormat(timeLeft);
+      timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
 
     initHud = false;
 
   });
-  
-  
 
   //reset hud powerup icons when player dies
   currentPlayer.on('destroyed', function() {
     resetPowerupIcons();
-  });
-
-  Q.state.on('change.timeLeft', function() {
-   timeLeft = Q.state.p.timeLeft;
   });
 
   var resetPowerupIcons = function () {
@@ -1320,7 +1315,10 @@ Q.scene(SCENE_SCORE, function(stage) {
   var rankIconSize       = 34;
   var scaleRankIcons     = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
 
-  var currentPlayer = getPlayerSprite(selfId);
+  var currentPlayer;
+  if(!isSession){
+    currentPlayer = getPlayerSprite(selfId);
+  }
 
   /*
   ** Set up UI containers
@@ -1414,8 +1412,8 @@ Q.scene(SCENE_SCORE, function(stage) {
   /*
   ** Loop through total number of players and add their scores line by line
   */
-  var kills  = Q.state.p.kills;  
-  var deaths = Q.state.p.deaths;
+  var kills  = Q.state.get('kills');  
+  var deaths = Q.state.get('deaths');
   
   //push to an array first, then sort. because javascript cannot directly sort Object by value
   var sortedByKillsAndDeath = [];
@@ -1441,12 +1439,12 @@ Q.scene(SCENE_SCORE, function(stage) {
     //values will be retrieved from original Object
     name = sortedByKillsAndDeath[item][0];
 
-    if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
+    if (typeof deaths[name] === 'undefined' || typeof kills[name] === 'undefined') {
       continue;
     }
 
     var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
-    if (currentPlayer.p.name == name) {
+    if (currentPlayer && currentPlayer.p.name == name) {
       scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
     }
 
@@ -1492,13 +1490,29 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       ++line;
   }
-  
+
   //padding between stuff in container and border of container
   rankContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   overlayContainer.fit(2*UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var endGame = stage.options.endGame;
+  if(endGame){
+    var buttonPlay = stage.insert(new Q.UI.Button({ x: 0, 
+                                                    y: (line+2)*offsetY,
+                                                    w: overlayContainer.p.w/3,
+                                                    h: SIZE_BOLD*2,
+                                                    font: FONT_BOLD,
+                                                    fill: 'limegreen',
+                                                    label: 'Play Again'
+                                            }), overlayContainer);
+
+    buttonPlay.on("click", function(){
+      Q.input.trigger('playAgain');
+    }); 
+  }
 });
 
 Q.scene(SCENE_NOTIFICATION, function(stage){
@@ -1530,21 +1544,21 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                   }));
 
 
-    var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
-                                                  y: 0,
-                                                  w: container.p.w/3,
-                                                  h: buttonOkH,
-                                                  font: FONT_BOLD,
-                                                  fill: LIGHT_GREY,
-                                                  label: 'OK'
-                                            }), container);
+  var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
+                                                y: 0,
+                                                w: container.p.w/3,
+                                                h: buttonOkH,
+                                                font: FONT_BOLD,
+                                                fill: LIGHT_GREY,
+                                                label: 'OK'
+                                          }), container);
 
-    buttonOk.on("click", function(){
-      
-      if(callback) callback();
+  buttonOk.on("click", function(){
+    
+    if(callback) callback();
 
-      container.destroy();
-    }); 
+    container.destroy();
+  }); 
 
   var label = stage.insert(new Q.UI.Text({x: 0, 
                                           y: -SIZE_BOLD*msgCount - buttonOkH,
@@ -1560,7 +1574,6 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
   container.fit(Q.height/20, Q.width/30);
 
 });
-
 
 Q.scene(SCENE_STATUS, function(stage){
 
