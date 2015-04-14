@@ -356,27 +356,8 @@ io.on('connection', function (socket) {
         }
         break;
       }
-      case 'removeSprite': //console.log("REMOVESPRITE: " + getJSON(data));
-      case 'joinSuccessful':
-      case 'joinFailed':
-      case 'synchronizeClocks':
-      
-      case 'addSprite':
-      case 'updateSprite':
-      
-      case 'powerupTaken':
-
-      case 'updateEnemy':
-      
-      case 'spriteTookDmg':
-      case 'spriteDied':
-      case 'gameStateChanged':{
-        sendToPlayers(data.eventData.players, data.eventName, data.eventData);
-        // console.log("Sending to multiple players from session "+sId+" -> "+getJSON(data));
-        break;
-      }
       default:{
-        console.log("Unknown session event [" + data.eventName +"]");
+        sendToPlayers(data.eventData.players, data.eventName, data.eventData);
         break;
       }
     }

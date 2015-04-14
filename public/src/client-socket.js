@@ -16,10 +16,12 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 //socket.on('connected',function (data) {console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var sessions = {};
+var sessionToken;
 var selfId;
 var sessionId;
 var allSprites;
 var gameState;
+var infoState;
 var isSession = false;
 var _isJoinSent = false;
 
@@ -44,7 +46,10 @@ var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 
 var _isSessionConnected = false;
 var _isWelcomeScreenShown = false;
 var _clockSynchronized = false;
-var _gameLoaded = false;
+var _isGameLoaded = false;
+var _isEndGame = false;
+
+var STATUS_CONNECTION = "Connected to 'Session [id]'";
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRtt = function (oneWayDelay) {
@@ -469,16 +474,18 @@ var addSprite = function (entityType, id, properties) {
     var interval_updateServer = setInterval(function () {
       //console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
-          sprite.p.isDead || !_isSessionConnected) {
+          sprite.p.isDead || !_isSessionConnected || !_isGameLoaded) {
         // (Defensive) Remove interval because it is gone/not on the client side
         console.log("clearing interval for sprite "+sprite.p.spriteId);
         clearInterval(interval_updateServer);
       }
 
-      Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
-        entityType: 'PLAYER',
-        spriteId: sprite.p.spriteId,
-        p: sprite.p
+      Q.input.trigger('sessionCast', {
+        eventName:'authoritativeSpriteUpdate', 
+        eventData: {
+          entityType: 'PLAYER',
+          spriteId: sprite.p.spriteId,
+          p: sprite.p
       }});
 
     }, interval_updateServer_timeInterval);
@@ -614,8 +621,7 @@ var updateSessions = function (sessionsInfo) {
   sessions = sessionsInfo;
 
   if(_isSessionConnected) {
-    console.log("Sessions updated but bypassing welcome screen session update event"+
-                "when player is connected to one of the sessions");
+    console.log("Sessions updated but player already in game, Skipping welcome screen update");
     return;
   }
 
@@ -649,7 +655,14 @@ var setupEventListeners = function () {
 
     _isJoinSent = true;
     // send request to app.js of joining a session
-    Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
+    Q.input.trigger('sessionCast', {
+      eventName:'join', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sId, 
+        characterId: cId
+      }
+    });
   });
 
   Q.input.on('respawn', function (data) {
@@ -675,7 +688,34 @@ var setupEventListeners = function () {
     }
 
     // send request to app.js of respawning in a session
-    Q.input.trigger('sessionCast', {eventName:'respawn', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
+    Q.input.trigger('sessionCast', {
+      eventName:'respawn', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sId, 
+        characterId: cId
+      }
+    });
+  });
+
+  Q.input.on('playAgain', function(){
+    var player = getPlayerSprite(selfId);
+    if(!player){
+      console.log("Unable to send play again request, player sprite not found");
+      return;
+    }
+
+    _isEndGame = false;
+    var cId = player.p.characterId;
+    Q.input.trigger('sessionCast', {
+      eventName:'playAgain', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sessionId, 
+        characterId: cId
+      }
+    });
+    
   });
 
     
@@ -734,22 +774,10 @@ var setupEventListeners = function () {
   each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
   Q.input.on('displayScoreScreen', function () {
-    
-    if(!_isSessionConnected || !_gameLoaded) {
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
     displayScoreScreen();
   });
 
   Q.input.on('displayScoreScreenUp', function () {
-    
-    if(!_isSessionConnected || !_gameLoaded) {
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
     hideScoreScreen();
   });
 
@@ -834,12 +862,11 @@ var setupEventListeners = function () {
         isUpPrev = isUp;
 
     }, false);
-
   }
 
   Q.input.on('toggleNextElementUp', function () {
 
-    if(!_gameLoaded) {
+    if(!_isGameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -865,12 +892,11 @@ var setupEventListeners = function () {
     Q.input.trigger('sessionCast', {eventName:'toggleNextElementUp', eventData: eData});
   });
 
-
   var handleMouseOrTouchEvent = function (e) {
     
     var player = getPlayerSprite(selfId);
     
-    if(!_gameLoaded || !player) {
+    if(!_isGameLoaded || !player) {
       // game state need to be loaded
       return;
     }
@@ -994,12 +1020,35 @@ var displayPlayerHUDScreen = function () {
 };
 
 var displayScoreScreen = function () {
+
+  if(!_isSessionConnected || !_isGameLoaded) {
+    // client side need to be connected to the server in order
+    // to show score screen
+    return;
+  }
+
   hideScoreScreen();
-  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+
+  if(!_isEndGame){
+    console.log("show score screen");
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  }
 };
 
 var hideScoreScreen = function () {
+  if(!_isSessionConnected || !_isGameLoaded) {
+    // client side need to be connected to the server in order
+    // to show score screen
+    return;
+  }
+
   Q.clearStage(STAGE_SCORE);
+};
+
+var displayEndGameScreen = function(){
+  hideScoreScreen();
+
+  Q.stageScene(SCENE_END_GAME, STAGE_END_GAME, {endGame: _isEndGame});
 };
 
 // ## Loads welcome screen
@@ -1031,11 +1080,22 @@ var displayGameScreen = function (level) {
 };
 
 // ## Loads the game state.
-var loadGameSession = function () {
+var loadGameSession = function (receivedGameState) {
   console.log("Loading game state...");
 
+  // there is old game state,
+  // remove all of them
+  if(gameState){
+    for (var entityType in gameState.sprites) {
+      for (var eId in gameState.sprites[entityType]) {
+        removeSprite(entityType, eId);
+      }
+    }
+  } 
+  resetState(clone(infoState));
+
   // load default values
-  gameState = gameState ? gameState : getDefaultGameState();
+  gameState = receivedGameState || getDefaultGameState();
   allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
@@ -1067,17 +1127,18 @@ var loadGameSession = function () {
   }
 
   // show connected status
-  displayStatusScreeen("Connected to 'Session "+sessionId+"'");
+  displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
   
     // load player HUD info
   displayPlayerHUDScreen();
   
-  _gameLoaded = true;
+  _isGameLoaded = true;
 }
 
 var sendToApp = function (eventName, eventData) {
   eventData.timestamp = (new Date()).getTime();
   eventData.timestamp += timestampOffset || 0;
+  eventData.sessionToken = sessionToken;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
 }
 
@@ -1130,6 +1191,13 @@ socket.on('updateSessions', function (data) {
 
 socket.on('gameStateChanged', function (data) {
   //console.log("Received event gameStateChanged");
+
+  var sToken = data.sessionToken;
+  if(sessionToken !== undefined && (!sToken || sToken != sessionToken)){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during gameStateChanged");
+    return;
+  }
+
   if (typeof data.kills === 'undefined') {
     console.log("Error in event gameStateChanged: data.kills is undefined");
     return;
@@ -1147,9 +1215,15 @@ socket.on('gameStateChanged', function (data) {
     return;
   }
   
-  //console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
+  // console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
   
-  Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+  if(!_isGameLoaded){
+    // received game state update before game is loaded
+    infoState = {kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime};
+  }else{
+    // recieve game state update after game is loaded
+    Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+  }
 });
 
 // player successfully joined a session and receive game state + session info 
@@ -1157,7 +1231,10 @@ socket.on('joinSuccessful', function (data) {
   console.log("Successfully joined session " + data.sessionId);
 
   sessionId = data.sessionId;
-  gameState = data.gameState;
+  sessionToken = data.sessionToken;
+  infoState = data.infoState;
+
+  // console.log("Joined : "+getJSON(data));
 
   _isSessionConnected = true;
   
@@ -1174,16 +1251,29 @@ socket.on('joinSuccessful', function (data) {
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
+  var receivedGameState = data.gameState;
   var interval_loadGameSession = setInterval(function () {
     
     // Only load the game after the clock is synchronized
     if (_clockSynchronized) {
 
       console.log("Clock synchronized with timestampOffset = " + timestampOffset);
-      loadGameSession();
+      loadGameSession(receivedGameState);
       clearInterval(interval_loadGameSession);
     }
   }, 100);
+});
+
+socket.on('endGame', function(data){
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during endGame");
+    return;
+  }
+
+  _isGameLoaded = false;
+  _isEndGame = true;
+  displayEndGameScreen();
 });
 
 var synchronizeClocksWithServer = function () {
@@ -1198,6 +1288,13 @@ var synchronizeClocksWithServer = function () {
 }
 
 socket.on('synchronizeClocks', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during clock synchronization");
+    return;
+  }
+
   // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
   var clientReceiveTime = getCurrentTime();         // t3
   var sessionSendTime = data.timestamp;             // t2
@@ -1221,14 +1318,22 @@ socket.on('joinFailed', function (data) {
   console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
+  _isEndGame = false;
   
-  displayNotificationScreen("Failed to join session "+data.sessionId+" due to "+data.msg, displayWelcomeScreen);
+  displayNotificationScreen("Failed to join session "+data.sessionId+" due to\n["+data.msg+"]", displayWelcomeScreen);
 });
 
 // add sprite
 socket.on('addSprite', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during addSprite");
+    return;
+  }
+
   var props = data.p;
   if(!props) {
     console.log("addSprite without properties");
@@ -1296,6 +1401,14 @@ socket.on('addSprite', function (data) {
 
 // update sprite
 socket.on('updateSprite', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during updateSprite");
+    return;
+  }
+
+
   if (_clockSynchronized) {
     var receivedTimeStamp = data.timestamp;
     var curTimeStamp = (new Date()).getTime() + timestampOffset;
@@ -1308,7 +1421,7 @@ socket.on('updateSprite', function (data) {
   
   //console.log("Message: updateSprite: timeStamp: ");
   //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
-  if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
+  if (!_isSessionConnected || !_clockSynchronized || !_isGameLoaded) {
     return;
   }
 
@@ -1341,6 +1454,12 @@ socket.on('updateSprite', function (data) {
 
 // remove sprite
 socket.on('removeSprite', function (data) {
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during removeSprite");
+    return;
+  }
+
   var props = data.p;
   if(!props) {
     console.log("removeSprite without properties");
@@ -1368,6 +1487,12 @@ socket.on('removeSprite', function (data) {
 });
 
 socket.on('powerupTaken', function (data) {
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during powerupTaken");
+    return;
+  }
+
   //console.log("Event: powerupTaken: data: " + getJSON(data));
   
   var eType = data.entityType,
@@ -1390,8 +1515,13 @@ socket.on('powerupTaken', function (data) {
 
 // sprite took damage
 socket.on('spriteTookDmg', function (data) {
-  
-  console.log("Event: spriteTookDmg: data: " + getJSON(data));
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during spriteTookDmg");
+    return;
+  }
+
+  // console.log("Event: spriteTookDmg: data: " + getJSON(data));
 
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
@@ -1411,6 +1541,13 @@ socket.on('spriteTookDmg', function (data) {
 
 // sprite died
 socket.on('spriteDied', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during spriteDied");
+    return;
+  }
+
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,
@@ -1429,12 +1566,21 @@ socket.on('spriteDied', function (data) {
 
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during updateSprite");
+    return;
+  }
+
+
   console.log("Session disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
-  
+  _isEndGame = false;
+
   // ask player to join a session again
   displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
 
@@ -1443,7 +1589,14 @@ socket.on('sessionDisconnected', function (data) {
 });
 
 // when one or more players disconnected from app.js
-socket.on('playerDisconnected', function (data) {  
+socket.on('playerDisconnected', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during playerDisconnected");
+    return;
+  }
+
   console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
   
   var player = getPlayerSprite(data.spriteId);
@@ -1459,7 +1612,9 @@ socket.on('disconnect', function () {
   console.log("App.js disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
+  _isEndGame = false;
+  _isJoinSent = false;
 
   // ask player to refresh browser again
   displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");

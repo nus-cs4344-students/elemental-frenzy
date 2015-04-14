@@ -30,6 +30,12 @@ Q.component("healthBar", {
       color = '#00FF00'; // player healthbar is green
     }
     var hf = this.entity.p.currentHealth / this.entity.p.maxHealth;
+    if (this.entity.isA('Player') && hf <= 0.5) {
+      color = 'yellow';
+      if (hf <= 0.25) {
+        color = 'brown';
+      }
+    }
     var width = this.entity.p.w * HEALTHBAR_WIDTH_SF;
     var height = this.entity.p.h * HEALTHBAR_HEIGHT_SF;
     ctx.fillStyle = color;
@@ -55,12 +61,18 @@ Q.component("manaBar", {
     if (this.entity.isA('Player')) {
       color = '#1589FF'; // player manaBar is light blue
     }
-    var hf = this.entity.p.currentMana / this.entity.p.maxMana;
+    var mf = this.entity.p.currentMana / this.entity.p.maxMana;
+    if (mf <= 0.5) {
+      color = '#3BB9FF';
+      if (mf <= 0.25) {
+        color = 'cyan';
+      }
+    }
     var width = this.entity.p.w * MANABAR_WIDTH_SF;
     var height = this.entity.p.h * MANABAR_HEIGHT_SF;
     ctx.fillStyle = color;
     ctx.fillRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
-          width * hf, height);
+          width * mf, height);
     ctx.fillStyle = "black";
     ctx.strokeRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
           width, height);

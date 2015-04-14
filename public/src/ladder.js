@@ -31,7 +31,6 @@ Q.component('2dLadder', {
   
   sensorCollision: function(obj) {
     var entity = this.entity;
-    console.log(entity.p.entityType + " " + entity.p.spriteId + " sensing");
     obj.climbLadder(entity);
   },
   
