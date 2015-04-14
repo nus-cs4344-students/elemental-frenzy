@@ -26,16 +26,16 @@ Q.component('2dLadder', {
       collisionMask: Q.SPRITE_ACTIVE, // ladder only collides with player
       onLadder: false
     });
-    entity.on('hit',this,"collision");
+    entity.on('sensor',this,"sensorCollision");
   },
-
-  collision: function(col,last) {
+  
+  sensorCollision: function(obj) {
     var entity = this.entity;
-    if(entity.isA('Ladder') && col.obj.isA('Player') && col.obj.has('2dLadder') && 
-    col.obj.p.x <= (entity.p.x + entity.p.cx) && col.obj.p.x >= (entity.p.x - entity.p.cx) ){
-      col.obj.climbLadder(entity);
+    console.log(entity.p.entityType + " " + entity.p.spriteId + " sensing");
+    if (obj.p.x <= (entity.p.x + entity.p.cx) && obj.p.x >= (entity.p.x - entity.p.cx) ){
+      obj.climbLadder(entity);
     }
-  },
+  }
   
   extend: {
     climbLadder: function(obj){
