@@ -910,29 +910,29 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     scale: scaleToHeight
                                       }));
       } else {
-        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
-        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-        var is150MovespeedActive    = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+        var is150MovespeedActive    = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
         
         powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
         powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
         powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
         
         if (isZeroManaActive) {
-          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST, 
                                      powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (isDoubleDmgActive) {
-          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_150PERCENTDMG, 
                                      powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (is150MovespeedActive) {
-          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
-          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150PERCENTSPEED, 
                                      powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
       }
@@ -1091,29 +1091,29 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     scale: scaleToHeight
                                       }));
       } else {
-        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
-        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-        var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+        var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
         
         powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
         powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
         powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
         
         if (isZeroManaActive) {
-          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST, 
                                      powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (isDoubleDmgActive) {
-          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_150PERCENTDMG, 
                                      powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (is150MovespeedActive) {
-          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
-          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150PERCENTSPEED, 
                                      powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
       }
