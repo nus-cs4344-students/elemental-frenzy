@@ -84,7 +84,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, feedbackDisplay, 2dLadder, powerupable');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, healDisplay, feedbackDisplay, 2dLadder, powerupable');
     
     this.takeDamageIntervalId = -1;
 
@@ -303,6 +303,12 @@ Q.Sprite.extend("Player",{
         this.die(shooterEntityType, shooterId);
       }
     }
+  },
+  
+  heal: function(healAmt) {
+    var diff = this.p.maxHealth - this.p.currentHealth;
+    healAmt = Math.min(diff, healAmt);
+    this.trigger('heal', healAmt);
   },
   
   die: function(killerEntityType, killerId) {

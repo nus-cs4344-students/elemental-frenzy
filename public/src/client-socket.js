@@ -1373,7 +1373,9 @@ socket.on('powerupTaken', function (data) {
   var eType = data.entityType,
       spriteId = data.spriteId,
       powerupName = data.powerupName,
-      powerupDuration = data.powerupDuration;
+      powerupDuration = data.powerupDuration,
+      powerupFeedbackOnTaken = data.powerupFeedbackOnTaken,
+      powerupSoundOnTaken = data.powerupSoundOnTaken;
       
   if (eType == 'PLAYER' && spriteId != selfId) {
     eType = 'ACTOR';
@@ -1383,7 +1385,7 @@ socket.on('powerupTaken', function (data) {
   }
   
   var sprite = getSprite(eType, spriteId);
-  sprite.addPowerup(powerupName, powerupDuration);
+  sprite.addPowerup(powerupName, powerupDuration, powerupFeedbackOnTaken, powerupSoundOnTaken);
 });
 
 // sprite took damage

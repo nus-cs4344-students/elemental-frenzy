@@ -8,7 +8,7 @@
  * 4. (implement) the effects of a powerup (using the powerup name) in the 'powerupable' component and the recalculateStats function
  */
  
-var POWERUP_COLLISIONTYPE = 64;
+var POWERUP_DEFAULT_FEEDBACKCOLOR             = 'blue';
 
 var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
 var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
@@ -24,6 +24,14 @@ var POWERUP_DURATION_ATTACK_DOUBLEDMG     = 10.0;
 var POWERUP_DURATION_HEALTH_HEAL30PERCENT = 0.0;
 var POWERUP_DURATION_MANA_ZEROMANACOST    = 10.0;
 var POWERUP_DURATION_MOVESPEED_150SPEED   = 10.0;
+
+var POWERUP_FEEDBACKONTAKEN_ATTACK_DOUBLEDMG     = "Attack x2 !!!";
+var POWERUP_FEEDBACKONTAKEN_MANA_ZEROMANACOST    = "0 mana cost !!!";
+var POWERUP_FEEDBACKONTAKEN_MOVESPEED_150SPEED   = "Movespeed 1.5x !!!";
+
+var POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG     = "nameless_sound_file.ogg";
+var POWERUP_SOUNDONTAKEN_MANA_ZEROMANACOST    = "nameless_sound_file.ogg";
+var POWERUP_SOUNDONTAKEN_MOVESPEED_150SPEED   = "nameless_sound_file.ogg";
 
 var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG      = 2;
 var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT  = 2;
@@ -143,7 +151,7 @@ Q.Sprite.extend("Powerup", {
   // Give player the effect of the powerup and then disappear
   givePlayerEffect: function(player) {
     //console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
-    player.addPowerup(this.p.name, this.p.duration);
+    player.addPowerup(this.p.name, this.p.duration, this.p.feedbackOnTaken, this.p.soundOnTaken);
     if (player.p.isServerSide) {
       // Tell client that powerup was taken
       Q.input.trigger('broadcastAll', {eventName: 'powerupTaken', eventData: {
@@ -151,6 +159,8 @@ Q.Sprite.extend("Powerup", {
           spriteId: player.p.spriteId,
           powerupName: this.p.name,
           powerupDuration: this.p.duration,
+          powerupFeedbackOnTaken: this.p.feedbackOnTaken,
+          powerupSoundOnTaken: this.p.soundOnTaken,
           powerupId: this.p.spriteId
         }
       });
@@ -177,6 +187,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_ATTACK_DOUBLEDMG:   { name:           POWERUP_CLASS_ATTACK_DOUBLEDMG,
                                           sheet:          POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG, 
                                           duration:       POWERUP_DURATION_ATTACK_DOUBLEDMG,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_ATTACK_DOUBLEDMG,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG,
                                           spawnTime:      POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG,
                                           existing:       0
@@ -191,6 +203,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
                                           sheet:          POWERUP_SPRITESHEET_MANA_ZEROMANACOST, 
                                           duration:       POWERUP_DURATION_MANA_ZEROMANACOST,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MANA_ZEROMANACOST,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_MANA_ZEROMANACOST,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST,
                                           spawnTime:      POWERUP_SPAWNTIME_MANA_ZEROMANACOST,
                                           existing:       0
@@ -198,6 +212,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_MOVESPEED_150SPEED: { name:           POWERUP_CLASS_MOVESPEED_150SPEED,
                                           sheet:          POWERUP_SPRITESHEET_MOVESPEED_150SPEED,
                                           duration:       POWERUP_DURATION_MOVESPEED_150SPEED,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MOVESPEED_150SPEED,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_MOVESPEED_150SPEED,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED,
                                           spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150SPEED,
                                           existing:       0
@@ -214,6 +230,8 @@ Q.component('powerupSystem', {
         name: powerupName, 
         sheet: this.powerups[powerupName].sheet, 
         duration: this.powerups[powerupName].duration,
+        feedbackOnTaken: this.powerups[powerupName].feedbackOnTaken,
+        soundOnTaken: this.powerups[powerupName].soundOnTaken,
         spriteId: getNextSpriteId(),
         x: x, 
         y: y
@@ -358,7 +376,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.heal(0.3 * entity.p.maxHealth); 
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -382,8 +400,28 @@ Q.component('powerupable', {
   },
   
   extend: {
-    addPowerup: function(powerupName, powerupDuration) {
+    powerupFeedback: function(feedbackOnTaken, soundOnTaken) {
+      // Add a feedback display for textual feedback
+      if ( !this.has('feedbackDisplay')) {
+        this.add('feedbackDisplay');
+      }
+      
+      // Display textual feedback
+      if (feedbackOnTaken) {
+        this.displayFeedback(feedbackOnTaken, {
+          fillStyle: POWERUP_DEFAULT_FEEDBACKCOLOR
+        });
+      }
+      
+      // Play a sound
+      //if (soundOnTaken) {
+      //  Q.audio.play(soundOnTaken);
+      //}
+    },
+    
+    addPowerup: function(powerupName, powerupDuration, powerupFeedbackOnTaken, powerupSoundOnTaken) {
       //console.log("Adding powerup: " + powerupName + " for duration: " + powerupDuration);
+      this.powerupFeedback(powerupFeedbackOnTaken, powerupSoundOnTaken);
       this.p.powerupsTimeLeft[powerupName] = powerupDuration;
       if ( !this.p.powerupsHeld[powerupName]) {
         this.p.powerupsHeld[powerupName] = true;
