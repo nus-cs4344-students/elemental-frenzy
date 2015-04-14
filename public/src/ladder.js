@@ -64,7 +64,7 @@ function shuffleArray(array) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
     
-    console.log("Shuffling index randomIndex " + randomIndex + " and currentIndex " + currentIndex);
+    //console.log("Shuffling index randomIndex " + randomIndex + " and currentIndex " + currentIndex);
 
     // And swap it with the current element.
     temporaryValue = array[currentIndex];
@@ -118,7 +118,7 @@ Q.component('ladderSystem',{
         var x = path[p].x;
         var y = path[p].y;
 
-        console.log("Insert ladder " + ladderCount + " at "+x+" "+y);
+        //console.log("Insert ladder " + ladderCount + " at "+x+" "+y);
         
         // Creates ladder
         var ladder = new Q.Ladder({

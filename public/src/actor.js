@@ -44,7 +44,10 @@ Q.Sprite.extend("Actor", {
     var that = this;
     var selfDestruct = setInterval(function() {
       //console.log("ACTOR id " + that.p.spriteId + " update " + that.p.update);
-      
+      if (!that || !that.p) {
+        clearInterval(selfDestruct);
+        return;
+      }
       if (!that.p.update) {
         clearInterval(selfDestruct);
         removeSprite(that.p.entityType, that.p.spriteId);

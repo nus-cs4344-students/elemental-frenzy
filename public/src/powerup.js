@@ -55,37 +55,11 @@ Q.component('2dPowerup', {
                       ^ Q.SPRITE_PARTICLE,  // collides with everything except passive things like ladders and itself and eleballs (particles)
       constantY: entity.p.y - POWERUP_DEFAULT_BOUNCEAMOUNT,               // start the powerup bouncing from above (so that it doesnt go into a tile)
       t: Math.PI/2 + Math.PI/4,                                           // t = time-axis
-      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT                          // bounce amplitude (up-down )
+      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT,                         // bounce amplitude (up-down )
+      sensor: true // so that it doesn't bounce off players
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
-    entity.on('sensor', this, 'sensorCollision');
-  },
-  
-  sensorCollision: function(obj) {
-    console.log("sensor collision");
-    var entity = this.entity;
-    // Powerups only care about player collisions who are powerupable
-    if ( (obj.isA('Player') || obj.isA('Actor')) && obj.has('powerupable')) {
-      //console.log("Powerup colliding with player " + obj.p.name + "(" + obj.p.spriteId + ")");
-      if (obj.p.isServerSide) {
-        // Server side will apply the effect
-        if ( !entity.p.isTaken) {
-          entity.taken(obj);
-        }
-      } else {
-        // Client side will only destroy the powerup
-        entity.destroy();
-      }
-    } else if ( !obj.isA('Player') && !obj.isA('Actor') && !obj.has('2dEleball') && !obj.isA('Ladder')) {
-      // turn off gravity, shift it up
-      entity.p.gravity = 0;
-      entity.p.vx = entity.p.ax = 0;
-      entity.p.vy = entity.p.ay = 0;
-      entity.p.y -= separate[1];
-      entity.p.constantY = entity.p.y- entity.p.bounceAmount;
-      //console.log("separate[1]: " + separate[1] + " bounceAmount: " + entity.p.bounceAmount);
-    }
   },
   
   collision: function(col,last) {
@@ -161,14 +135,14 @@ Q.Sprite.extend("Powerup", {
       y: 100
     });
     
-    console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
+    //console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
     
     this.add('2dPowerup');
   },
   
   // Give player the effect of the powerup and then disappear
   givePlayerEffect: function(player) {
-    console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
+    //console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
     player.addPowerup(this.p.name, this.p.duration);
     if (player.p.isServerSide) {
       // Tell client that powerup was taken
@@ -260,7 +234,7 @@ Q.component('powerupSystem', {
     var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
     while (randomX <= MARGIN || randomX >= (tileLayer.p.w - MARGIN) || Q.stage(STAGE_LEVEL).locate(randomX, randomY)) {
       // near the borders or already has a sprite there
-      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+      //console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
       randomX = randomCoord.x;
       randomY = randomCoord.y - tileLayer.p.tileH;
       randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
@@ -298,7 +272,7 @@ Q.component('powerupSystem', {
         var that = this;
         setTimeout(function() {
           if (that && that.entity && powerupObj.existing < powerupObj.maxNumAtATime) {
-            console.log("Randomly spawning powerup " + powerupName + " because existing = " + powerupObj.existing + " but maxNum = " + powerupObj.maxNumAtATime);
+            //console.log("Randomly spawning powerup " + powerupName + " because existing = " + powerupObj.existing + " but maxNum = " + powerupObj.maxNumAtATime);
             that.randomlySpawnPowerup(powerupName);
           }
         }, powerupObj.spawnTime * 1000);

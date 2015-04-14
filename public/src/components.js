@@ -230,14 +230,14 @@ Q.component('2dEleball', {
     var other = col.obj;
     if (other.has("2dEleball")) {
       // Eleball - eleball collision
-      console.log("Eleball-eleball collision");
+      //console.log("Eleball-eleball collision");
       var i = entity.p.element,
         j = other.p.element;
       console.log("i = " + i + " j = " + j);
       if (i == j) {
         // Case 1, destroy each other
-        console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
         removeSprite(entity.p.entityType, entity.p.spriteId);
 
@@ -247,8 +247,8 @@ Q.component('2dEleball', {
         }
       } else if ( (j-i == 1) || (j-i == 1-ELEBALL_ELEMENTNAMES.length) ){
         // Case 2, this eleball destroys the other and passes through
-        console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys " + ELEBALL_ELEMENTNAMES[j]);
         
         removeSprite(other.p.entityType, other.p.spriteId);
 
@@ -257,12 +257,12 @@ Q.component('2dEleball', {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
         }
       } else if (Math.abs(i-j) == 2) {
-        console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
-              + " passes through " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " passes through " + ELEBALL_ELEMENTNAMES[j]);
       }
       entity.trigger("onHit", col);
     } else {
-      console.log("In 2dEleball: triggering onHit");
+      //console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
       removeSprite(entity.p.entityType, entity.p.spriteId);

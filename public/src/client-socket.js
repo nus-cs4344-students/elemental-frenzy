@@ -35,7 +35,7 @@ var INTERVAL_TIME_SYNCCLOCKS = 60000; // try to sync clocks with server every 60
 
 // RTT-related
 var avgRtt = 0;
-var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
 
 // Global flags for synchronization
 var _isSessionConnected = false;
@@ -407,6 +407,10 @@ var addSprite = function (entityType, id, properties) {
     console.log("Trying to add sprite without entityType");
     return;
   }
+  if (!allSprites[eType]) {
+    console.log("Trying to add sprite of type " + eType + " that currently is not in allSprites array");
+    return;
+  }
 
   var spriteId = id;
   switch(eType) {
@@ -447,11 +451,11 @@ var addSprite = function (entityType, id, properties) {
   }
 
   clonedProps.isServerSide = false; 
-  console.log("Added sprite " + eType + " id " + spriteId);
+  //console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
   
   // DEBUGGING PURPOSES
-  if (eType == 'PLAYERELEBALL') {
+  if (eType == 'PLAYERELEBALL' && clonedProps.shooterId == selfId) {
     var now = getCurrentTime();
     console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
   }
@@ -903,7 +907,7 @@ var setupEventListeners = function () {
     };
 
     time_sentMouseUp = getCurrentTime();
-    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
+    //console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
     

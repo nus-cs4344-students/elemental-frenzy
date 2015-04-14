@@ -274,7 +274,7 @@ var getNextSprite = function(entityType, theSpriteId) {
     }
   }
   
-  console.log("spriteCount: " + spriteCount + " upperBoundId: " + upperBoundId + " smallestId: " + smallestId);
+  //console.log("spriteCount: " + spriteCount + " upperBoundId: " + upperBoundId + " smallestId: " + smallestId);
   
   if (spriteCount == 0) {
     return;
@@ -378,7 +378,7 @@ var updateSprite = function(eType, spriteId, updateProps) {
   }
   
   // To avoid flooding the console
-  numSpriteUpdatesToPlayer[spriteId] = (numSpriteUpdatesToPlayer[spriteId]) ? numSpriteUpdatesToPlayer[spriteId] + 1 : 1;
+  numSpriteUpdatesToPlayer[spriteId] = (numSpriteUpdatesToPlayer[spriteId]) ? (numSpriteUpdatesToPlayer[spriteId] + 1) % 1000000000 : 1;
   if (numSpriteUpdatesToPlayer[spriteId] % 10 == 0) {
     console.log("Updating " + eType + " " + spriteId);
   }
@@ -578,7 +578,7 @@ var removeSprite = function(entityType, id){
     return false;
   }
 
-  console.log("Removed sprite " + eType + " id " + spriteId);
+  //console.log("Removed sprite " + eType + " id " + spriteId);
   
   if (eType == 'PLAYERELEBALL') {
     // Only the server chooses to destroy eleballs, so it must tell all players to remove the sprite
@@ -734,7 +734,7 @@ var initialization = function(){
       return;
     } 
     
-    console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
+    //console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
     Q.stage(STAGE_LEVEL).softFollow(playerToFollow);
     Q.stage(STAGE_MINIMAP).softFollow(playerToFollow);
   });   
@@ -866,7 +866,7 @@ var loadGameSession = function(sessionId) {
     }
     if( !getSprite(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
-      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      //console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
       // store sprite reference
       allSprites[eType][spriteId] = item;
       // store sprite properties into game state
@@ -884,7 +884,7 @@ var loadGameSession = function(sessionId) {
     }
     if( !getSprite(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
-      console.log("Removing item " + eType + " spriteId " + spriteId + " into state");
+      //console.log("Removing item " + eType + " spriteId " + spriteId + " into state");
       // store sprite reference
       delete allSprites[eType][spriteId];
       // store sprite properties into game state
@@ -1183,6 +1183,11 @@ socket.on('playerDisconnected', function(data) {
   
   // Update the state (remove this player from the state)
   Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);
+  
+  // If the viewport is following this player, toggle it
+  if (Q.stage(STAGE_LEVEL).viewport.following && Q.stage(STAGE_LEVEL).viewport.following.p.spriteId == pId) {
+    Q.input.trigger('toggleFollow');
+  }
 
   // Destroy player and remove him from game state
   removePlayerSprite(pId);
@@ -1308,7 +1313,7 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
       return;
     }
 
-    var action = actionName.substring(0, actionName.length - "Up".length);console.log(action);
+    var action = actionName.substring(0, actionName.length - "Up".length);//console.log(action);
     player.inputs[action] = false;
   });
 
