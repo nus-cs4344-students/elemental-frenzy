@@ -894,14 +894,9 @@ var loadGameSession = function(sessionId) {
     if (!eType || typeof spriteId === 'undefined') {
       return;
     }
-    if( !getSprite(eType,spriteId)){
-      // sprite doesn't exist, add it into the game state
-      //console.log("Removing item " + eType + " spriteId " + spriteId + " into state");
-      // store sprite reference
-      delete allSprites[eType][spriteId];
-      // store sprite properties into game state
-      delete gameState.sprites[eType][spriteId];
-    }
+    
+    //console.log("Removing item " + eType + " spriteId " + spriteId + " from state");
+    removeSprite(eType, spriteId);
   });
   
   Q.stage(STAGE_LEVEL).add("ladderSystem");
