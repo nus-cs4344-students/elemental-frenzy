@@ -87,6 +87,77 @@ Q.component("nameBar", {
   }
 });
 
+// ## feedbackDisplay component to be attached to a sprite which displays text feedback
+// Usage:
+//  1. Call the displayFeedback function of the sprite to add a text, [fontcolor], [fontsize in px], [font family] to the buffer
+//  2. Call the step(dt) function in the step function of the entity.
+//  3. Call the draw(ctx) function in the draw function of the entity.
+Q.component("feedbackDisplay", {
+  added: function() {
+    this.feedbackList = [];           // feedback to be displayed
+    this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
+    this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
+    this.feedbackDisplayVx = 0;       // 
+    this.feedbackDisplayVy = -1;      // velocities for the display
+    
+    this.entity.on('draw', this, 'draw');
+    this.entity.on('step', this, 'step');
+  },
+  
+  step: function(dt) {
+    for (var i = 0; i < this.feedbackTimeLeftList.length; i++) {
+      this.feedbackTimeLeftList[i] -= dt;
+      if (this.feedbackTimeLeftList[i] <= 0) {
+        // No need to display anymore, so remove it
+        this.feedbackTimeLeftList.splice(i, 1);
+        this.feedbackDisplayDmgList.splice(i, 1);
+        this.feedbackDisplayPosList.splice(i, 1);
+      } else {
+        // Need to display, so shift by vx, vy
+        this.feedbackDisplayPosList[i][0] += this.feedbackDisplayVx;
+        this.feedbackDisplayPosList[i][1] += this.feedbackDisplayVy;
+      }
+    }
+  },
+  
+  draw: function(ctx) {
+    for (var i = 0; i < this.feedbackList.length; i++) {
+      var feedback = this.feedbackList[i].text;
+      var options = this.feedbackList[i].options;
+      ctx.font = options.fontSize + "px " + options.fontFamily;
+      ctx.textAlign = options.textAlign;
+      ctx.fillStyle = options.fillStyle;
+      ctx.fillText(feedback, 
+            this.feedbackDisplayPosList[i][0], this.feedbackDisplayPosList[i][1]);
+    }
+  },
+  
+  extend: {
+    displayFeedback: function(text, options) {
+      // No text, don't bother doing anything
+      if (!text) {
+        return;
+      }
+      
+      options = options || {};
+      Q._defaults(options, {
+        fillStyle: 'black',
+        fontSize: 15,
+        fontFamily: FONT_FAMILY,
+        textAlign: 'left',
+        displayTime: 2, // in seconds
+        offset: 10 // the offset of the text from the center of the sprite
+      });
+      
+      // Adds the feedback into the buffer
+      var feedbackDisplay = this.feedbackDisplay;
+      feedbackDisplay.feedbackList.push({text: text, options: options});
+      feedbackDisplay.feedbackTimeLeftList.push(options.displayTime); 
+      feedbackDisplay.feedbackDisplayPosList.push([this.p.cx + options.offset, 0]);
+    }
+  }
+});
+
 // ## DmgDisplay component to be attached to a sprite which displays the damages they take
 // Usage:
 //  1. Call the addDmg(dmg) function when damage is taken to add the dmg to the display buffer
