@@ -243,6 +243,15 @@ Quintus.Sprites = function(Q) {
    @final
   */
   Q.SPRITE_UI       = 64;
+  
+  /**
+   Passive sprite type 128
+   
+   @property Q.SPRITE_PASSIVE
+   @for Quintus.sprites
+   @final
+  */
+  Q.SPRITE_PASSIVE  = 128;
 
   /**
    all sprite type - 0xFFFF
