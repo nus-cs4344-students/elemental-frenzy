@@ -1193,7 +1193,7 @@ socket.on('gameStateChanged', function (data) {
   //console.log("Received event gameStateChanged");
 
   var sToken = data.sessionToken;
-  if(sessionToken && (!sToken || sToken != sessionToken)){
+  if(sessionToken !== undefined && (!sToken || sToken != sessionToken)){
     console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during gameStateChanged");
     return;
   }
@@ -1212,12 +1212,6 @@ socket.on('gameStateChanged', function (data) {
   }
   if (typeof data.totalTime === 'undefined') {
     console.log("Error in event gameStateChanged: data.totalTime is undefined");
-    return;
-  }
-
-  var sToken = data.sessionToken;
-  if(!sToken || sToken != sessionToken){
-    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during gameStateChanged");
     return;
   }
   
