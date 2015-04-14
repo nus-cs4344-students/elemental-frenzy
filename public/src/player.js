@@ -366,10 +366,26 @@ Q.Sprite.extend("Player",{
       this.p.gravity = 0;
 
       if(Q.inputs['up']) {
-        this.p.vy = -this.p.speed;
+        if (this.p.vx > 0) {
+          this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
+          this.p.vy = -Math.sqrt(this.p.speed*this.p.speed/2);
+        } else if (this.p.vx < 0) {
+          this.p.vx = -Math.sqrt(this.p.speed*this.p.speed/2);
+          this.p.vy = -Math.sqrt(this.p.speed*this.p.speed/2);
+        } else {
+          this.p.vy = -this.p.speed; // only going upwards, so vy is the absolute speed
+        }
         this.play("run_in");
       } else if(Q.inputs['down']) {
-        this.p.vy = this.p.speed;
+        if (this.p.vx > 0) {
+          this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
+          this.p.vy = Math.sqrt(this.p.speed*this.p.speed/2);
+        } else if (this.p.vx < 0) {
+          this.p.vx = -Math.sqrt(this.p.speed*this.p.speed/2);
+          this.p.vy = Math.sqrt(this.p.speed*this.p.speed/2);
+        } else {
+          this.p.vy = this.p.speed; // only going downwards, so vy is the absolute speed
+        }
         this.play("run_in");
       } else{
         this.p.vy = 0;
