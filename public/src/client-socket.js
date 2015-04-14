@@ -1497,6 +1497,7 @@ socket.on('powerupTaken', function (data) {
   
   var eType = data.entityType,
       spriteId = data.spriteId,
+      powerupId = data.powerupId,
       powerupName = data.powerupName,
       powerupDuration = data.powerupDuration,
       powerupFeedbackOnTaken = data.powerupFeedbackOnTaken,
@@ -1511,6 +1512,7 @@ socket.on('powerupTaken', function (data) {
   
   var sprite = getSprite(eType, spriteId);
   sprite.addPowerup(powerupName, powerupDuration, powerupFeedbackOnTaken, powerupSoundOnTaken);
+  removeSprite('POWERUP', powerupId);
 });
 
 // sprite took damage
