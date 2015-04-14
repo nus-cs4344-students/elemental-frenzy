@@ -34,7 +34,9 @@ var gameState;
 var session;
 var allSprites;
 var spriteId = 0;
+var sessionToken = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
+var STATUS_CONNECTTION = "Connected as 'Session [id]'";
 
 // RTT-related
 var avgRttOfPlayers = [];
@@ -124,8 +126,7 @@ var getDefaultGameState = function() {
   var defaultGameState = {
     level: 'level3',
     sprites: defaultSprites,
-    kills: {},
-    deaths: {}
+    info: {}
   };
   
   return defaultGameState;
@@ -717,6 +718,44 @@ var initialization = function(){
   Q.input.on('displayScoreScreenUp', function(){
     hideScoreScreen();
   });
+
+  // On state change, update local gameState and
+  // update players
+  Q.input.on('stateChanged', function(){
+    gameState.info.kills = Q.state.get('kills');
+    gameState.info.deaths = Q.state.get('deaths');
+    gameState.info.timeLeft = Q.state.get('timeLeft');
+    gameState.info.totalTime = Q.state.get('totalTime');
+
+    // console.log("timeleft: " + gameState.info.timeLeft + " totaltime = " + gameState.info.totalTime);
+    
+    Q.input.trigger('broadcastAll', {
+      eventName: 'gameStateChanged', 
+      eventData: gameState.info
+    });
+
+    var tLeft = gameState.info.timeLeft;
+    if(tLeft !== undefined && tLeft <=0){
+      Q.input.trigger('endGame');
+    }
+
+  });
+
+  Q.input.on('endGame', function(){
+
+    console.log("end game session socket");
+    
+    Q.input.trigger('broadcastAll', {
+      eventName: 'endGame', 
+      eventData: {}
+    });
+
+    // reload game session
+    loadGameSession(session.sessionId);
+
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+  });
 };
 
 var resetDisplayScreen = function(){
@@ -760,7 +799,13 @@ var displayGameScreen = function(level){
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {level: level, miniStage: STAGE_LEVEL});  
 
   // show connected status
-  displayStatusScreeen("Connected as 'Session "+session.sessionId+"'");
+  var status = STATUS_CONNECTTION.replace('[id]', session.sessionId);
+  var tLeft = Q.state.get('timeLeft');
+  if(tLeft){
+    status += " "+getTimeFormat(tLeft);
+  }
+
+  displayStatusScreeen(status);
 
   // Viewport
   Q.stage(STAGE_LEVEL).add("viewport");
@@ -771,16 +816,6 @@ var displayGameScreen = function(level){
 };
 
 
-// Set the timer (timer tick starts only when the first player joins, and pauses when there are no players left or has reached 0)
-var setRoundTimer = function() {
-  Q.state.set({totalTime: TIME_PER_ROUND, timeLeft: TIME_PER_ROUND});
-  setInterval(function() {
-    if (session.playerCount > 0 && Q.state.get('timeLeft') > 0) {
-      Q.state.dec("timeLeft", 1);
-    }
-  }, 1000);
-};
-
 var loadGameSession = function(sessionId) {
   if(!sessionId){
     console.log("Trying to load game session without session id");
@@ -789,15 +824,57 @@ var loadGameSession = function(sessionId) {
 
   console.log("Loading game state...");
 
-  // initialize game state and session
-  gameState = getDefaultGameState();
+  // initialize session
   session = clone(DEFAULT_SESSION);
+  sessionToken++;
   session.sessionId = sessionId;
+
+  // there is old game state,
+  // remove all of them
+  if(gameState){
+    for (var entityType in gameState.sprites) {
+      for (var eId in gameState.sprites[entityType]) {
+        removeSprite(entityType, eId);
+      }
+    }
+  } 
+  // remove previous round timer if any
+  var prevTimer = Q.state.get('roundTimer');
+  if(prevTimer !== undefined){
+    clearInterval(prevTimer);
+  }
+
+  resetState();
+
+  // initialize game state
+  gameState = getDefaultGameState();
   allSprites = getDefaultSprites();
+  
+
+  var setRoundTimer = function() {
+    Q.state.p.totalTime = TIME_PER_ROUND;
+    Q.state.p.timeLeft = TIME_PER_ROUND;
+    
+    var roundTimer = setInterval(function() {
+      var timeLeft = Q.state.get('timeLeft');
+
+      if (session.playerCount > 0 && timeLeft && timeLeft > 0) {
+        
+        displayStatusScreeen(STATUS_CONNECTTION.replace('[id]', session.sessionId)+" "+getTimeFormat(timeLeft));
+
+        Q.state.dec("timeLeft", 1);
+      }
+    }, 1000);
+
+    Q.state.p.roundTimer = roundTimer;
+  };
+
+  setRoundTimer();
 
   displayGameScreen(gameState.level);
+
+
   
-  setRoundTimer();
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -837,6 +914,7 @@ var loadGameSession = function(sessionId) {
       Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: item.p}});
     }
   });
+
   // Listen to the removed event
   Q.stage(STAGE_LEVEL).on('removed', function(item) {
     var eType = item.p.entityType;
@@ -861,27 +939,6 @@ var loadGameSession = function(sessionId) {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
-  
-  // On Q.state change, update local gameState and
-  // update players
-  Q.state.on('change', function() {
-    gameState.kills = Q.state.get('kills');
-    gameState.deaths = Q.state.get('deaths');
-    gameState.timeLeft = Q.state.get('timeLeft');
-    gameState.totalTime = Q.state.get('totalTime');
-    
-    //console.log("timeleft: " + gameState.timeLeft + " totaltime = " + gameState.totalTime);
-
-    Q.input.trigger('broadcastAll', {
-      eventName: 'gameStateChanged', 
-      eventData: {
-        kills: gameState.kills,
-        deaths: gameState.deaths,
-        totalTime: gameState.totalTime,
-        timeLeft: gameState.timeLeft
-      }
-    });
-  });
 };
 
 var joinSession = function(playerId, characterId) {
@@ -926,6 +983,14 @@ var joinSession = function(playerId, characterId) {
         return result;
       }
     }
+  }
+
+  // Reject player join request is time left is less than 15 seconds
+  var tLeft = Q.state.get('timeLeft');
+  if(tLeft === undefined || tLeft <= 15){
+    console.log("Reject join request because session "+session.sessionId+" time left: "+getTimeFormat(tLeft));
+    result.msg = "Requested to join session "+session.sessionId+" which is ending it's round soon.";
+    return result;
   }
 
   // player can join the session
@@ -993,6 +1058,7 @@ var sendToApp = function(eventName, eventData){
   }
   
   eventData.timestamp = (new Date()).getTime();
+  eventData.sessionToken = sessionToken;
   socket.emit('session', {eventName: eventName, eventData: eventData, senderId: session.sessionId});
 };
 
@@ -1061,7 +1127,12 @@ socket.on('join', function(data) {
     Q.state.trigger('playerJoined', pId);
 
     // update the new player
-    var newPlayerData = {gameState: gameState, sessionId: session.sessionId};
+    var newPlayerData = {
+      gameState: gameState,
+      sessionId: session.sessionId, 
+      sessionToken: sessionToken
+    };
+
     Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
     
     // update other players
@@ -1082,6 +1153,13 @@ socket.on('join', function(data) {
 socket.on('synchronizeClocks', function(data) {
   data.sessionReceiveTime = getCurrentTime();
   data.clientSendTime = data.timestamp;
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during clock synchronization");
+    return;
+  }
+
   var playerId = data.playerId;
   Q.input.trigger('singleCast', {receiverId: playerId, eventName:'synchronizeClocks', eventData: data});
 });
@@ -1101,6 +1179,11 @@ socket.on('respawn', function(data) {
     return;
   }
 
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during respawn for player "+pId+" characterId "+cId);
+    return;
+  }
   // respawn player and creates sprite for it
   addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
 });
@@ -1108,6 +1191,12 @@ socket.on('respawn', function(data) {
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
   
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during clock synchronization");
+    return;
+  }
+
   var pId = data.spriteId
   if(!pId){
     console.log("Player without id is disconnected from session " + session.sessionId);
@@ -1146,7 +1235,14 @@ socket.on('disconnect', function(){
 // Authoritative message about the movement of the sprite from a client
 // Session must obey
 socket.on('authoritativeSpriteUpdate', function(data) {
-  if ( !checkGoodSprite(data.entityType, data.spriteId, 'authoritativeSpriteUpdate socket event')) {
+  
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during authoritativeSpriteUpdate");
+    return;
+  }
+
+  if (!checkGoodSprite(data.entityType, data.spriteId, 'authoritativeSpriteUpdate socket event')) {
     return;
   }
   
@@ -1182,6 +1278,12 @@ socket.on('mouseup', function(data) {
     console.log("Player "+pId+" from session "+sessionId+" sent mouseUp without event data");
     return;
   }
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during mouseup from player "+pId);
+    return;
+  }
   
   var player = getPlayerSprite(pId);
   var now = (new Date()).getTime();
@@ -1215,6 +1317,12 @@ each(['left','right','up', 'down'], function(actionName) {
       return;
     }
 
+    var sToken = data.sessionToken;
+    if(!sToken || sToken != sessionToken){
+      console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during ["+actionName+"] from player "+sId);
+      return;
+    }
+
     var player = getPlayerSprite(sId);
 
     // Simulate player releasing the key
@@ -1242,7 +1350,13 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
       console.log("Player "+sId+" from unknown session sent ["+actionName+"]");
       return;
     }
- 
+  
+    var sToken = data.sessionToken;
+    if(!sToken || sToken != sessionToken){
+      console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during ["+actionName+"] from player "+sId);
+      return;
+    }
+    
     var player = getPlayerSprite(sId);
 
     // Simulate player releasing the key
@@ -1262,6 +1376,13 @@ socket.on('toggleNextElementUp', function(data){
     var sId = data.spriteId;
     var eType = data.entityType;
 
+
+    var sToken = data.sessionToken;
+    if(!sToken || sToken != sessionToken){
+      console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during toggleNextElementUp");
+      return;
+    }
+
     if(!checkGoodSprite(eType, sId, "toggleNextElementUp")){
       return;
     }
@@ -1275,6 +1396,7 @@ socket.on('toggleNextElementUp', function(data){
 
     player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
 
-    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;console.log("current "+player.p.element+" received "+nextElement);
+    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
+    console.log("current "+player.p.element+" received "+nextElement);
     player.p.element = nextElement;
   });
