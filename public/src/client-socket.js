@@ -46,7 +46,7 @@ var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 
 var _isSessionConnected = false;
 var _isWelcomeScreenShown = false;
 var _clockSynchronized = false;
-var _gameLoaded = false;
+var _isGameLoaded = false;
 var _isEndGame = false;
 
 var STATUS_CONNECTION = "Connected to 'Session [id]'";
@@ -474,7 +474,7 @@ var addSprite = function (entityType, id, properties) {
     var interval_updateServer = setInterval(function () {
       //console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
-          sprite.p.isDead || !_isSessionConnected || !_gameLoaded) {
+          sprite.p.isDead || !_isSessionConnected || !_isGameLoaded) {
         // (Defensive) Remove interval because it is gone/not on the client side
         console.log("clearing interval for sprite "+sprite.p.spriteId);
         clearInterval(interval_updateServer);
@@ -705,7 +705,8 @@ var setupEventListeners = function () {
       return;
     }
 
-    var cId = player.characterId;
+    _isEndGame = false;
+    var cId = player.p.characterId;
     Q.input.trigger('sessionCast', {
       eventName:'playAgain', 
       eventData: {
@@ -865,7 +866,7 @@ var setupEventListeners = function () {
 
   Q.input.on('toggleNextElementUp', function () {
 
-    if(!_gameLoaded) {
+    if(!_isGameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -895,7 +896,7 @@ var setupEventListeners = function () {
     
     var player = getPlayerSprite(selfId);
     
-    if(!_gameLoaded || !player) {
+    if(!_isGameLoaded || !player) {
       // game state need to be loaded
       return;
     }
@@ -1020,7 +1021,7 @@ var displayPlayerHUDScreen = function () {
 
 var displayScoreScreen = function () {
 
-  if(!_isSessionConnected || !_gameLoaded) {
+  if(!_isSessionConnected || !_isGameLoaded) {
     // client side need to be connected to the server in order
     // to show score screen
     return;
@@ -1035,7 +1036,7 @@ var displayScoreScreen = function () {
 };
 
 var hideScoreScreen = function () {
-  if(!_isSessionConnected || !_gameLoaded) {
+  if(!_isSessionConnected || !_isGameLoaded) {
     // client side need to be connected to the server in order
     // to show score screen
     return;
@@ -1131,7 +1132,7 @@ var loadGameSession = function (receivedGameState) {
     // load player HUD info
   displayPlayerHUDScreen();
   
-  _gameLoaded = true;
+  _isGameLoaded = true;
 }
 
 var sendToApp = function (eventName, eventData) {
@@ -1222,7 +1223,7 @@ socket.on('gameStateChanged', function (data) {
   
   // console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
   
-  if(!_gameLoaded){
+  if(!_isGameLoaded){
     // received game state update before game is loaded
     infoState = {kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime};
   }else{
@@ -1276,7 +1277,7 @@ socket.on('endGame', function(data){
     return;
   }
 
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isEndGame = true;
   displayEndGameScreen();
 });
@@ -1323,11 +1324,11 @@ socket.on('joinFailed', function (data) {
   console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
   _isEndGame = false;
   
-  displayNotificationScreen("Failed to join session "+data.sessionId+" due to "+data.msg, displayWelcomeScreen);
+  displayNotificationScreen("Failed to join session "+data.sessionId+" due to\n["+data.msg+"]", displayWelcomeScreen);
 });
 
 // add sprite
@@ -1426,7 +1427,7 @@ socket.on('updateSprite', function (data) {
   
   //console.log("Message: updateSprite: timeStamp: ");
   //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
-  if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
+  if (!_isSessionConnected || !_clockSynchronized || !_isGameLoaded) {
     return;
   }
 
@@ -1580,7 +1581,7 @@ socket.on('sessionDisconnected', function (data) {
   console.log("Session disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
   _isEndGame = false;
 
@@ -1615,7 +1616,7 @@ socket.on('disconnect', function () {
   console.log("App.js disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isEndGame = false;
   _isJoinSent = false;
 

@@ -1128,15 +1128,10 @@ Q.scene(SCENE_HUD, function(stage) {
     if(timeLeft === undefined){
       timeLeft = Q.state.get('totalTime');
      }
-    var secLeft = Math.floor(timeLeft % 60);
-    var minLeft = Math.floor(timeLeft / 60);
-
-    minLeft = minLeft < 10 ? "0" + minLeft : minLeft;
-    secLeft = secLeft < 10 ? "0" + secLeft : secLeft;
 
     if (initHud) {
       timerText = stage.insert(new Q.UI.Text({
-      label : minLeft + ":" + secLeft,
+      label : getTimeFormat(timeLeft),
       x: Q.width/2,
       y: 13*Q.height/50,
       size: SIZE_NORMAL,
@@ -1144,8 +1139,8 @@ Q.scene(SCENE_HUD, function(stage) {
       }));
 
     } else {
-      timerText.p.label = minLeft + ":" + secLeft;
-      timerText.p.color = minLeft == "00" ? 'red' : 'black'; 
+      timerText.p.label = getTimeFormat(timeLeft);
+      timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
 
     initHud = false;
@@ -1516,7 +1511,6 @@ Q.scene(SCENE_SCORE, function(stage) {
 
     buttonPlay.on("click", function(){
       Q.input.trigger('playAgain');
-      Q.clearStage(STAGE_END_GAME);
     }); 
   }
 });

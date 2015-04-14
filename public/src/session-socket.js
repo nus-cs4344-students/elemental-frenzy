@@ -1007,7 +1007,7 @@ var joinSession = function(playerId, characterId) {
   // session full
   if(session.playerCount >= session.playerMaxCount){
     console.log("Session "+session.sessionId +" is full");
-    result.msg = "Requested to join session "+session.sessionId+" which is currently full";
+    result.msg = "Session "+session.sessionId+" is currently full";
     return result;
   
   }
@@ -1017,15 +1017,15 @@ var joinSession = function(playerId, characterId) {
     // player already joins the session
     if(session.players[pId]){
       console.log("Player "+pId+" is already in session "+session.sessionId);
-      result.msg = "Requested to join session "+session.sessionId+" which player "+pId+" has already joined";
+      result.msg = "Player "+pId+" has already joined Session "+session.sessionId;
       return result;
       }
 
     for(var p in session.players){
       if(session.players[p] == cId){
         console.log("Character "+cId+" is already used by Player "+p+" in session "+session.sessionId);
-        result.msg = "Requested to join session "+session.sessionId+
-                    " with character ["+PLAYER_NAMES[cId]+"] which is currently in use by other player";
+        result.msg = "Character ["+PLAYER_NAMES[cId]+"] in session "+session.sessionId+
+                    " is currently in use by other player";
         return result;
       }
     }
@@ -1142,57 +1142,67 @@ socket.on('connected', function(data) {
 
 
 // when a player request to join
-socket.on('join', function(data) {
+each(['join', 'playAgain'], function(event) {
+
+  socket.on(event, function(data) {
   
-  var pId = data.spriteId;
-  if(!pId){
-    console.log("Player without sprite id requests to join");
-    return;
-  }
+    var pId = data.spriteId;
+    if(!pId){
+      console.log("Player without sprite id requests to "+event);
+      return;
+    }
 
-  var cId = data.characterId;
-  if(!cId){
-    console.log("Player without character id requests to join");
-    return;
-  }
+    var cId = data.characterId;
+    if(!cId){
+      console.log("Player without character id requests to "+event);
+      return;
+    }
 
-  console.log("Player " + pId + " requests to join as character "+cId);
+    console.log("Player " + pId + " requests to "+event+" as character "+cId);
 
-  // try to put the player into  the session
-  var isJoined = joinSession(pId, cId);
-  
-  if(isJoined.status){
-    // console.log("gameState joined - "+getJSON(gameState));
-
-    // add player and creates sprite for it
-    addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
+    // try to put the player into  the session
+    var isJoined = joinSession(pId, cId);
     
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has joined"});
+    if(isJoined.status){
+      // console.log("gameState joined - "+getJSON(gameState));
 
-    // add player kills/deaths to Q.state
-    Q.state.trigger('playerJoined', pId);
+      // add player and creates sprite for it
+      var spawnPoint = getRandomSpawnPoint();
+      addPlayerSprite(pId, {
+        sheet: PLAYER_CHARACTERS[cId], 
+        name: PLAYER_NAMES[cId], 
+        characterId: cId,
+        x: spawnPoint.x,
+        y: spawnPoint.y
+      });
+      
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has joined"});
 
-    // update the new player
-    var newPlayerData = {
-      gameState: gameState,
-      sessionId: session.sessionId, 
-      sessionToken: sessionToken
-    };
+      // add player kills/deaths to Q.state
+      Q.state.trigger('playerJoined', pId);
 
-    Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
-    
-    // update other players
-    var otherPlayersData = {p: getPlayerProperties(pId)};
-    Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'addSprite', eventData: otherPlayersData});
+      // update the new player
+      var newPlayerData = {
+        gameState: gameState,
+        sessionId: session.sessionId, 
+        sessionToken: sessionToken
+      };
 
-    // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+      Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
+      
+      // update other players
+      var otherPlayersData = {p: getPlayerProperties(pId)};
+      Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'addSprite', eventData: otherPlayersData});
 
-  }else{
-    // update app.js regarding joinSession failed
-    var newPlayerData = {sessionId: session.sessionId, msg: isJoined.msg};
-    Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinFailed', eventData: newPlayerData});
-  }
+      // update app.js regarding session info
+      Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+
+    }else{
+      // update app.js regarding joinSession failed
+      var newPlayerData = {sessionId: session.sessionId, msg: isJoined.msg};
+      Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinFailed', eventData: newPlayerData});
+    }
+  });
 });
 
 // When a player joins, he will try to synchronize clocks
@@ -1230,7 +1240,19 @@ socket.on('respawn', function(data) {
     console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during respawn for player "+pId+" characterId "+cId);
     return;
   }
-  // respawn player and creates sprite for it
+
+  var spawnPoint = getRandomSpawnPoint();
+  addPlayerSprite(pId, {
+    sheet: PLAYER_CHARACTERS[cId], 
+    name: PLAYER_NAMES[cId], 
+    characterId: cId,
+    x: spawnPoint.x,
+    y: spawnPoint.y
+  });
+});
+
+var getRandomSpawnPoint = function(){
+    // respawn player and creates sprite for it
   // Get random spawn position
   var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
   var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
@@ -1238,16 +1260,10 @@ socket.on('respawn', function(data) {
   while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
     randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
   }
-  var randomX = randomCoord.x,
-      randomY = randomCoord.y - tileLayer.p.tileH;
-  addPlayerSprite(pId, {
-    sheet: PLAYER_CHARACTERS[cId], 
-    name: PLAYER_NAMES[cId], 
-    characterId: cId,
-    x: randomX,
-    y: randomY
-  });
-});
+  return {x: randomCoord.x,
+          y: randomCoord.y - tileLayer.p.tileH
+        };
+}
 
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
