@@ -36,6 +36,9 @@ var allSprites;
 var spriteId = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 
+// Debugging helper variables
+var numSpriteUpdatesToPlayer = {};
+
 // RTT-related
 var avgRttOfPlayers = [];
 var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
@@ -374,7 +377,11 @@ var updateSprite = function(eType, spriteId, updateProps) {
     return;
   }
   
-  console.log("Updating " + eType + " " + spriteId);
+  // To avoid flooding the console
+  numSpriteUpdatesToPlayer[spriteId] = (numSpriteUpdatesToPlayer[spriteId]) ? numSpriteUpdatesToPlayer[spriteId] + 1 : 1;
+  if (numSpriteUpdatesToPlayer[spriteId] % 10 == 0) {
+    console.log("Updating " + eType + " " + spriteId);
+  }
   
   updateProps.isServerSide = true;
   var spriteToUpdate = getSprite(eType, spriteId);
