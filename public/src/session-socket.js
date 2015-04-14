@@ -117,7 +117,7 @@ var getDefaultGameState = function() {
                               // duration: POWERUP_DURATION_MOVESPEED_150SPEED 
                             // }},
                             // "4": {p: {
-                              // name: POWERUP_CLASS_HEALTH_HEALTOFULL,
+                              // name: POWERUP_CLASS_HEALTH_HEAL30PERCENT,
                               // sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
                               // spriteId: 4,
                               // duration: POWERUP_DURATION_HEALTH_HEALTOFULL

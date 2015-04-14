@@ -13,27 +13,27 @@ var POWERUP_COLLISIONTYPE = 64;
 var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
 var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
 var POWERUP_CLASS_MOVESPEED_150SPEED          = "POWERUP_CLASS_MOVESPEED_150SPEED";
-var POWERUP_CLASS_HEALTH_HEALTOFULL           = "POWERUP_CLASS_HEALTH_HEALTOFULL";
+var POWERUP_CLASS_HEALTH_HEAL30PERCENT           = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
 
 var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
 var POWERUP_SPRITESHEET_MOVESPEED_150SPEED    = 'powerup_movement';
-var POWERUP_SPRITESHEET_HEALTH_HEALTOFULL     = 'powerup_red';
+var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT  = 'powerup_red';
 
 var POWERUP_DURATION_ATTACK_DOUBLEDMG     = 10.0;
-var POWERUP_DURATION_HEALTH_HEALTOFULL    = 0.0;
+var POWERUP_DURATION_HEALTH_HEAL30PERCENT = 0.0;
 var POWERUP_DURATION_MANA_ZEROMANACOST    = 10.0;
 var POWERUP_DURATION_MOVESPEED_150SPEED   = 10.0;
 
-var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG   = 2;
-var POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL  = 2;
-var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST   = 2;
-var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED = 2;
+var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG      = 2;
+var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT  = 2;
+var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST     = 2;
+var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED    = 2;
 
-var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG   = POWERUP_DURATION_ATTACK_DOUBLEDMG;
-var POWERUP_SPAWNTIME_HEALTH_HEALTOFULL  = 10.0;
-var POWERUP_SPAWNTIME_MANA_ZEROMANACOST   = POWERUP_DURATION_MANA_ZEROMANACOST;
-var POWERUP_SPAWNTIME_MOVESPEED_150SPEED = POWERUP_DURATION_MOVESPEED_150SPEED;
+var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG      = POWERUP_DURATION_ATTACK_DOUBLEDMG;
+var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT  = 10.0;
+var POWERUP_SPAWNTIME_MANA_ZEROMANACOST     = POWERUP_DURATION_MANA_ZEROMANACOST;
+var POWERUP_SPAWNTIME_MOVESPEED_150SPEED    = POWERUP_DURATION_MOVESPEED_150SPEED;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
@@ -207,11 +207,11 @@ Q.component('powerupSystem', {
                                           spawnTime:      POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG,
                                           existing:       0
                                         },
-      POWERUP_CLASS_HEALTH_HEALTOFULL:  { name:           POWERUP_CLASS_HEALTH_HEALTOFULL,
-                                          sheet:          POWERUP_SPRITESHEET_HEALTH_HEALTOFULL, 
-                                          duration:       POWERUP_DURATION_HEALTH_HEALTOFULL,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL,
-                                          spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEALTOFULL,
+      POWERUP_CLASS_HEALTH_HEAL30PERCENT:{name:           POWERUP_CLASS_HEALTH_HEAL30PERCENT,
+                                          sheet:          POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT, 
+                                          duration:       POWERUP_DURATION_HEALTH_HEAL30PERCENT,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT,
+                                          spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT,
                                           existing:       0
                                         },
       POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
@@ -384,7 +384,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEALTOFULL      : entity.p.currentHealth      = entity.p.maxHealth; 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -400,7 +400,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    -= 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEALTOFULL      : // do nothing
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : // do nothing
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
