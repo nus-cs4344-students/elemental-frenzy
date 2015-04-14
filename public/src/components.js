@@ -112,7 +112,7 @@ Q.component("dmgDisplay", {
 
     var dmg = dmgAndShooter.dmg;
     this.dmgDisplayDmgList.push(dmg);
-    this.dmgDisplayTimeLeftList.push(1); // display for 1 second
+    this.dmgDisplayTimeLeftList.push(2); // display for 2 seconds
     this.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
   },
   
@@ -133,11 +133,11 @@ Q.component("dmgDisplay", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px "+FONT_FAMILY;
+    ctx.font = "20px "+FONT_FAMILY;
     ctx.textAlign = "left";
     ctx.fillStyle = 'red';
     for (var i = 0; i < this.dmgDisplayDmgList.length; i++) {
-      ctx.fillText(this.dmgDisplayDmgList[i], 
+      ctx.fillText("-" + this.dmgDisplayDmgList[i], 
             this.dmgDisplayPosList[i][0], this.dmgDisplayPosList[i][1]);
     }
   }
