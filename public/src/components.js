@@ -191,7 +191,10 @@ Q.component('2dEleball', {
       ay: 0,
       gravity: 0, // Eleballs have no gravity
       type: Q.SPRITE_PARTICLE, // Eleballs are particles
-      collisionMask: Q.SPRITE_ALL // Eleballs collide with anything except
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PASSIVE, // Eleballs collide with anything except powerups and passive things like ladders
+      sensor: true
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");

@@ -32,11 +32,12 @@ Q.Sprite.extend("Actor", {
       sprite: ACTOR_ANIMATION,
       maxHealth: ACTOR_DEFAULT_MAXHEALTH,
       type: Q.SPRITE_ACTIVE,
+      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_ACTIVE,
       takeDamageCooldown: 0,
       update: true
     });
     
-    this.add('healthBar, nameBar, dmgDisplay, animation, 2d, powerupable');
+    this.add('healthBar, nameBar, dmgDisplay, animation, 2d, powerupable, 2dLadder');
     
     this.on("takeDamage");
 
@@ -92,8 +93,21 @@ Q.Sprite.extend("Actor", {
       this.takeDamageIntervalId = -1;
     }
 
+    if(this.p.onLadder) {
+      this.p.gravity = 0;
 
-    if(this.has('animation')){
+      if(Q.inputs['up']) {
+        this.play("run_in");
+      } else if(Q.inputs['down']) {
+        this.play("run_in");
+      } else{
+        this.play("stand_back");
+      }
+    }else{
+      this.p.gravity = 1;
+    }
+
+    if(!this.p.onLadder && this.has('animation')){
 
       if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&
         typeof this.p.fireAnimation != 'undefined'){

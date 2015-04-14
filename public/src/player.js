@@ -57,6 +57,7 @@ Q.Sprite.extend("Player",{
       manaPerShot: PLAYER_DEFAULT_MANA_PER_SHOT,
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
+      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_ACTIVE,
       characterId: PLAYER_DEFAULT_CHARACTERID,
       fireAnimation: PLAYER_NO_FIRE_ANIMATION,
       fireTargetX: 0, // position x of target in game world
@@ -366,11 +367,9 @@ Q.Sprite.extend("Player",{
 
       if(Q.inputs['up']) {
         this.p.vy = -this.p.speed;
-        this.p.x = this.p.ladderX;
         this.play("run_in");
       } else if(Q.inputs['down']) {
         this.p.vy = this.p.speed;
-        this.p.x = this.p.ladderX;
         this.play("run_in");
       } else{
         this.p.vy = 0;
