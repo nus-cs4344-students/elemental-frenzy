@@ -81,7 +81,9 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     ladder.png, ladder.json, \
     hud.png, hud.json, \
     powerups.png, powerups.json,\
-    scoreboard.png, scoreboard.json", function() {
+    scoreboard.png, scoreboard.json, \
+    hastePowerUp.ogg, healthPowerUp.ogg, \
+    manaPowerUp.ogg, manaInsufficient.ogg", function() {
 
    // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
