@@ -290,7 +290,11 @@ var getSprite = function (entityType, id) {
     console.log("Trying to get sprite "+eType+" without id");
   }
 
-  return allSprites[eType][spriteId];
+  if (allSprites) {
+    return allSprites[eType][spriteId];
+  } else {
+    return;
+  }
 };
 
 var getPlayerSprite = function (playerId) {
@@ -857,12 +861,24 @@ var setupEventListeners = function () {
 
   var handleMouseOrTouchEvent = function (e) {
     
-    if(!_gameLoaded) {
+    var player = getPlayerSprite(selfId);
+    
+    if(!_gameLoaded || !player) {
       // game state need to be loaded
       return;
     }
-
-    var player = getPlayerSprite(selfId);
+    
+    if (player.p.firingCooldown <= 0) {
+      if (!player.p.canFire) console.log("Setting canFire to true in client-socket");
+      player.p.canFire = true;
+      player.p.firingCooldown = 0;
+    }
+    
+    if(!player.p.canFire || player.p.isDead
+      || player.p.currentMana < player.p.manaPerShot) {
+        //console.log("cannot shoot canFire? " + player.p.canFire);
+      return;
+    }
 
     var stage = Q.stage(STAGE_LEVEL);
     var touch = e.changedTouches ?  e.changedTouches[0] : e;
@@ -870,38 +886,32 @@ var setupEventListeners = function () {
     var touchLocation = Q.input.touchLocation(touch);
     var mouseX = Q.canvasToStageX(touchLocation.x, stage);
     var mouseY = Q.canvasToStageY(touchLocation.y, stage);
+    
+    // Client side player fires the event!
+    var createdEvt = {
+      x: mouseX,
+      y: mouseY
+    };
 
+    // prevent event propagation
+    // e.preventDefault();
+
+    var eData = { sessionId: sessionId,
+                  spriteId: selfId,
+                  entityType: 'PLAYER',
+                  e: createdEvt
+    };
+
+    time_sentMouseUp = getCurrentTime();
+    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
+
+    Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
+    
     // Trigger the fire animation of the player
     if(player) {
       player.trigger('fire', createdEvt);
     } else {
       console.log("Cannot locate current player to perform mouseup");
-    }
-    
-    if(!player || !player.p.canFire || player.p.isDead
-      || player.p.currentMana < player.p.manaPerShot) {
-        //console.log("cannot shoot canFire? " + player.p.canFire);
-      return;
-    } else {
-      // Client side player fires the event!
-      var createdEvt = {
-        x: mouseX,
-        y: mouseY
-      };
-
-      // prevent event propagation
-      // e.preventDefault();
-
-      var eData = { sessionId: sessionId,
-                    spriteId: selfId,
-                    entityType: 'PLAYER',
-                    e: createdEvt
-      };
-
-      time_sentMouseUp = getCurrentTime();
-      console.log("Sent mouseup event to server at time " + time_sentMouseUp);
-
-      Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
     }
   };
 

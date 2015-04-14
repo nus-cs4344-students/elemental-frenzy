@@ -116,7 +116,7 @@ Q.Sprite.extend("Player",{
     // Will be set to true in the fired function
     this.p.canFire = false;
     this.p.firingCooldown = PLAYER_DEFAULT_FIRING_COOLDOWN;
-
+    
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
     var mouseX = e.x;
