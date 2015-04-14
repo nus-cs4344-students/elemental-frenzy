@@ -1175,7 +1175,7 @@ socket.on('playerDisconnected', function(data) {
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
   
   // Update the state (remove this player from the state)
-  Q.state.trigger('playerDisconnected', pId);
+  Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);
 
   // Destroy player and remove him from game state
   removePlayerSprite(pId);
