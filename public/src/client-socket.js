@@ -863,11 +863,6 @@ var setupEventListeners = function () {
     }
 
     var player = getPlayerSprite(selfId);
-    if(!player || !player.p.canFire || player.p.isDead
-      || player.p.currentMana < player.p.manaPerShot) {
-        //console.log("cannot shoot canFire? " + player.p.canFire);
-      return;
-    }
 
     var stage = Q.stage(STAGE_LEVEL);
     var touch = e.changedTouches ?  e.changedTouches[0] : e;
@@ -876,31 +871,37 @@ var setupEventListeners = function () {
     var mouseX = Q.canvasToStageX(touchLocation.x, stage);
     var mouseY = Q.canvasToStageY(touchLocation.y, stage);
 
-    // Client side player fires the event!
-    var createdEvt = {
-      x: mouseX,
-      y: mouseY
-    };
-
-    // prevent event propagation
-    // e.preventDefault();
-
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER',
-                  e: createdEvt
-    };
-
-    time_sentMouseUp = getCurrentTime();
-    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
-
-    Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
-
     // Trigger the fire animation of the player
     if(player) {
       player.trigger('fire', createdEvt);
     } else {
       console.log("Cannot locate current player to perform mouseup");
+    }
+    
+    if(!player || !player.p.canFire || player.p.isDead
+      || player.p.currentMana < player.p.manaPerShot) {
+        //console.log("cannot shoot canFire? " + player.p.canFire);
+      return;
+    } else {
+      // Client side player fires the event!
+      var createdEvt = {
+        x: mouseX,
+        y: mouseY
+      };
+
+      // prevent event propagation
+      // e.preventDefault();
+
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER',
+                    e: createdEvt
+      };
+
+      time_sentMouseUp = getCurrentTime();
+      console.log("Sent mouseup event to server at time " + time_sentMouseUp);
+
+      Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
     }
   };
 
