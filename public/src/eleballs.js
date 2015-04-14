@@ -54,8 +54,10 @@ Q.Sprite.extend("Eleball", {
       x : 0,
       y : 0,
       dmg : ELEBALL_DEFAULT_DMG,
-      type : Q.SPRITE_PARTICLE,
-      collisionMask : Q.SPRITE_ALL
+      type: Q.SPRITE_PARTICLE, // Eleballs are particles
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PASSIVE // Eleballs collide with anything except powerups and passive things like ladders
     });  
     
     /*

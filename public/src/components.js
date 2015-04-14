@@ -87,6 +87,77 @@ Q.component("nameBar", {
   }
 });
 
+// ## feedbackDisplay component to be attached to a sprite which displays text feedback
+// Usage:
+//  1. Call the displayFeedback function of the sprite to add a text, [fontcolor], [fontsize in px], [font family] to the buffer
+//  2. Call the step(dt) function in the step function of the entity.
+//  3. Call the draw(ctx) function in the draw function of the entity.
+Q.component("feedbackDisplay", {
+  added: function() {
+    this.feedbackList = [];           // feedback to be displayed
+    this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
+    this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
+    this.feedbackDisplayVx = 0;       // 
+    this.feedbackDisplayVy = -1;      // velocities for the display
+    
+    this.entity.on('draw', this, 'draw');
+    this.entity.on('step', this, 'step');
+  },
+  
+  step: function(dt) {
+    for (var i = 0; i < this.feedbackTimeLeftList.length; i++) {
+      this.feedbackTimeLeftList[i] -= dt;
+      if (this.feedbackTimeLeftList[i] <= 0) {
+        // No need to display anymore, so remove it
+        this.feedbackTimeLeftList.splice(i, 1);
+        this.feedbackDisplayDmgList.splice(i, 1);
+        this.feedbackDisplayPosList.splice(i, 1);
+      } else {
+        // Need to display, so shift by vx, vy
+        this.feedbackDisplayPosList[i][0] += this.feedbackDisplayVx;
+        this.feedbackDisplayPosList[i][1] += this.feedbackDisplayVy;
+      }
+    }
+  },
+  
+  draw: function(ctx) {
+    for (var i = 0; i < this.feedbackList.length; i++) {
+      var feedback = this.feedbackList[i].text;
+      var options = this.feedbackList[i].options;
+      ctx.font = options.fontSize + "px " + options.fontFamily;
+      ctx.textAlign = options.textAlign;
+      ctx.fillStyle = options.fillStyle;
+      ctx.fillText(feedback, 
+            this.feedbackDisplayPosList[i][0], this.feedbackDisplayPosList[i][1]);
+    }
+  },
+  
+  extend: {
+    displayFeedback: function(text, options) {
+      // No text, don't bother doing anything
+      if (!text) {
+        return;
+      }
+      
+      options = options || {};
+      Q._defaults(options, {
+        fillStyle: 'black',
+        fontSize: 15,
+        fontFamily: FONT_FAMILY,
+        textAlign: 'left',
+        displayTime: 2, // in seconds
+        offset: 10 // the offset of the text from the center of the sprite
+      });
+      
+      // Adds the feedback into the buffer
+      var feedbackDisplay = this.feedbackDisplay;
+      feedbackDisplay.feedbackList.push({text: text, options: options});
+      feedbackDisplay.feedbackTimeLeftList.push(options.displayTime); 
+      feedbackDisplay.feedbackDisplayPosList.push([this.p.cx + options.offset, 0]);
+    }
+  }
+});
+
 // ## DmgDisplay component to be attached to a sprite which displays the damages they take
 // Usage:
 //  1. Call the addDmg(dmg) function when damage is taken to add the dmg to the display buffer
@@ -112,7 +183,7 @@ Q.component("dmgDisplay", {
 
     var dmg = dmgAndShooter.dmg;
     this.dmgDisplayDmgList.push(dmg);
-    this.dmgDisplayTimeLeftList.push(1); // display for 1 second
+    this.dmgDisplayTimeLeftList.push(2); // display for 2 seconds
     this.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
   },
   
@@ -133,30 +204,12 @@ Q.component("dmgDisplay", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px "+FONT_FAMILY;
+    ctx.font = "20px "+FONT_FAMILY;
     ctx.textAlign = "left";
     ctx.fillStyle = 'red';
     for (var i = 0; i < this.dmgDisplayDmgList.length; i++) {
-      ctx.fillText(this.dmgDisplayDmgList[i], 
+      ctx.fillText("-" + this.dmgDisplayDmgList[i], 
             this.dmgDisplayPosList[i][0], this.dmgDisplayPosList[i][1]);
-    }
-  }
-});
-
-Q.component('2dLadder', {
-  added: function(){  
-    var entity = this.entity;
-    Q._defaults(entity.p,{
-      type: Q.SPRITE_UI, // ladder is ui element
-      collisionMask: Q.SPRITE_ACTIVE // ladder only collides with player
-    });
-    entity.on('hit',this,"collision");
-  },
-
-  collision: function(col,last) {
-    if(col.obj.isA("Ladder")){
-      var entity = this.entity;
-      entity.trigger("onLadder", col);
     }
   }
 });
@@ -209,7 +262,10 @@ Q.component('2dEleball', {
       ay: 0,
       gravity: 0, // Eleballs have no gravity
       type: Q.SPRITE_PARTICLE, // Eleballs are particles
-      collisionMask: Q.SPRITE_ALL // Eleballs collide with anything except
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PASSIVE, // Eleballs collide with anything except powerups and passive things like ladders
+      sensor: true
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
@@ -231,8 +287,8 @@ Q.component('2dEleball', {
       return;
     }
     
-    // Don't collide with powerups
-    if (col.obj.isA('Powerup')) {
+    // Don't collide with powerups and ladders
+    if (col.obj.isA('Powerup') || col.obj.isA('Ladder')) {
       return;
     }
     
@@ -245,14 +301,14 @@ Q.component('2dEleball', {
     var other = col.obj;
     if (other.has("2dEleball")) {
       // Eleball - eleball collision
-      console.log("Eleball-eleball collision");
+      //console.log("Eleball-eleball collision");
       var i = entity.p.element,
         j = other.p.element;
       console.log("i = " + i + " j = " + j);
       if (i == j) {
         // Case 1, destroy each other
-        console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
         removeSprite(entity.p.entityType, entity.p.spriteId);
 
@@ -262,8 +318,8 @@ Q.component('2dEleball', {
         }
       } else if ( (j-i == 1) || (j-i == 1-ELEBALL_ELEMENTNAMES.length) ){
         // Case 2, this eleball destroys the other and passes through
-        console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys " + ELEBALL_ELEMENTNAMES[j]);
         
         removeSprite(other.p.entityType, other.p.spriteId);
 
@@ -272,12 +328,12 @@ Q.component('2dEleball', {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
         }
       } else if (Math.abs(i-j) == 2) {
-        console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
-              + " passes through " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " passes through " + ELEBALL_ELEMENTNAMES[j]);
       }
       entity.trigger("onHit", col);
     } else {
-      console.log("In 2dEleball: triggering onHit");
+      //console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
       removeSprite(entity.p.entityType, entity.p.spriteId);

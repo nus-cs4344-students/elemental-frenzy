@@ -567,11 +567,17 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('prerender', ctx);
 
       var vp = stage.viewport;
+      var cLayer = mapStage._collisionLayers[0];
       var vpScale = 0.1;
-      var screenW = Q.width/3;
       var screenH = Q.height/3;
+      var screenW = Q.width/3;
       var startX, startY, endX, endY;
 
+      if(cLayer) {
+        vpScale = Math.max(0.1, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
+        vpScale = Math.round(vpScale * 100) / 100;
+      }
+      
       if(vp) {
 
         vp.scale = vpScale;
@@ -650,15 +656,26 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
   );
-       stage.insert(new Q.Ladder({x:1457, y:720}));
-    stage.insert(new Q.Ladder({x:1457, y:658}));
-    stage.insert(new Q.Ladder({x:1457, y:596}));
-    stage.insert(new Q.Ladder({x:1457, y:534}));
-    stage.insert(new Q.Ladder({x:1457, y:472}));
-    stage.insert(new Q.Ladder({x:1457, y:410}));
-    stage.insert(new Q.Ladder({x:1457, y:348}));
-    stage.insert(new Q.Ladder({x:1457, y:286}));
-    stage.insert(new Q.Ladder({x:1457, y:224}));
+  /*
+    stage.insert(new Q.Ladder({x:1457, y:784}));
+    stage.insert(new Q.Ladder({x:1457, y:752}));
+    stage.insert(new Q.Ladder({x:1457, y:720}));
+    stage.insert(new Q.Ladder({x:1457, y:688}));
+    stage.insert(new Q.Ladder({x:1457, y:656}));
+    stage.insert(new Q.Ladder({x:1457, y:624}));
+    stage.insert(new Q.Ladder({x:1457, y:592}));
+    stage.insert(new Q.Ladder({x:1457, y:560}));
+    stage.insert(new Q.Ladder({x:1457, y:528}));
+    stage.insert(new Q.Ladder({x:1457, y:496}));
+    stage.insert(new Q.Ladder({x:1457, y:464}));
+    stage.insert(new Q.Ladder({x:1457, y:432}));
+    stage.insert(new Q.Ladder({x:1457, y:400}));
+    stage.insert(new Q.Ladder({x:1457, y:368}));
+    stage.insert(new Q.Ladder({x:1457, y:336}));
+    stage.insert(new Q.Ladder({x:1457, y:304}));
+    stage.insert(new Q.Ladder({x:1457, y:272}));
+    stage.insert(new Q.Ladder({x:1457, y:240}));
+    stage.insert(new Q.Ladder({x:1457, y:208}));
 
     stage.insert(new Q.Ladder({x:500, y:764}));
     stage.insert(new Q.Ladder({x:500, y:702}));
@@ -672,7 +689,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.insert(new Q.Ladder({x:272, y:412}));
     stage.insert(new Q.Ladder({x:272, y:474}));
     
-   
+   */
   }
 });
 
@@ -833,20 +850,104 @@ Q.scene(SCENE_HUD, function(stage) {
 
   updateEleSelector(element);
 
-  var initHud = true;
+  var initHud  = true;
+  var initHud2 = true;
+
   var powerupMana_ZeroMana;
   var powerupAtk_DoubleDmg;
   var powerupMovement_150Speed;
   var powerupIconCenterX = [];
   var powerupIconCenterY = [];
-  var timerText;
 
+  var timerText;
+  var timeLeft = Q.state.p.totalTime;
+
+  var secondHudContainer = null;
+  if (isScreenWidthTooSmall && initHud2) {
+    secondHudContainer = stage.insert(new Q.UI.Container({ 
+                                                     x: Q.width/2, 
+                                                     y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
+                                                     w: WIDTH_HUD,
+                                                     h: HEIGH_HUD,
+                                                     fill: DARK_GREY,
+                                                     radius: 0 //0 = no rounded corners
+                                                    }));
+
+    secondHudContainer.on('draw', secondHudContainer, function(ctx) {
+
+      var currentPlayer = getPlayerSprite(selfId);
+      if(!currentPlayer) {
+        console.log("Cannot locate current player during HUD player attribute drawing");
+        resetPowerupIcons();
+        return;
+      }
+
+      /*
+      ** Power ups
+      */
+      var powerupIconWidth        = 34;
+      var spaceBetweenPowerupIcon = 15;
+      var borderWidth             = 4;
+      var numPowerupsType         = 3;
+
+      var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+
+      if (initHud2) {
+
+        initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
+
+        powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
+                                                                    x    : powerupIconCenterX[0],
+                                                                    y    : powerupIconCenterY[0],
+                                                                    scale: scaleToHeight
+                                      }));
+        powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
+                                                                    x    : powerupIconCenterX[1],
+                                                                    y    : powerupIconCenterY[1],
+                                                                    scale: scaleToHeight
+                                      }));
+        powerupMovement_150Speed    = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
+                                                                    x    : powerupIconCenterX[2],
+                                                                    y    : powerupIconCenterY[2],
+                                                                    scale: scaleToHeight
+                                      }));
+      } else {
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+        var is150MovespeedActive    = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        
+        powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
+        powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
+        powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
+        
+        if (isZeroManaActive) {
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+                                     powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
+
+        if (isDoubleDmgActive) {
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+                                     powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
+
+        if (is150MovespeedActive) {
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+                                     powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
+      }
+      initHud2 = false;
+    });
+  }
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
       console.log("Cannot locate current player during HUD player attribute drawing");
+      resetPowerupIcons();
       return;
     }
     
@@ -964,67 +1065,59 @@ Q.scene(SCENE_HUD, function(stage) {
     /*
     ** Power ups
     */
-    var powerupIconWidth = 34;
-    var spaceBetweenPowerupIcon = 15;
-    var borderWidth = 4;
-    var numPowerupsType = 3;
+    if (secondHudContainer === null) {
+      var powerupIconWidth        = 34;
+      var spaceBetweenPowerupIcon = 15;
+      var borderWidth             = 4;
+      var numPowerupsType         = 3;
 
-    var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
-    if (initHud) {
-      if (isScreenWidthTooSmall) {
-        var powerupContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                       y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
-                                                       w: WIDTH_HUD,
-                                                       h: HEIGH_HUD,
-                                                       fill: DARK_GREY,
-                                                       radius: 0 //0 = no rounded corners
-                                                      }));
-      }
-      
+      if (initHud) {
 
-      initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
+        initialisePowerupPlacementsInHud(numPowerupsType, powerupIconCenterX, powerupIconCenterY, powerupIconWidth, scaleToHeight, spaceBetweenPowerupIcon);
 
-      powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
-                                                                  x    : powerupIconCenterX[0],
-                                                                  y    : powerupIconCenterY[0],
-                                                                  scale: scaleToHeight
-                                    }));
-      powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
-                                                                  x    : powerupIconCenterX[1],
-                                                                  y    : powerupIconCenterY[1],
-                                                                  scale: scaleToHeight
-                                    }));
-      powerupMovement_150Speed = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
-                                                                  x    : powerupIconCenterX[2],
-                                                                  y    : powerupIconCenterY[2],
-                                                                  scale: scaleToHeight
-                                    }));
-    } else {
-      var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
-      var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-      var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
-      
-      powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
-      powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
-      powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
-      
-      if (isZeroManaActive) {
-        var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-        drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
-                                   powerupIconCenterX[0], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
-      }
+        powerupMana_ZeroMana        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_ZERO_MANA_COST,
+                                                                    x    : powerupIconCenterX[0],
+                                                                    y    : powerupIconCenterY[0],
+                                                                    scale: scaleToHeight
+                                      }));
+        powerupAtk_DoubleDmg        = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_DOUBLE_DMG,
+                                                                    x    : powerupIconCenterX[1],
+                                                                    y    : powerupIconCenterY[1],
+                                                                    scale: scaleToHeight
+                                      }));
+        powerupMovement_150Speed    = this.insert(new Q.UI.Button({ sheet: HUD_INACTIVE_150_MOVESPEED,
+                                                                    x    : powerupIconCenterX[2],
+                                                                    y    : powerupIconCenterY[2],
+                                                                    scale: scaleToHeight
+                                      }));
+      } else {
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+        var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        
+        powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
+        powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
+        powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
+        
+        if (isZeroManaActive) {
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+                                     powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
 
-      if (isDoubleDmgActive) {
-        var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-        drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
-                                   powerupIconCenterX[1], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
-      }
+        if (isDoubleDmgActive) {
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+                                     powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
 
-      if (is150MovespeedActive) {
-        var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
-        drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
-                                   powerupIconCenterX[2], 0, powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        if (is150MovespeedActive) {
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+                                     powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
+        }
       }
     }
 
@@ -1061,21 +1154,25 @@ Q.scene(SCENE_HUD, function(stage) {
 
   //reset hud powerup icons when player dies
   currentPlayer.on('destroyed', function() {
+    resetPowerupIcons();
+  });
+
+  var resetPowerupIcons = function () {
     powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
     powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
     powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
-  });
+  }
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
     var centerX = -(numPowerupsType/2) * iconWidth * scale;
-    var centerY = isScreenWidthTooSmall ? hudContainer.p.h : 0;
+    var centerY = 0;
     for (var i = 0; i < numPowerupsType; i++) {
       arrayX.push(centerX);
       arrayY.push(centerY);
       centerX += iconWidth * scale + spaceBetweenIcons;
     }
   }
-  
+
   /*
   ** This function fils a solid circle accordingly to value and maxValue, much like the HP circle.
   ** Then, once the circle is filled, it is clipped. A full square with rounded corners is drawn but

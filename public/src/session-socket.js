@@ -38,6 +38,12 @@ var sessionToken = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 var STATUS_CONNECTTION = "Connected as 'Session [id]'";
 
+// Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
+var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
+
+// Debugging helper variables
+var numSpriteUpdatesToPlayer = {};
+
 // RTT-related
 var avgRttOfPlayers = [];
 var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
@@ -81,7 +87,8 @@ var creates = {
   PLAYERELEBALL:  function(p) { return new Q.PlayerEleball(p); },
   ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
   ENEMY:          function(p) { return new Q.Enemy(p); },
-  POWERUP:        function(p) { return new Q.Powerup(p); }
+  POWERUP:        function(p) { return new Q.Powerup(p); },
+  LADDER:         function(p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function() {  
@@ -90,7 +97,8 @@ var getDefaultSprites = function() {
                           PLAYERELEBALL: {},
                           ENEMYELEBALL: {},
                           ENEMY: {},
-                          POWERUP: {}
+                          POWERUP: {},
+                          LADDER: {}
                         };
   return defaultSprites;
 }
@@ -117,7 +125,7 @@ var getDefaultGameState = function() {
                               // duration: POWERUP_DURATION_MOVESPEED_150SPEED 
                             // }},
                             // "4": {p: {
-                              // name: POWERUP_CLASS_HEALTH_HEALTOFULL,
+                              // name: POWERUP_CLASS_HEALTH_HEAL30PERCENT,
                               // sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
                               // spriteId: 4,
                               // duration: POWERUP_DURATION_HEALTH_HEALTOFULL
@@ -270,7 +278,7 @@ var getNextSprite = function(entityType, theSpriteId) {
     }
   }
   
-  console.log("spriteCount: " + spriteCount + " upperBoundId: " + upperBoundId + " smallestId: " + smallestId);
+  //console.log("spriteCount: " + spriteCount + " upperBoundId: " + upperBoundId + " smallestId: " + smallestId);
   
   if (spriteCount == 0) {
     return;
@@ -373,7 +381,11 @@ var updateSprite = function(eType, spriteId, updateProps) {
     return;
   }
   
-  console.log("Updating " + eType + " " + spriteId);
+  // To avoid flooding the console
+  numSpriteUpdatesToPlayer[spriteId] = (numSpriteUpdatesToPlayer[spriteId]) ? (numSpriteUpdatesToPlayer[spriteId] + 1) % 1000000000 : 1;
+  if (numSpriteUpdatesToPlayer[spriteId] % 10 == 0) {
+    console.log("Updating " + eType + " " + spriteId);
+  }
   
   updateProps.isServerSide = true;
   var spriteToUpdate = getSprite(eType, spriteId);
@@ -570,7 +582,7 @@ var removeSprite = function(entityType, id){
     return false;
   }
 
-  console.log("Removed sprite " + eType + " id " + spriteId);
+  //console.log("Removed sprite " + eType + " id " + spriteId);
   
   if (eType == 'PLAYERELEBALL') {
     // Only the server chooses to destroy eleballs, so it must tell all players to remove the sprite
@@ -657,35 +669,63 @@ var initialization = function(){
   // To move viewports
   var viewportSpeed = 50;
   Q.input.on("server_up", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
 
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y-viewportSpeed);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y-viewportSpeed);
+    sLevel.viewport.softCenterOn(x, y-(viewportSpeed*scale));
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini, yMini-(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_down", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x, y+viewportSpeed);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x, y+viewportSpeed);
+    sLevel.viewport.softCenterOn(x, y+(viewportSpeed*scale));
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini, yMini+(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_left", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x-viewportSpeed, y);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x-viewportSpeed, y);
+    sLevel.viewport.softCenterOn(x-(viewportSpeed*scale), y);
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini-(viewportSpeed*scaleMini), yMini);
   });
   
   Q.input.on("server_right", function() {
-    var x = Q.stage(STAGE_LEVEL).viewport.centerX,
-        y = Q.stage(STAGE_LEVEL).viewport.centerY;
+    var sLevel = Q.stage(STAGE_LEVEL);
+    var x = sLevel.viewport.centerX,
+        y = sLevel.viewport.centerY,
+        scale = sLevel.viewport.scale;
   
-    Q.stage(STAGE_LEVEL).viewport.softCenterOn(x+viewportSpeed, y);
-    Q.stage(STAGE_MINIMAP).viewport.softCenterOn(x+viewportSpeed, y);
+    sLevel.viewport.softCenterOn(x+(viewportSpeed*scale), y);
+
+    var sMini = Q.stage(STAGE_MINIMAP);
+    var xMini = sMini.viewport.centerX,
+        yMini = sMini.viewport.centerY,
+        scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(xMini+(viewportSpeed*scaleMini), yMini);
   });
   
   // Allow the session to follow different players
@@ -698,7 +738,7 @@ var initialization = function(){
       return;
     } 
     
-    console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
+    //console.log("Trying to follow player " + playerToFollow.p.spriteId + " and _playerToFollowId is " + _playerToFollowId);
     Q.stage(STAGE_LEVEL).softFollow(playerToFollow);
     Q.stage(STAGE_MINIMAP).softFollow(playerToFollow);
   });   
@@ -813,6 +853,15 @@ var displayGameScreen = function(level){
   // minimap
   Q.stage(STAGE_MINIMAP).add("viewport");
   
+  // Shrink the bounding box for the sprites' width to fit its real width
+  // for PLAYER and ACTOR sprites only
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
+      Q._generatePoints(item, true);
+    }
+  });
+  
 };
 
 
@@ -901,11 +950,12 @@ var loadGameSession = function(sessionId) {
     var eType = item.p.entityType;
     var spriteId = item.p.spriteId;
     if (!eType || typeof spriteId === 'undefined') {
+      console.log("Error in inserted event listener: entityType of spriteId is undefined");
       return;
     }
     if( !getSprite(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
-      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      //console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
       // store sprite reference
       allSprites[eType][spriteId] = item;
       // store sprite properties into game state
@@ -922,16 +972,12 @@ var loadGameSession = function(sessionId) {
     if (!eType || typeof spriteId === 'undefined') {
       return;
     }
-    if( !getSprite(eType,spriteId)){
-      // sprite doesn't exist, add it into the game state
-      console.log("Removing item " + eType + " spriteId " + spriteId + " into state");
-      // store sprite reference
-      delete allSprites[eType][spriteId];
-      // store sprite properties into game state
-      delete gameState.sprites[eType][spriteId];
-    }
+    
+    //console.log("Removing item " + eType + " spriteId " + spriteId + " from state");
+    removeSprite(eType, spriteId);
   });
   
+  Q.stage(STAGE_LEVEL).add("ladderSystem");
   Q.stage(STAGE_LEVEL).add("powerupSystem");
 
   for(var i =0; i< spritesToAdd.length; i++){
@@ -1185,7 +1231,22 @@ socket.on('respawn', function(data) {
     return;
   }
   // respawn player and creates sprite for it
-  addPlayerSprite(pId, {sheet: PLAYER_CHARACTERS[cId], name: PLAYER_NAMES[cId], characterId: cId});
+  // Get random spawn position
+  var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
+  var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+  var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
+  while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
+    randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+  }
+  var randomX = randomCoord.x,
+      randomY = randomCoord.y - tileLayer.p.tileH;
+  addPlayerSprite(pId, {
+    sheet: PLAYER_CHARACTERS[cId], 
+    name: PLAYER_NAMES[cId], 
+    characterId: cId,
+    x: randomX,
+    y: randomY
+  });
 });
 
 // when one or more players disconnected from app.js
@@ -1216,7 +1277,12 @@ socket.on('playerDisconnected', function(data) {
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
   
   // Update the state (remove this player from the state)
-  Q.state.trigger('playerDisconnected', pId);
+  Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);
+  
+  // If the viewport is following this player, toggle it
+  if (Q.stage(STAGE_LEVEL).viewport.following && Q.stage(STAGE_LEVEL).viewport.following.p.spriteId == pId) {
+    Q.input.trigger('toggleFollow');
+  }
 
   // Destroy player and remove him from game state
   removePlayerSprite(pId);
@@ -1289,9 +1355,11 @@ socket.on('mouseup', function(data) {
   var now = (new Date()).getTime();
   var oneWayDelay = now - data.timestamp;
   var timeBeforeShooting = (1000*PLAYER_FIRE_ANIMATION_TIME) - (2 * oneWayDelay);
+  
   console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
               " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
   player.trigger('fire', e);
+
   setTimeout(function() {
     // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
     if (player) {
@@ -1330,7 +1398,7 @@ each(['left','right','up', 'down'], function(actionName) {
       console.log("Player without sprite pressed the key");
       return;
     }
-    console.log("session received "+actionName);
+
     player.inputs[actionName] = true;
   });
 
@@ -1365,7 +1433,7 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
       return;
     }
 
-    var action = actionName.substring(0, actionName.length - "Up".length);console.log(action);
+    var action = actionName.substring(0, actionName.length - "Up".length);//console.log(action);
     player.inputs[action] = false;
   });
 

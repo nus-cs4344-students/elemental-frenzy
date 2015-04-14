@@ -57,6 +57,7 @@ Q.Sprite.extend("Player",{
       manaPerShot: PLAYER_DEFAULT_MANA_PER_SHOT,
       dmg: PLAYER_DEFAULT_DMG,
       type: Q.SPRITE_ACTIVE,
+      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_ACTIVE,
       characterId: PLAYER_DEFAULT_CHARACTERID,
       fireAnimation: PLAYER_NO_FIRE_ANIMATION,
       fireTargetX: 0, // position x of target in game world
@@ -83,7 +84,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder, powerupable');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, feedbackDisplay, 2dLadder, powerupable');
     
     this.takeDamageIntervalId = -1;
 
@@ -100,6 +101,12 @@ Q.Sprite.extend("Player",{
   fire: function(e){
     // console.log("At the START of FIRE function of PLAYER. properties of player: " + getJSON(this.p));
     
+    if (this.p.firingCooldown <= 0) {
+      if (!this.p.canFire) console.log("Setting canFire to true in fire");
+      this.p.canFire = true;
+      this.p.firingCooldown = 0;
+    }
+    
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
     if (this.p.isDead || !this.p.canFire ||
         this.p.currentMana < this.p.manaPerShot) {
@@ -110,7 +117,7 @@ Q.Sprite.extend("Player",{
     // Will be set to true in the fired function
     this.p.canFire = false;
     this.p.firingCooldown = PLAYER_DEFAULT_FIRING_COOLDOWN;
-
+    
     // when fire event is trigger, x & y in the event data are translate into game world coordinates
     // during event handling in client socket
     var mouseX = e.x;
@@ -342,13 +349,6 @@ Q.Sprite.extend("Player",{
 
     removePlayerSprite(vId);
   },
-  
-  climbLadder: function(col){
-      if(col.obj.isA("Ladder")) { 
-        this.p.onLadder = true;
-        this.p.ladderX = col.obj.p.x;
-      }
-  },
 
   step: function(dt) {
     // stop interval when player can take damage
@@ -358,24 +358,18 @@ Q.Sprite.extend("Player",{
     }
     
     this.p.firingCooldown -= dt;
-    if (this.p.firingCooldown <= 0) {
-      this.p.canFire = true;
-    }
   
     // Update countdown
     //this.p.updateCountdown -= dt;
-
-
+    
     if(this.p.onLadder) {
       this.p.gravity = 0;
 
       if(Q.inputs['up']) {
         this.p.vy = -this.p.speed;
-        this.p.x = this.p.ladderX;
         this.play("run_in");
       } else if(Q.inputs['down']) {
         this.p.vy = this.p.speed;
-        this.p.x = this.p.ladderX;
         this.play("run_in");
       } else{
         this.p.vy = 0;
@@ -410,8 +404,9 @@ Q.Sprite.extend("Player",{
       }
     }
     
-
+    
     this.p.onLadder = false;
+    
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
     this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 

@@ -13,27 +13,27 @@ var POWERUP_COLLISIONTYPE = 64;
 var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
 var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
 var POWERUP_CLASS_MOVESPEED_150SPEED          = "POWERUP_CLASS_MOVESPEED_150SPEED";
-var POWERUP_CLASS_HEALTH_HEALTOFULL           = "POWERUP_CLASS_HEALTH_HEALTOFULL";
+var POWERUP_CLASS_HEALTH_HEAL30PERCENT           = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
 
 var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
 var POWERUP_SPRITESHEET_MOVESPEED_150SPEED    = 'powerup_movement';
-var POWERUP_SPRITESHEET_HEALTH_HEALTOFULL     = 'powerup_red';
+var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT  = 'powerup_red';
 
 var POWERUP_DURATION_ATTACK_DOUBLEDMG     = 10.0;
-var POWERUP_DURATION_HEALTH_HEALTOFULL    = 0.0;
+var POWERUP_DURATION_HEALTH_HEAL30PERCENT = 0.0;
 var POWERUP_DURATION_MANA_ZEROMANACOST    = 10.0;
 var POWERUP_DURATION_MOVESPEED_150SPEED   = 10.0;
 
-var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG   = 5;
-var POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL  = 5;
-var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST   = 5;
-var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED = 5;
+var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG      = 2;
+var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT  = 2;
+var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST     = 2;
+var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED    = 2;
 
-var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG   = POWERUP_DURATION_ATTACK_DOUBLEDMG;
-var POWERUP_SPAWNTIME_HEALTH_HEALTOFULL  = 10.0;
-var POWERUP_SPAWNTIME_MANA_ZEROMANACOST   = POWERUP_DURATION_MANA_ZEROMANACOST;
-var POWERUP_SPAWNTIME_MOVESPEED_150SPEED = POWERUP_DURATION_MOVESPEED_150SPEED;
+var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG      = POWERUP_DURATION_ATTACK_DOUBLEDMG;
+var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT  = 10.0;
+var POWERUP_SPAWNTIME_MANA_ZEROMANACOST     = POWERUP_DURATION_MANA_ZEROMANACOST;
+var POWERUP_SPAWNTIME_MOVESPEED_150SPEED    = POWERUP_DURATION_MOVESPEED_150SPEED;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
@@ -48,17 +48,21 @@ Q.component('2dPowerup', {
       ax: 0,
       ay: 0,
       gravity: 1, 
-      type: Q.SPRITE_PARTICLE, 
-      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,          // don't collide with itself and with particles (eleballs)
-      constantY: entity.p.y - POWERUP_DEFAULT_BOUNCEAMOUNT,     // start the powerup bouncing from above (so that it doesnt go into a tile)
-      t: Math.PI/2 + Math.PI/4,                                 // t = time-axis
-      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT                // bounce amplitude (up-down )
+      type: Q.SPRITE_POWERUP, 
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_PASSIVE 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PARTICLE,  // collides with everything except passive things like ladders and itself and eleballs (particles)
+      constantY: entity.p.y - POWERUP_DEFAULT_BOUNCEAMOUNT,               // start the powerup bouncing from above (so that it doesnt go into a tile)
+      t: Math.PI/2 + Math.PI/4,                                           // t = time-axis
+      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT,                         // bounce amplitude (up-down )
+      sensor: true // so that it doesn't bounce off players
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
   },
   
-  collision: function(col,last) {    
+  collision: function(col,last) {
     var entity = this.entity;
     // Powerups only care about player collisions who are powerupable
     if ( (col.obj.isA('Player') || col.obj.isA('Actor')) && col.obj.has('powerupable')) {
@@ -72,7 +76,7 @@ Q.component('2dPowerup', {
         // Client side will only destroy the powerup
         entity.destroy();
       }
-    } else if ( !col.obj.isA('Player') && !col.obj.isA('Actor') && !col.obj.has('2dEleball') ) {
+    } else if ( !col.obj.isA('Player') && !col.obj.isA('Actor') && !col.obj.has('2dEleball') && !col.obj.isA('Ladder')) {
       // turn off gravity, shift it up
       entity.p.gravity = 0;
       entity.p.vx = entity.p.ax = 0;
@@ -121,21 +125,24 @@ Q.Sprite.extend("Powerup", {
       spriteId: -1,
       isTaken: false,
       duration: 10.0,
-      type: Q.SPRITE_PARTICLE,
-      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,
+      type: Q.SPRITE_POWERUP, 
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_PASSIVE 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PARTICLE,  // collides with everything except passive things like ladders and itself and eleballs (particles)
       sensor: true, // so that it doesn't bounce players off
       x: 700,
       y: 100
     });
     
-    console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
+    //console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
     
     this.add('2dPowerup');
   },
   
   // Give player the effect of the powerup and then disappear
   givePlayerEffect: function(player) {
-    console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
+    //console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
     player.addPowerup(this.p.name, this.p.duration);
     if (player.p.isServerSide) {
       // Tell client that powerup was taken
@@ -174,11 +181,11 @@ Q.component('powerupSystem', {
                                           spawnTime:      POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG,
                                           existing:       0
                                         },
-      POWERUP_CLASS_HEALTH_HEALTOFULL:  { name:           POWERUP_CLASS_HEALTH_HEALTOFULL,
-                                          sheet:          POWERUP_SPRITESHEET_HEALTH_HEALTOFULL, 
-                                          duration:       POWERUP_DURATION_HEALTH_HEALTOFULL,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEALTOFULL,
-                                          spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEALTOFULL,
+      POWERUP_CLASS_HEALTH_HEAL30PERCENT:{name:           POWERUP_CLASS_HEALTH_HEAL30PERCENT,
+                                          sheet:          POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT, 
+                                          duration:       POWERUP_DURATION_HEALTH_HEAL30PERCENT,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT,
+                                          spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT,
                                           existing:       0
                                         },
       POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
@@ -222,16 +229,20 @@ Q.component('powerupSystem', {
     // Get random spawn position
     var tileLayer = this.entity._collisionLayers[0];
     var randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+    var randomX = randomCoord.x,
+        randomY = randomCoord.y - tileLayer.p.tileH;
     var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
-    while (randomCoord.x <= MARGIN || randomCoord.x >= (tileLayer.p.w - MARGIN)) {
-      console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+    while (randomX <= MARGIN || randomX >= (tileLayer.p.w - MARGIN) || Q.stage(STAGE_LEVEL).locate(randomX, randomY)) {
+      // near the borders or already has a sprite there
+      //console.log("Avoiding spawning powerup at border x: " + randomCoord.x + " y: " + randomCoord.y);
+      randomX = randomCoord.x;
+      randomY = randomCoord.y - tileLayer.p.tileH;
       randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
     }
-    var randomX = randomCoord.x,
-        randomY = randomCoord.y;
         
     // Create the powerup
     var powerup = this.createPowerup(powerupName, randomX, randomY);
+    powerup.p.scale = Math.min(tileLayer.p.tileW/powerup.p.w, tileLayer.p.tileH/powerup.p.h);
     // Listen in to the taken event of the powerup so that when one powerup is taken 
     powerup.on('taken', this, 'powerupTaken');
     // Insert the powerup
@@ -261,7 +272,7 @@ Q.component('powerupSystem', {
         var that = this;
         setTimeout(function() {
           if (that && that.entity && powerupObj.existing < powerupObj.maxNumAtATime) {
-            console.log("Randomly spawning powerup " + powerupName + " because existing = " + powerupObj.existing + " but maxNum = " + powerupObj.maxNumAtATime);
+            //console.log("Randomly spawning powerup " + powerupName + " because existing = " + powerupObj.existing + " but maxNum = " + powerupObj.maxNumAtATime);
             that.randomlySpawnPowerup(powerupName);
           }
         }, powerupObj.spawnTime * 1000);
@@ -347,7 +358,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEALTOFULL      : entity.p.currentHealth      = entity.p.maxHealth; 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -363,7 +374,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    -= 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEALTOFULL      : // do nothing
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : // do nothing
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;

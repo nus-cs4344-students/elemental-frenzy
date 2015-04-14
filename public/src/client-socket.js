@@ -25,6 +25,9 @@ var infoState;
 var isSession = false;
 var _isJoinSent = false;
 
+// Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
+var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
+
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
@@ -37,7 +40,7 @@ var INTERVAL_TIME_SYNCCLOCKS = 60000; // try to sync clocks with server every 60
 
 // RTT-related
 var avgRtt = 0;
-var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
 
 // Global flags for synchronization
 var _isSessionConnected = false;
@@ -74,7 +77,8 @@ var creates = {
   PLAYERELEBALL:  function (p) { return new Q.PlayerEleball(p); },
   ENEMYELEBALL:   function (p) { return new Q.EnemyEleball(p); },
   ENEMY:          function (p) { return new Q.Enemy(p); },
-  POWERUP:        function (p) { return new Q.Powerup(p); }
+  POWERUP:        function (p) { return new Q.Powerup(p); },
+  LADDER:         function (p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function () {  
@@ -83,7 +87,8 @@ var getDefaultSprites = function () {
                           PLAYERELEBALL: {},
                           ENEMYELEBALL: {},
                           ENEMY: {},
-                          POWERUP: {}
+                          POWERUP: {},
+                          LADDER: {}
                         };
   return defaultSprites;
 };
@@ -293,7 +298,11 @@ var getSprite = function (entityType, id) {
     console.log("Trying to get sprite "+eType+" without id");
   }
 
-  return allSprites[eType][spriteId];
+  if (allSprites) {
+    return allSprites[eType][spriteId];
+  } else {
+    return;
+  }
 };
 
 var getPlayerSprite = function (playerId) {
@@ -406,6 +415,10 @@ var addSprite = function (entityType, id, properties) {
     console.log("Trying to add sprite without entityType");
     return;
   }
+  if (!allSprites[eType]) {
+    console.log("Trying to add sprite of type " + eType + " that currently is not in allSprites array");
+    return;
+  }
 
   var spriteId = id;
   switch(eType) {
@@ -446,11 +459,11 @@ var addSprite = function (entityType, id, properties) {
   }
 
   clonedProps.isServerSide = false; 
-  console.log("Added sprite " + eType + " id " + spriteId);
+  //console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
   
   // DEBUGGING PURPOSES
-  if (eType == 'PLAYERELEBALL') {
+  if (eType == 'PLAYERELEBALL' && clonedProps.shooterId == selfId) {
     var now = getCurrentTime();
     console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
   }
@@ -880,13 +893,20 @@ var setupEventListeners = function () {
 
   var handleMouseOrTouchEvent = function (e) {
     
-    if(!_gameLoaded) {
+    var player = getPlayerSprite(selfId);
+    
+    if(!_gameLoaded || !player) {
       // game state need to be loaded
       return;
     }
-
-    var player = getPlayerSprite(selfId);
-    if(!player || !player.p.canFire || player.p.isDead
+    
+    if (player.p.firingCooldown <= 0) {
+      if (!player.p.canFire) console.log("Setting canFire to true in client-socket");
+      player.p.canFire = true;
+      player.p.firingCooldown = 0;
+    }
+    
+    if(!player.p.canFire || player.p.isDead
       || player.p.currentMana < player.p.manaPerShot) {
         //console.log("cannot shoot canFire? " + player.p.canFire);
       return;
@@ -898,7 +918,7 @@ var setupEventListeners = function () {
     var touchLocation = Q.input.touchLocation(touch);
     var mouseX = Q.canvasToStageX(touchLocation.x, stage);
     var mouseY = Q.canvasToStageY(touchLocation.y, stage);
-
+    
     // Client side player fires the event!
     var createdEvt = {
       x: mouseX,
@@ -915,10 +935,10 @@ var setupEventListeners = function () {
     };
 
     time_sentMouseUp = getCurrentTime();
-    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
+    //console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
-
+    
     // Trigger the fire animation of the player
     if(player) {
       player.trigger('fire', createdEvt);
@@ -1048,6 +1068,14 @@ var displayGameScreen = function (level) {
   
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
 
+  // Shrink the bounding box for the sprites' width to fit its real width
+  // for PLAYER and ACTOR sprites only
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
+      Q._generatePoints(item, true);
+    }
+  });
 };
 
 // ## Loads the game state.

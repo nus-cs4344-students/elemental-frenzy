@@ -289,10 +289,11 @@ Quintus["2D"] = function(Q) {
     
     // Finds all the vertical tile-to-tile paths which are empty (no tiles on the paths) which have at least #leastPathLength empty tiles
     // which connect a tile directly below the path to a tile at the top of the path on its left/right
+    // Retuns coords of the center of each tile
     getVerticalTileToTileEmptyPaths: function(leastPathLength) {
       if (!leastPathLength) {
         leastPathLength = 1;
-      } else if (numEmptyTilesAbove <= 0) {
+      } else if (leastPathLength <= 0) {
         // Can't do this!
         return;
       }
@@ -313,7 +314,8 @@ Quintus["2D"] = function(Q) {
           if (x < this.p.cols-1) {
             rightTile = this.getTile(x+1, y);
           }
-          if (tile) {
+
+          if (curTile) {
             // hit a tile! Check if we have >= #leastPathlength tiles above
             if (currentPath.length >= leastPathLength) {
               // good path! Add it!
@@ -321,21 +323,23 @@ Quintus["2D"] = function(Q) {
             }
             foundLeftOrRightTile = false;
             currentPath = [];
-          } else if ( foundLeftOrRightTile ){
-            // Already found a left/right tile above to connect to, keep adding on to our path length!
-            currentPath.push({x: x*this.p.tileW/2, y: y*this.p.tileH/2});
           } else if (leftTile) {
             // There is a left tile, check if it has at least 2 empty tile spaces above it.
             // If so then we have found a good left tile!
             var isLeftUpOneEmpty = (y < 1 || !this.getTile(x-1, y-1));
             var isLeftUpTwoEmpty = (y < 2 || !this.getTile(x-1, y-2));
-            foundLeftOrRightTile = isLeftUpOneEmpty && isLeftUpTwoEmpty;
+            foundLeftOrRightTile = isLeftUpOneEmpty && isLeftUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
           } else if (rightTile) {
             // There is a right tile, check if it has at least 2 empty tile spaces above it.
             // If so then we have found a good right tile!
             var isRightUpOneEmpty = (y < 1 || !this.getTile(x+1, y-1));
             var isRightUpTwoEmpty = (y < 2 || !this.getTile(x+1, y-2));
-            foundRightOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty;
+            foundLeftOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
+          }
+          
+          if ( foundLeftOrRightTile ){
+            // Already found a left/right tile above to connect to, keep adding on to our path length!
+            currentPath.push({x: x*this.p.tileW+this.p.tileW/2, y: y*this.p.tileH+this.p.tileH/2});
           }
         }
       }
@@ -389,9 +393,9 @@ Quintus["2D"] = function(Q) {
       return tileCoords[randomIdx];
     },
     
-    // Returns the gameworld coordinates of the top-left corner of the tile specified by (tileX, tileY).
+    // Returns the gameworld coordinates of the center of the tile specified by (tileX, tileY).
     convertTileCoordToGameWorldCoord: function(tileX, tileY) {
-      return {x: tileX * this.p.tileW, y: tileY * this.p.tileH};
+      return {x: tileX * this.p.tileW + this.p.tileW/2, y: tileY * this.p.tileH + this.p.tileH/2};
     },
     
     // Finds a random tile that has at least #numEmptyTilesAbove tiles above which are empty and returns its coordinates (gameworld coords)
