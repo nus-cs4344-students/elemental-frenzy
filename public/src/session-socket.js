@@ -107,22 +107,22 @@ var getDefaultGameState = function() {
   var defaultSprites = getDefaultSprites();
   
   // defaultSprites.POWERUP = {"1": {p: {
-                              // name: POWERUP_CLASS_ATTACK_DOUBLEDMG,
-                              // sheet: POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG,
+                              // name: POWERUP_CLASS_ATTACK_150PERCENTDMG,
+                              // sheet: POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG,
                               // spriteId: 1,
-                              // duration: POWERUP_DURATION_ATTACK_DOUBLEDMG
+                              // duration: POWERUP_DURATION_ATTACK_150PERCENTDMG
                             // }},
                             // "2": {p: {
-                              // name: POWERUP_CLASS_MANA_ZEROMANACOST,
-                              // sheet: POWERUP_SPRITESHEET_MANA_ZEROMANACOST,
+                              // name: POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST,
+                              // sheet: POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST,
                               // spriteId: 2,
-                              // duration: POWERUP_DURATION_MANA_ZEROMANACOST
+                              // duration: POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST
                             // }},
                             // "3": {p: {
-                              // name: POWERUP_CLASS_MOVESPEED_150SPEED ,
-                              // sheet: POWERUP_SPRITESHEET_MOVESPEED_150SPEED ,
+                              // name: POWERUP_CLASS_MOVESPEED_150PERCENTSPEED ,
+                              // sheet: POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED ,
                               // spriteId: 3,
-                              // duration: POWERUP_DURATION_MOVESPEED_150SPEED 
+                              // duration: POWERUP_DURATION_MOVESPEED_150PERCENTSPEED 
                             // }},
                             // "4": {p: {
                               // name: POWERUP_CLASS_HEALTH_HEAL30PERCENT,

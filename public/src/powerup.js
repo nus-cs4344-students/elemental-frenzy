@@ -10,30 +10,30 @@
  
 var POWERUP_COLLISIONTYPE = 64;
 
-var POWERUP_CLASS_ATTACK_DOUBLEDMG            = "POWERUP_CLASS_ATTACK_DOUBLEDMG";
-var POWERUP_CLASS_MANA_ZEROMANACOST           = "POWERUP_CLASS_MANA_ZEROMANACOST";
-var POWERUP_CLASS_MOVESPEED_150SPEED          = "POWERUP_CLASS_MOVESPEED_150SPEED";
-var POWERUP_CLASS_HEALTH_HEAL30PERCENT           = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
+var POWERUP_CLASS_ATTACK_150PERCENTDMG          = "POWERUP_CLASS_ATTACK_150PERCENTDMG";
+var POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST  = "POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST";
+var POWERUP_CLASS_MOVESPEED_150PERCENTSPEED     = "POWERUP_CLASS_MOVESPEED_150PERCENTSPEED";
+var POWERUP_CLASS_HEALTH_HEAL30PERCENT          = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
 
-var POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG      = 'powerup_attack';
-var POWERUP_SPRITESHEET_MANA_ZEROMANACOST     = 'powerup_mana';
-var POWERUP_SPRITESHEET_MOVESPEED_150SPEED    = 'powerup_movement';
-var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT  = 'powerup_red';
+var POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG          = 'powerup_attack';
+var POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST  = 'powerup_mana';
+var POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED     = 'powerup_movement';
+var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT          = 'powerup_red';
 
-var POWERUP_DURATION_ATTACK_DOUBLEDMG     = 10.0;
-var POWERUP_DURATION_HEALTH_HEAL30PERCENT = 0.0;
-var POWERUP_DURATION_MANA_ZEROMANACOST    = 10.0;
-var POWERUP_DURATION_MOVESPEED_150SPEED   = 10.0;
+var POWERUP_DURATION_ATTACK_150PERCENTDMG         = 10.0;
+var POWERUP_DURATION_HEALTH_HEAL30PERCENT         = 0.0;
+var POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST = 10.0;
+var POWERUP_DURATION_MOVESPEED_150PERCENTSPEED    = 10.0;
 
-var POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG      = 2;
-var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT  = 2;
-var POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST     = 2;
-var POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED    = 2;
+var POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG          = 2;
+var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT          = 2;
+var POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST  = 2;
+var POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED     = 2;
 
-var POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG      = POWERUP_DURATION_ATTACK_DOUBLEDMG;
-var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT  = 10.0;
-var POWERUP_SPAWNTIME_MANA_ZEROMANACOST     = POWERUP_DURATION_MANA_ZEROMANACOST;
-var POWERUP_SPAWNTIME_MOVESPEED_150SPEED    = POWERUP_DURATION_MOVESPEED_150SPEED;
+var POWERUP_SPAWNTIME_ATTACK_150PERCENTDMG          = POWERUP_DURATION_ATTACK_150PERCENTDMG;
+var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT          = 10.0;
+var POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST  = POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST;
+var POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED     = POWERUP_DURATION_MOVESPEED_150PERCENTSPEED;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
@@ -174,11 +174,11 @@ Q.component('powerupSystem', {
   added: function() {
     // All the powerups of the game
     this.powerups = {
-      POWERUP_CLASS_ATTACK_DOUBLEDMG:   { name:           POWERUP_CLASS_ATTACK_DOUBLEDMG,
-                                          sheet:          POWERUP_SPRITESHEET_ATTACK_DOUBLEDMG, 
-                                          duration:       POWERUP_DURATION_ATTACK_DOUBLEDMG,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_DOUBLEDMG,
-                                          spawnTime:      POWERUP_SPAWNTIME_ATTACK_DOUBLEDMG,
+      POWERUP_CLASS_ATTACK_150PERCENTDMG:{name:           POWERUP_CLASS_ATTACK_150PERCENTDMG,
+                                          sheet:          POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG, 
+                                          duration:       POWERUP_DURATION_ATTACK_150PERCENTDMG,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG,
+                                          spawnTime:      POWERUP_SPAWNTIME_ATTACK_150PERCENTDMG,
                                           existing:       0
                                         },
       POWERUP_CLASS_HEALTH_HEAL30PERCENT:{name:           POWERUP_CLASS_HEALTH_HEAL30PERCENT,
@@ -188,18 +188,18 @@ Q.component('powerupSystem', {
                                           spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT,
                                           existing:       0
                                         },
-      POWERUP_CLASS_MANA_ZEROMANACOST:  { name:           POWERUP_CLASS_MANA_ZEROMANACOST,
-                                          sheet:          POWERUP_SPRITESHEET_MANA_ZEROMANACOST, 
-                                          duration:       POWERUP_DURATION_MANA_ZEROMANACOST,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_ZEROMANACOST,
-                                          spawnTime:      POWERUP_SPAWNTIME_MANA_ZEROMANACOST,
+      POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST:{name:   POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST,
+                                          sheet:          POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST, 
+                                          duration:       POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST,
+                                          spawnTime:      POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST,
                                           existing:       0
                                         },
-      POWERUP_CLASS_MOVESPEED_150SPEED: { name:           POWERUP_CLASS_MOVESPEED_150SPEED,
-                                          sheet:          POWERUP_SPRITESHEET_MOVESPEED_150SPEED,
-                                          duration:       POWERUP_DURATION_MOVESPEED_150SPEED,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150SPEED,
-                                          spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150SPEED,
+      POWERUP_CLASS_MOVESPEED_150PERCENTSPEED: {name:     POWERUP_CLASS_MOVESPEED_150PERCENTSPEED,
+                                          sheet:          POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED,
+                                          duration:       POWERUP_DURATION_MOVESPEED_150PERCENTSPEED,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED,
+                                          spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED,
                                           existing:       0
                                         }
     };
@@ -352,13 +352,13 @@ Q.component('powerupable', {
   applyPowerup: function(powerupName) {
     var entity = this.entity;
     switch (powerupName) {
-      case POWERUP_CLASS_ATTACK_DOUBLEDMG       : this.dmgMultiplier          += 1.0; 
+      case POWERUP_CLASS_ATTACK_150PERCENTDMG               : this.dmgMultiplier          += 0.5; 
         break;
-      case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = true; 
+      case POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST       : this.manaPerShotMultiplier  -= 0.7; 
         break;
-      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    += 0.5; 
+      case POWERUP_CLASS_MOVESPEED_150PERCENTSPEED          : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT               : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -368,13 +368,13 @@ Q.component('powerupable', {
   expirePowerup: function(powerupName) {
     var entity = this.entity;
     switch (powerupName) {
-      case POWERUP_CLASS_ATTACK_DOUBLEDMG       : this.dmgMultiplier          -= 1.0; 
+      case POWERUP_CLASS_ATTACK_150PERCENTDMG               : this.dmgMultiplier          -= 0.5; 
         break;
-      case POWERUP_CLASS_MANA_ZEROMANACOST      : this.manaPerShotIsZero      = false; 
+      case POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST       : this.manaPerShotMultiplier  += 0.7; 
         break;
-      case POWERUP_CLASS_MOVESPEED_150SPEED  : this.movespeedMultiplier    -= 0.5; 
-        break;
-      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : // do nothing
+      case POWERUP_CLASS_MOVESPEED_150PERCENTSPEED          : this.movespeedMultiplier    -= 0.5; 
+        break;          
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT               : // do nothing
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
