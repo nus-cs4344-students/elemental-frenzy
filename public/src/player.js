@@ -84,7 +84,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder, powerupable');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, feedbackDisplay, 2dLadder, powerupable');
     
     this.takeDamageIntervalId = -1;
 
