@@ -6,9 +6,9 @@ Q.Sprite.extend("Ladder", {
   init: function(p, defaultP) {
     this._super(p, { 
       sheet: 'ladder_wood',
-      type: Q.SPRITE_DEFAULT,
       entityType: 'LADDER',
-      collisonMask: Q.SPRITE_ACTIVE,
+      type: Q.SPRITE_PASSIVE,
+      collisionMask: Q.SPRITE_ACTIVE, // only collides with active players
       sensor: true
     });
 
@@ -22,7 +22,7 @@ Q.component('2dLadder', {
   added: function(){  
     var entity = this.entity;
     Q._defaults(entity.p,{
-      type: Q.SPRITE_UI,             // ladder is ui element
+      type: Q.SPRITE_PASSIVE,          
       collisionMask: Q.SPRITE_ACTIVE, // ladder only collides with player
       onLadder: false
     });
@@ -30,20 +30,17 @@ Q.component('2dLadder', {
   },
 
   collision: function(col,last) {
-    // only when player collide with ladder, then player will trigger 'onLadder'
     var entity = this.entity;
-    if(col.obj.isA("Ladder") && 
-    entity.p.x <= (col.obj.p.x + col.obj.p.cx) && entity.p.x >= (col.obj.p.x - col.obj.p.cx) ){
-      var entity = this.entity;
-      entity.climbLadder(col);
+    if(entity.isA('Ladder') && col.obj.isA('Player') && col.obj.has('2dLadder') && 
+    col.obj.p.x <= (entity.p.x + entity.p.cx) && col.obj.p.x >= (entity.p.x - entity.p.cx) ){
+      col.obj.climbLadder(entity);
     }
   },
   
   extend: {
-    climbLadder: function(col){
-        if(col.obj.isA("Ladder")) { 
+    climbLadder: function(obj){
+        if(obj.isA("Ladder")) { 
           this.p.onLadder = true;
-          this.p.ladderX = col.obj.p.x;
         }
     }
   }

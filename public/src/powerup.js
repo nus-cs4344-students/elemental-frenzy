@@ -48,11 +48,14 @@ Q.component('2dPowerup', {
       ax: 0,
       ay: 0,
       gravity: 1, 
-      type: Q.SPRITE_PARTICLE, 
-      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,          // don't collide with itself and with particles (eleballs)
-      constantY: entity.p.y - POWERUP_DEFAULT_BOUNCEAMOUNT,     // start the powerup bouncing from above (so that it doesnt go into a tile)
-      t: Math.PI/2 + Math.PI/4,                                 // t = time-axis
-      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT                // bounce amplitude (up-down )
+      type: Q.SPRITE_POWERUP, 
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_PASSIVE 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PARTICLE,  // collides with everything except passive things like ladders and itself and eleballs (particles)
+      constantY: entity.p.y - POWERUP_DEFAULT_BOUNCEAMOUNT,               // start the powerup bouncing from above (so that it doesnt go into a tile)
+      t: Math.PI/2 + Math.PI/4,                                           // t = time-axis
+      bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT                          // bounce amplitude (up-down )
     });
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
@@ -148,8 +151,11 @@ Q.Sprite.extend("Powerup", {
       spriteId: -1,
       isTaken: false,
       duration: 10.0,
-      type: Q.SPRITE_PARTICLE,
-      collisionMask: Q.SPRITE_ALL ^ Q.SPRITE_PARTICLE,
+      type: Q.SPRITE_POWERUP, 
+      collisionMask: Q.SPRITE_ALL 
+                      ^ Q.SPRITE_PASSIVE 
+                      ^ Q.SPRITE_POWERUP 
+                      ^ Q.SPRITE_PARTICLE,  // collides with everything except passive things like ladders and itself and eleballs (particles)
       sensor: true, // so that it doesn't bounce players off
       x: 700,
       y: 100
