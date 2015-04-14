@@ -27,6 +27,8 @@ var PLAYER_DEFAULT_FIRING_COOLDOWN = PLAYER_FIRE_ANIMATION_TIME;
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
+var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
+
 var time_fromFire;
 
 // ## Player Sprite
@@ -108,8 +110,12 @@ Q.Sprite.extend("Player",{
     }
     
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
-    if (this.p.isDead || !this.p.canFire ||
-        this.p.currentMana < this.p.manaPerShot) {
+    if (this.p.isDead || !this.p.canFire) {
+      return;
+    }
+    if (this.p.currentMana < this.p.manaPerShot) {
+      // Play not enough mana sound
+      Q.audio.play(SOUND_NOTENOUGHMANA);
       return;
     }
     time_fromFire = getCurrentTime();

@@ -25,6 +25,8 @@ var infoState;
 var isSession = false;
 var _isJoinSent = false;
 
+var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
+
 // Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
 var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
 
@@ -907,9 +909,13 @@ var setupEventListeners = function () {
       player.p.firingCooldown = 0;
     }
     
-    if(!player.p.canFire || player.p.isDead
-      || player.p.currentMana < player.p.manaPerShot) {
+    if(!player.p.canFire || player.p.isDead) {
         //console.log("cannot shoot canFire? " + player.p.canFire);
+      return;
+    }
+    if (player.p.currentMana < player.p.manaPerShot) {
+      // Play not enough mana sound
+      Q.audio.play(SOUND_NOTENOUGHMANA);
       return;
     }
 

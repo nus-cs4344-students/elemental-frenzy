@@ -110,7 +110,7 @@ Q.component("feedbackDisplay", {
     this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
     this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
     this.feedbackDisplayVx = 0;       // 
-    this.feedbackDisplayVy = -1;      // velocities for the display
+    this.feedbackDisplayVy = -2;      // velocities for the display
     
     this.entity.on('draw', this, 'draw');
     this.entity.on('step', this, 'step');
