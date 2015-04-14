@@ -23,6 +23,9 @@ var gameState;
 var isSession = false;
 var _isJoinSent = false;
 
+// Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
+var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
+
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
@@ -70,7 +73,7 @@ var creates = {
   ENEMYELEBALL:   function (p) { return new Q.EnemyEleball(p); },
   ENEMY:          function (p) { return new Q.Enemy(p); },
   POWERUP:        function (p) { return new Q.Powerup(p); },
-  LADDER:         function(p) { return new Q.Ladder(p); }
+  LADDER:         function (p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function () {  
@@ -1017,6 +1020,14 @@ var displayGameScreen = function (level) {
   
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
 
+  // Shrink the bounding box for the sprites' width to fit its real width
+  // for PLAYER and ACTOR sprites only
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
+      Q._generatePoints(item, true);
+    }
+  });
 };
 
 // ## Loads the game state.

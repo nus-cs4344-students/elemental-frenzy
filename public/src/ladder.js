@@ -32,10 +32,8 @@ Q.component('2dLadder', {
   sensorCollision: function(obj) {
     var entity = this.entity;
     console.log(entity.p.entityType + " " + entity.p.spriteId + " sensing");
-    if (obj.p.x <= (entity.p.x + entity.p.cx) && obj.p.x >= (entity.p.x - entity.p.cx) ){
-      obj.climbLadder(entity);
-    }
-  }
+    obj.climbLadder(entity);
+  },
   
   extend: {
     climbLadder: function(obj){
@@ -101,19 +99,7 @@ Q.component('ladderSystem',{
         continue;
       }
 
-      // for loop for inserting one ladder
-      // insert one extra tile on top
-      var x = path[0].x;
-      var y = path[0].y - ladderH;
-      var ladder = new Q.Ladder({
-        name: 'ladder_'+ladderCount,
-        spriteId: getNextSpriteId(),
-        x: x,
-        y: y
-      });
-
-      // Insert the ladder
-      this.entity.insert(ladder);
+      // Insert one ladder (multiple ladder tiles)
       for(var p in path){
         var x = path[p].x;
         var y = path[p].y;

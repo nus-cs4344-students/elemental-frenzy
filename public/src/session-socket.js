@@ -36,6 +36,9 @@ var allSprites;
 var spriteId = 0;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 
+// Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
+var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
+
 // Debugging helper variables
 var numSpriteUpdatesToPlayer = {};
 
@@ -804,6 +807,15 @@ var displayGameScreen = function(level){
 
   // minimap
   Q.stage(STAGE_MINIMAP).add("viewport");
+  
+  // Shrink the bounding box for the sprites' width to fit its real width
+  // for PLAYER and ACTOR sprites only
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
+      Q._generatePoints(item, true);
+    }
+  });
   
 };
 

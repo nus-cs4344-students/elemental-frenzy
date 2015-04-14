@@ -404,13 +404,8 @@ Q.Sprite.extend("Player",{
       }
     }
     
-    // Need 2 counts of step off a ladder before being considered off the ladder
-    if (this.p.notOnLadderCount) {
-      this.p.notOnLadderCount = 0;
-      this.p.onLadder = false;
-    } else {
-      this.p.notOnLadderCount = 1;
-    }
+    
+    this.p.onLadder = false;
     
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
     this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
