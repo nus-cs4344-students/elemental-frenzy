@@ -86,7 +86,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
   }
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
-                                            y:Q.height/20,
+                                            y:Q.height/30,
                                             weight: WEIGHT_TITLE,
                                             size: SIZE_TITLE,
                                             font: FONT_FAMILY,
@@ -158,7 +158,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                          y: 6.3*Q.height/11,
+                                                          y: 7.05*Q.height/11,
                                                           w: 3*Q.width/4,
                                                           h: Q.height/4,
                                                           fill: DARKER_GREY
@@ -245,7 +245,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // characterSprites selection section
   var characterSection = stage.insert(new Q.UI.Container({x: Q.width/2, 
-                                                          y: 4*Q.height/13,
+                                                          y: 3.1*Q.height/13,
                                                           w: 3*Q.width/4,
                                                           h: Q.height/4,
                                                           fill: DARK_GREY
@@ -385,13 +385,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
   characterSection.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 
 
-
+  var controlsTitleColor = 'hotpink';
+  var controlsTextColor = 'white';
   //control panel
   var controlsContainer = stage.insert(new Q.UI.Container({    x   : Q.width/2, 
-                                                               y   : 8.55*Q.height/11,
+                                                               y   : 9.2*Q.height/11,
                                                                w   : 3*Q.width/4,
-                                                               h   : Q.height/8,
-                                                               fill: DARKER_GREY
+                                                               h   : Q.height/10,
+                                                               fill: DARKEST_GREY
                                                         }));
 
   //controls in text form
@@ -402,8 +403,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
-                                                  label : 'Change to next element'
+                                                  color : controlsTitleColor,
+                                                  label : 'Change attack element'
                                               }));
 
   var changeElementText = stage.insert(new Q.UI.Text({ 
@@ -413,7 +414,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nSPACE'
                                               }));
 
@@ -424,7 +425,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Movement'
                                               }));
 
@@ -435,7 +436,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nW,A,S,D'
                                               }));
 
@@ -446,7 +447,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Shoot'
                                               }));
 
@@ -457,7 +458,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nMouse Click'
                                               }));
 
@@ -468,7 +469,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Scoreboard'
                                               }));
 
@@ -479,19 +480,24 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nHold TAB'
                                               }));
 
   //instrctions panel
   var instructionsContainer = stage.insert(new Q.UI.Container({
                                                               x   : Q.width/2, 
-                                                              y   : 9.6*Q.height/11,
+                                                              y   : 4.85*Q.height/11,
                                                               w   : 3*Q.width/4,
-                                                              h   : Q.height/28,
+                                                              h   : Q.height/9,
                                                               fill: DARKEST_GREY
                                                         }));
 
+  var instructions = 'Instructions:'+
+  '\nTake down opponents by consuming their elements!'+
+  '\nFire > Earth > Lightning > Water > Fire'+
+  '\n(\">\" means passes through)';
+                                              
   var instructionText = stage.insert(new Q.UI.Text({ 
                                                   x     : instructionsContainer.p.x,
                                                   y     : instructionsContainer.p.y - (2*instructionsContainer.p.h/5),
@@ -499,9 +505,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'hotpink',
-                                                  label : 'Remember, Fire > Earth > Lightning > Water > Fire!'
-                                              }));
+                                                  color : 'limegreen',
+                                                  label : instructions
+                                                  }));
 
   controlsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   instructionsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
