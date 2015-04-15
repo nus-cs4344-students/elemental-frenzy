@@ -110,7 +110,7 @@ Q.component("feedbackDisplay", {
     this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
     this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
     this.feedbackDisplayVx = 0;       // 
-    this.feedbackDisplayVy = -1;      // velocities for the display
+    this.feedbackDisplayVy = -2;      // velocities for the display
     
     this.entity.on('draw', this, 'draw');
     this.entity.on('step', this, 'step');
@@ -122,12 +122,14 @@ Q.component("feedbackDisplay", {
       if (this.feedbackTimeLeftList[i] <= 0) {
         // No need to display anymore, so remove it
         this.feedbackTimeLeftList.splice(i, 1);
-        this.feedbackDisplayDmgList.splice(i, 1);
+        this.feedbackList.splice(i, 1);
         this.feedbackDisplayPosList.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
-        this.feedbackDisplayPosList[i][0] += this.feedbackDisplayVx;
-        this.feedbackDisplayPosList[i][1] += this.feedbackDisplayVy;
+        var vx = this.feedbackList[i].options.displayVx;
+        var vy = this.feedbackList[i].options.displayVy;
+        this.feedbackDisplayPosList[i][0] += vx;
+        this.feedbackDisplayPosList[i][1] += vy;
       }
     }
   },
@@ -154,10 +156,12 @@ Q.component("feedbackDisplay", {
       options = options || {};
       Q._defaults(options, {
         fillStyle: 'black',
-        fontSize: 15,
+        fontSize: 20,
         fontFamily: FONT_FAMILY,
         textAlign: 'left',
         displayTime: 2, // in seconds
+        displayVx: this.feedbackDisplay.feedbackDisplayVx,
+        displayVy: this.feedbackDisplay.feedbackDisplayVy,
         offset: 10 // the offset of the text from the center of the sprite
       });
       
@@ -170,59 +174,43 @@ Q.component("feedbackDisplay", {
   }
 });
 
+Q.component("healDisplay", {
+  added: function() {
+    var entity = this.entity;
+    entity.on('heal', this, 'showHealFeedback');
+  },
+  
+  showHealFeedback: function(healAmt) {
+    var entity = this.entity;
+    if (!entity.has('feedbackDisplay')) {
+      entity.add('feedbackDisplay');
+    }
+    entity.displayFeedback("+" + healAmt, {
+      fillStyle: '#00B000'
+    });
+  }
+});
+
 // ## DmgDisplay component to be attached to a sprite which displays the damages they take
 // Usage:
-//  1. Call the addDmg(dmg) function when damage is taken to add the dmg to the display buffer
+//  1. Call the showDmgFeedback(dmg) function when damage is taken to add the dmg to the display buffer
 //  2. Call the step(dt) function in the step function of the entity.
 //  3. Call the draw(ctx) function in the draw function of the entity.
 Q.component("dmgDisplay", {
   added: function() {
-    this.dmgDisplayDmgList = [];      // damages to be displayed
-    this.dmgDisplayTimeLeftList = [];  // timeLeft for each damage to be displayed
-    this.dmgDisplayPosList = [];    // positions x and y of the display for each damage
-    this.dmgDisplayVx = 0;    // 
-    this.dmgDisplayVy = -1;  // velocities for the display
-    
-    this.entity.on('draw', this, 'draw');
-    this.entity.on('step', this, 'step');
-    this.entity.on('takeDamage', this, 'addDmg');
+    var entity = this.entity;
+    entity.on('takeDamage', this, 'showDmgFeedback');
   },
   
-  addDmg: function(dmgAndShooter) {
-    if(this.entity.p.takeDamageCooldown > 0){
-      return;
-    }
-
+  showDmgFeedback: function(dmgAndShooter) {
     var dmg = dmgAndShooter.dmg;
-    this.dmgDisplayDmgList.push(dmg);
-    this.dmgDisplayTimeLeftList.push(2); // display for 2 seconds
-    this.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
-  },
-  
-  step: function(dt) {
-    for (var i = 0; i < this.dmgDisplayTimeLeftList.length; i++) {
-      this.dmgDisplayTimeLeftList[i] -= dt;
-      if (this.dmgDisplayTimeLeftList[i] <= 0) {
-        // No need to display anymore, so remove it
-        this.dmgDisplayTimeLeftList.splice(i, 1);
-        this.dmgDisplayDmgList.splice(i, 1);
-        this.dmgDisplayPosList.splice(i, 1);
-      } else {
-        // Need to display, so shift by vx, vy
-        this.dmgDisplayPosList[i][0] += this.dmgDisplayVx;
-        this.dmgDisplayPosList[i][1] += this.dmgDisplayVy;
-      }
+    var entity = this.entity;
+    if (!entity.has('feedbackDisplay')) {
+      entity.add('feedbackDisplay');
     }
-  },
-  
-  draw: function(ctx) {
-    ctx.font = "20px "+FONT_FAMILY;
-    ctx.textAlign = "left";
-    ctx.fillStyle = 'red';
-    for (var i = 0; i < this.dmgDisplayDmgList.length; i++) {
-      ctx.fillText("-" + this.dmgDisplayDmgList[i], 
-            this.dmgDisplayPosList[i][0], this.dmgDisplayPosList[i][1]);
-    }
+    entity.displayFeedback("-" + dmg, {
+      fillStyle: 'red'
+    });    
   }
 });
 

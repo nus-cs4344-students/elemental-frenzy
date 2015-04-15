@@ -8,7 +8,7 @@
  * 4. (implement) the effects of a powerup (using the powerup name) in the 'powerupable' component and the recalculateStats function
  */
  
-var POWERUP_COLLISIONTYPE = 64;
+var POWERUP_DEFAULT_FEEDBACKCOLOR             = 'blue';
 
 var POWERUP_CLASS_ATTACK_150PERCENTDMG          = "POWERUP_CLASS_ATTACK_150PERCENTDMG";
 var POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST  = "POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST";
@@ -24,6 +24,15 @@ var POWERUP_DURATION_ATTACK_150PERCENTDMG         = 10.0;
 var POWERUP_DURATION_HEALTH_HEAL30PERCENT         = 0.0;
 var POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST = 10.0;
 var POWERUP_DURATION_MOVESPEED_150PERCENTSPEED    = 10.0;
+
+var POWERUP_FEEDBACKONTAKEN_ATTACK_150PERCENTDMG          = "Dmg 150%";
+var POWERUP_FEEDBACKONTAKEN_MANA_REDUCE70PERCENTMANACOST  = "Manacost 30%";
+var POWERUP_FEEDBACKONTAKEN_MOVESPEED_150PERCENTSPEED     = "Speed 150%";
+
+var POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG             = "damagePowerUp2.ogg";
+var POWERUP_SOUNDONTAKEN_HEALTH_HEAL30PERCENT         = "healthPowerUp.ogg";
+var POWERUP_SOUNDONTAKEN_MANA_REDUCE70PERCENTMANACOST = "manaPowerUp.ogg";
+var POWERUP_SOUNDONTAKEN_MOVESPEED_150PERCENTSPEED    = "hastePowerUp.ogg";
 
 var POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG          = 2;
 var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT          = 2;
@@ -143,7 +152,7 @@ Q.Sprite.extend("Powerup", {
   // Give player the effect of the powerup and then disappear
   givePlayerEffect: function(player) {
     //console.log("Powerup " + this.p.name + " giving effect to player " + player.p.name + "(" + player.p.spriteId + ")");
-    player.addPowerup(this.p.name, this.p.duration);
+    player.addPowerup(this.p.name, this.p.duration, this.p.feedbackOnTaken, this.p.soundOnTaken);
     if (player.p.isServerSide) {
       // Tell client that powerup was taken
       Q.input.trigger('broadcastAll', {eventName: 'powerupTaken', eventData: {
@@ -151,6 +160,8 @@ Q.Sprite.extend("Powerup", {
           spriteId: player.p.spriteId,
           powerupName: this.p.name,
           powerupDuration: this.p.duration,
+          powerupFeedbackOnTaken: this.p.feedbackOnTaken,
+          powerupSoundOnTaken: this.p.soundOnTaken,
           powerupId: this.p.spriteId
         }
       });
@@ -177,6 +188,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_ATTACK_150PERCENTDMG:{name:           POWERUP_CLASS_ATTACK_150PERCENTDMG,
                                           sheet:          POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG, 
                                           duration:       POWERUP_DURATION_ATTACK_150PERCENTDMG,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_ATTACK_150PERCENTDMG,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG,
                                           spawnTime:      POWERUP_SPAWNTIME_ATTACK_150PERCENTDMG,
                                           existing:       0
@@ -184,6 +197,7 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_HEALTH_HEAL30PERCENT:{name:           POWERUP_CLASS_HEALTH_HEAL30PERCENT,
                                           sheet:          POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT, 
                                           duration:       POWERUP_DURATION_HEALTH_HEAL30PERCENT,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_HEALTH_HEAL30PERCENT,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT,
                                           spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT,
                                           existing:       0
@@ -191,6 +205,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST:{name:   POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST,
                                           sheet:          POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST, 
                                           duration:       POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MANA_REDUCE70PERCENTMANACOST,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_MANA_REDUCE70PERCENTMANACOST,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST,
                                           spawnTime:      POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST,
                                           existing:       0
@@ -198,6 +214,8 @@ Q.component('powerupSystem', {
       POWERUP_CLASS_MOVESPEED_150PERCENTSPEED: {name:     POWERUP_CLASS_MOVESPEED_150PERCENTSPEED,
                                           sheet:          POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED,
                                           duration:       POWERUP_DURATION_MOVESPEED_150PERCENTSPEED,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MOVESPEED_150PERCENTSPEED,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_MOVESPEED_150PERCENTSPEED,
                                           maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED,
                                           spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED,
                                           existing:       0
@@ -214,6 +232,8 @@ Q.component('powerupSystem', {
         name: powerupName, 
         sheet: this.powerups[powerupName].sheet, 
         duration: this.powerups[powerupName].duration,
+        feedbackOnTaken: this.powerups[powerupName].feedbackOnTaken,
+        soundOnTaken: this.powerups[powerupName].soundOnTaken,
         spriteId: getNextSpriteId(),
         x: x, 
         y: y
@@ -358,7 +378,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150PERCENTSPEED          : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEAL30PERCENT               : entity.p.currentHealth      = Math.min(entity.p.currentHealth + 0.3 * entity.p.maxHealth, entity.p.maxHealth); 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.heal(0.3 * entity.p.maxHealth); 
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -382,8 +402,28 @@ Q.component('powerupable', {
   },
   
   extend: {
-    addPowerup: function(powerupName, powerupDuration) {
+    powerupFeedback: function(feedbackOnTaken, soundOnTaken) {
+      // Add a feedback display for textual feedback
+      if ( !this.has('feedbackDisplay')) {
+        this.add('feedbackDisplay');
+      }
+      
+      // Display textual feedback
+      if (feedbackOnTaken) {
+        this.displayFeedback(feedbackOnTaken, {
+          fillStyle: POWERUP_DEFAULT_FEEDBACKCOLOR
+        });
+      }
+      
+      // Play a sound
+      if (soundOnTaken) {
+        Q.audio.play(soundOnTaken);
+      }
+    },
+    
+    addPowerup: function(powerupName, powerupDuration, powerupFeedbackOnTaken, powerupSoundOnTaken) {
       //console.log("Adding powerup: " + powerupName + " for duration: " + powerupDuration);
+      this.powerupFeedback(powerupFeedbackOnTaken, powerupSoundOnTaken);
       this.p.powerupsTimeLeft[powerupName] = powerupDuration;
       if ( !this.p.powerupsHeld[powerupName]) {
         this.p.powerupsHeld[powerupName] = true;
