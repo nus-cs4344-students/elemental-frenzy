@@ -988,12 +988,12 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.lineWidth = lineWidth;
     }
 
-    var currentHp = currentPlayer.p.currentHealth;
+    var currentHp = Math.round(currentPlayer.p.currentHealth);
     var maxHp     = currentPlayer.p.maxHealth;
     var scaledHp  = currentHp / maxHp;
 
     //green -> yellow -> red
-    var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
+    var color       = scaledHp > 0.5 ? 'green' : scaledHp > 0.25 ? 'yellow' : 'brown';
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
     var centerX     = 4*this.p.w/15;
@@ -1007,7 +1007,7 @@ Q.scene(SCENE_HUD, function(stage) {
     */
     var currentMana = Math.round(currentPlayer.p.currentMana);
     var maxMana     = currentPlayer.p.maxMana;
-
+    
     color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
@@ -1028,7 +1028,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillStyle   = color;
     centerX         = selector.p.x - eleW / 1.2;
     centerY         = selector.p.y;
-    var manaPerShot = currentPlayer.p.manaPerShot;
+    var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
@@ -1049,7 +1049,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.strokeStyle   = color;
     ctx.fillStyle     = color;
     centerY           = selector.p.y - this.p.h / 3;
-    var damagePerShot = currentPlayer.p.dmg;
+    var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
     ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
@@ -1070,7 +1070,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
     centerY         = selector.p.y + this.p.h / 3;
-    var moveSpeed   = currentPlayer.p.speed;
+    var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
@@ -1151,11 +1151,15 @@ Q.scene(SCENE_HUD, function(stage) {
     resetPowerupIcons();
   });
 
+  var roundToOneDecimalPlace = function (number) {
+    return Math.round(number * 10) / 10;
+  };
+
   var resetPowerupIcons = function () {
     powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
     powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
     powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
-  }
+  };
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
     var centerX = -(numPowerupsType/2) * iconWidth * scale;
@@ -1165,7 +1169,7 @@ Q.scene(SCENE_HUD, function(stage) {
       arrayY.push(centerY);
       centerX += iconWidth * scale + spaceBetweenIcons;
     }
-  }
+  };
 
   /*
   ** This function fils a solid circle accordingly to value and maxValue, much like the HP circle.
@@ -1217,7 +1221,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.stroke();
 
     ctx.restore();
-  }
+  };
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
