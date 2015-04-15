@@ -395,6 +395,10 @@ var updateSprite = function(eType, spriteId, updateProps) {
     spriteToUpdate.p.x = updateProps.x;
     spriteToUpdate.p.y = updateProps.y;
   }
+
+  gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
+
+  return;
 }
 
 var isSpriteExists = function(entityType, id){

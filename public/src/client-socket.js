@@ -265,8 +265,7 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p = clonedProps;
   }
   
-  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
-  //console.log("Updated "+eType+" id " + spriteId);
+  gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
 
   return;
 }
@@ -703,20 +702,12 @@ var setupEventListeners = function () {
   });
 
   Q.input.on('playAgain', function(){
-    var player = getPlayerSprite(selfId);
-    if(!player){
-      console.log("Unable to send play again request, player sprite not found");
-      return;
-    }
-
-    _isEndGame = false;
-    var cId = player.p.characterId;
     Q.input.trigger('sessionCast', {
       eventName:'playAgain', 
       eventData: {
         spriteId: selfId, 
         sessionId: sessionId, 
-        characterId: cId
+        characterId: welcomeCharSelected
       }
     });
     
