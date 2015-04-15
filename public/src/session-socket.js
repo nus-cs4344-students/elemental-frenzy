@@ -1268,11 +1268,7 @@ var getRandomSpawnPoint = function(){
 // when one or more players disconnected from app.js
 socket.on('playerDisconnected', function(data) {  
   
-  var sToken = data.sessionToken;
-  if(!sToken || sToken != sessionToken){
-    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during clock synchronization");
-    return;
-  }
+  // player disconnected does not require session token as it is being sent by app.js
 
   var pId = data.spriteId
   if(!pId){

@@ -1602,7 +1602,7 @@ socket.on('playerDisconnected', function (data) {
   Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
   // Destroy player and remove him from game state
-  removePlayer(data.spriteId);
+  removePlayerSprite(sId);
 });
 
 // when app.js is disconnected
