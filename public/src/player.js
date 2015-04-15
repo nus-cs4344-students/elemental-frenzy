@@ -376,8 +376,7 @@ Q.Sprite.extend("Player",{
     
     if(this.p.onLadder) {
       this.p.gravity = 0;
-
-      if(Q.inputs['up']) {
+      if( !this.p.isServerSide && Q.inputs['up']) {
         if (this.p.vx > 0) {
           this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
           this.p.vy = -Math.sqrt(this.p.speed*this.p.speed/2);
@@ -388,7 +387,7 @@ Q.Sprite.extend("Player",{
           this.p.vy = -this.p.speed; // only going upwards, so vy is the absolute speed
         }
         this.play("run_in");
-      } else if(Q.inputs['down']) {
+      } else if( !this.p.isServerSide && Q.inputs['down']) {
         if (this.p.vx > 0) {
           this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
           this.p.vy = Math.sqrt(this.p.speed*this.p.speed/2);
@@ -405,29 +404,28 @@ Q.Sprite.extend("Player",{
       }
     }else{
       this.p.gravity = 1;
-    }
-
-    if(!this.p.onLadder && this.has('animation')){
-      // player not jumping
-      if(this.p.vy == 0){
-        // play running animation
-        if (this.p.vx > 0) {
-          this.play("run_right");
-        } else if (this.p.vx < 0) {
-          this.play("run_left");
-        } else {
-          this.play("stand_front");
-        }
-      }else{
-        // player is jumping
-        // play the still frame where the direction is
-        if (this.p.vx > 0) {
-          this.play("run_right_still");
-        } else if (this.p.vx < 0) {
-          this.play("run_left_still");
-        }
-        else {
-          this.play("stand_front");
+      if(this.has('animation')){
+        // player not jumping
+        if(this.p.vy == 0){
+          // play running animation
+          if (this.p.vx > 0) {
+            this.play("run_right");
+          } else if (this.p.vx < 0) {
+            this.play("run_left");
+          } else {
+            this.play("stand_front");
+          }
+        }else{
+          // player is jumping
+          // play the still frame where the direction is
+          if (this.p.vx > 0) {
+            this.play("run_right_still");
+          } else if (this.p.vx < 0) {
+            this.play("run_left_still");
+          }
+          else {
+            this.play("stand_front");
+          }
         }
       }
     }
