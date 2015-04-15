@@ -308,10 +308,7 @@ io.on('connection', function (socket) {
 
       // inform all players that the session is disconnected
       var pList = getPlayerIdsOfSessionId(sId);
-      
-      for(var p in pList) {
-        sendToPlayer(p, 'sessionDisconnected');
-      }
+      sendToPlayers(pList, 'sessionDisconnected');
 
       removeSession(sId);
 
