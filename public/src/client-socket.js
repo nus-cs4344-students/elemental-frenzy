@@ -260,6 +260,7 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
+
   } else {
     spriteToUpdate.p = clonedProps;
   }
@@ -346,13 +347,14 @@ var getSpriteProperties = function (entityType, id) {
     return;
   }
 
-  var s = getSprite(entityType,id);
+  var s = getSprite(eType,spriteId);
+  var properties;
 
-  if(s) {
-    // console.log("Sprite properties: "+getJSON(s.p));
+  if(s){
+    properties = clone(gameState.sprites[eType][spriteId].p);
   }
 
-  return s ? s.p : undefined;
+  return properties;
 };
 
 var getPlayerProperties = function (playerId) {
@@ -1036,7 +1038,6 @@ var displayScoreScreen = function () {
   hideScoreScreen();
 
   if(!_isEndGame){
-    console.log("show score screen");
     Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
   }
 };
@@ -1575,12 +1576,7 @@ socket.on('spriteDied', function (data) {
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
 
-  var sToken = data.sessionToken;
-  if(!sToken || sToken != sessionToken){
-    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during updateSprite");
-    return;
-  }
-
+  // session disconnected does not require seesion token as it is being sent by app.js
 
   console.log("Session disconnected");
 
@@ -1605,10 +1601,16 @@ socket.on('playerDisconnected', function (data) {
     return;
   }
 
-  console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
+  var sId = data.p.spriteId;
+  if(!sId){
+    console.log("Player disconnected without sprite id");
+    return;
+  }
+
+  console.log("Player " + sId + " from session " + sessionId + " disconnected!");
   
-  var player = getPlayerSprite(data.spriteId);
-  var msg = "Player "+ (player ? player.p.name : data.spriteId)+" has left";
+  var player = getPlayerSprite(sId);
+  var msg = "Player "+ (player ? player.p.name : sId)+" has left";
   Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
   // Destroy player and remove him from game state
