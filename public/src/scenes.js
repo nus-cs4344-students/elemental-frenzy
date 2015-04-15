@@ -943,6 +943,28 @@ Q.scene(SCENE_HUD, function(stage) {
 
   hudContainer.on('draw', hudContainer, function(ctx) {
 
+    /*
+    ** Timer
+    */
+    var timeLeft = Q.state.get('timeLeft');
+    if(timeLeft === undefined){
+      timeLeft = Q.state.get('totalTime');
+     }
+
+    if (initHud) {
+      timerText = stage.insert(new Q.UI.Text({
+      label : getTimeFormat(timeLeft),
+      x: Q.width/2,
+      y: 13*Q.height/50,
+      size: SIZE_NORMAL,
+      font: FONT_FAMILY
+      }));
+
+    } else {
+      timerText.p.label = getTimeFormat(timeLeft);
+      timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
+    }
+
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
       console.log("Cannot locate current player during HUD player attribute drawing");
@@ -1118,28 +1140,6 @@ Q.scene(SCENE_HUD, function(stage) {
                                      powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
       }
-    }
-
-    /*
-    ** Timer
-    */
-    var timeLeft = Q.state.get('timeLeft');
-    if(timeLeft === undefined){
-      timeLeft = Q.state.get('totalTime');
-     }
-
-    if (initHud) {
-      timerText = stage.insert(new Q.UI.Text({
-      label : getTimeFormat(timeLeft),
-      x: Q.width/2,
-      y: 13*Q.height/50,
-      size: SIZE_NORMAL,
-      font: FONT_FAMILY
-      }));
-
-    } else {
-      timerText.p.label = getTimeFormat(timeLeft);
-      timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
 
     initHud = false;
