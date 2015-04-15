@@ -15,11 +15,6 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-/*
-var DEFAULT_ENEMIES = {"1": {p: {x: 700, y: 0, enemyId: 1, isServerSide: true}}, 
-                       "2": {p: {x: 800, y: 0, enemyId: 2, isServerSide: true}}};
-*/
-
 var TIME_PER_ROUND = 300; // 5 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
@@ -105,32 +100,7 @@ var getDefaultSprites = function() {
 
 var getDefaultGameState = function() {
   var defaultSprites = getDefaultSprites();
-  
-  // defaultSprites.POWERUP = {"1": {p: {
-                              // name: POWERUP_CLASS_ATTACK_150PERCENTDMG,
-                              // sheet: POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG,
-                              // spriteId: 1,
-                              // duration: POWERUP_DURATION_ATTACK_150PERCENTDMG
-                            // }},
-                            // "2": {p: {
-                              // name: POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST,
-                              // sheet: POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST,
-                              // spriteId: 2,
-                              // duration: POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST
-                            // }},
-                            // "3": {p: {
-                              // name: POWERUP_CLASS_MOVESPEED_150PERCENTSPEED ,
-                              // sheet: POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED ,
-                              // spriteId: 3,
-                              // duration: POWERUP_DURATION_MOVESPEED_150PERCENTSPEED 
-                            // }},
-                            // "4": {p: {
-                              // name: POWERUP_CLASS_HEALTH_HEAL30PERCENT,
-                              // sheet: POWERUP_SPRITESHEET_HEALTH_HEALTOFULL,
-                              // spriteId: 4,
-                              // duration: POWERUP_DURATION_HEALTH_HEALTOFULL
-                            // }},
-  // };
+
   var defaultGameState = {
     level: 'level3',
     sprites: defaultSprites,
@@ -320,7 +290,6 @@ var getEnemyEleballSprite  = function(ballId) {
   return getSprite('ENEMYELEBALL' , ballId);
 };
 
-
 var getSpriteProperties = function(entityType, id) {
   // console.log("Getting sprite properties of "+entityType+" id " + id);
 
@@ -347,12 +316,13 @@ var getSpriteProperties = function(entityType, id) {
   }
 
   var s = getSprite(eType,spriteId);
+  var properties;
 
   if(s){
-    // console.log("Sprite properties: "+getJSON(s.p));
+    properties = clone(gameState.sprites[eType][spriteId].p);
   }
 
-  return s ? s.p : undefined;
+  return properties;
 };
 
 var getPlayerProperties = function(playerId) {
@@ -457,7 +427,7 @@ var isSpriteExists = function(entityType, id){
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function(entityType, id, properties, delayToInsert) {  
-  delayToInsert = delayToInsert ? delayToInsert : 0;
+  delayToInsert = 0;
   
   var eType = entityType;
   if(!eType){
@@ -521,7 +491,7 @@ var addSprite = function(entityType, id, properties, delayToInsert) {
   allSprites[eType][spriteId] = sprite;
 
   // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: sprite.p}; 
+  gameState.sprites[eType][spriteId] = {p: clonedProps}; 
   
   // Insert into the stage
   setTimeout(function() {
@@ -955,7 +925,7 @@ var loadGameSession = function(sessionId) {
     }
     if( !getSprite(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
-      //console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
       // store sprite reference
       allSprites[eType][spriteId] = item;
       // store sprite properties into game state
@@ -1168,6 +1138,7 @@ each(['join', 'playAgain'], function(event) {
 
       // add player and creates sprite for it
       var spawnPoint = getRandomSpawnPoint();
+
       addPlayerSprite(pId, {
         sheet: PLAYER_CHARACTERS[cId], 
         name: PLAYER_NAMES[cId], 
@@ -1242,6 +1213,7 @@ socket.on('respawn', function(data) {
   }
 
   var spawnPoint = getRandomSpawnPoint();
+
   addPlayerSprite(pId, {
     sheet: PLAYER_CHARACTERS[cId], 
     name: PLAYER_NAMES[cId], 
@@ -1286,7 +1258,7 @@ socket.on('playerDisconnected', function(data) {
 
   // inform every other player about the player disconnection
   var otherPlayersData = {p: getPlayerProperties(pId)};
-  Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'removeSprite', eventData: otherPlayersData});
+  Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'playerDisconnected', eventData: otherPlayersData});
   
   // Update the state (remove this player from the state)
   Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);

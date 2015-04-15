@@ -860,7 +860,6 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupIconCenterY = [];
 
   var timerText;
-  var timeLeft = Q.state.p.totalTime;
 
   var secondHudContainer = null;
   if (isScreenWidthTooSmall && initHud2) {
@@ -1259,7 +1258,7 @@ Q.scene(SCENE_INFO ,function(stage) {
 
   infoMsgList.push(msg);
   infoTimeLeftList.push(3); // display for 3 second
-  infoPositionList.push([0, -40]);
+  infoPositionList.push([0, -20]);
 
   infoHolder.on('step', infoHolder, function(dt){
 
