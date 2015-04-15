@@ -50,6 +50,7 @@ var _isWelcomeScreenShown = false;
 var _clockSynchronized = false;
 var _isGameLoaded = false;
 var _isEndGame = false;
+var selfCharacterId;
 
 var STATUS_CONNECTION = "Connected to 'Session [id]'";
 
@@ -265,7 +266,8 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p = clonedProps;
   }
   
-  gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
+  if(isCyclic(spriteToUpdate.p)){console.log("Detected cyclic at after update "+eType+" "+spriteId);}
+  // gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
 
   return;
 }
@@ -460,10 +462,14 @@ var addSprite = function (entityType, id, properties) {
     console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return;
   }
-
   clonedProps.isServerSide = false; 
+
+  if(isCyclic(clonedProps)){console.log("Detected cyclic clonedProps before creating sprite "+eType+" "+spriteId);}
+  
   //console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
+  
+  if(isCyclic(sprite.p)){console.log("Detected cyclic after created sprite"+eType+" "+spriteId+" clonedProps "+getJSON(clonedProps));}
   
   // DEBUGGING PURPOSES
   if (eType == 'PLAYERELEBALL' && clonedProps.shooterId == selfId) {
@@ -471,7 +477,7 @@ var addSprite = function (entityType, id, properties) {
     console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
   }
 
-  if (eType == 'PLAYER') {
+  if(spriteId == selfId && eType == 'PLAYER') {
     
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function () {
@@ -492,17 +498,8 @@ var addSprite = function (entityType, id, properties) {
       }});
 
     }, interval_updateServer_timeInterval);
-  }
 
-  // store sprite reference
-  allSprites[eType][spriteId] = sprite;
 
-  insertIntoStage(sprite);
-  // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: sprite.p};
-
-  if(sprite.p.spriteId == selfId && eType == 'PLAYER') {
-    
     if(!Q.stage(STAGE_LEVEL).has('viewport')) {
       Q.stage(STAGE_LEVEL).add('viewport');
     }
@@ -515,6 +512,18 @@ var addSprite = function (entityType, id, properties) {
 
     Q.stage(STAGE_MINIMAP).softFollow(sprite);
   }
+
+  // store sprite reference
+  allSprites[eType][spriteId] = sprite;
+
+  if(isCyclic(sprite.p)){console.log("Detected cyclic before adding "+eType+" "+spriteId+" into stage");}
+  
+  insertIntoStage(sprite);
+
+  if(isCyclic(sprite.p)){console.log("Detected cyclic at after adding "+eType+" "+spriteId+" into stage");}
+  
+  // store sprite properties into game state
+  gameState.sprites[eType][spriteId] = {p: clonedProps};
 
   return sprite;
 };
@@ -576,7 +585,7 @@ var removeSprite = function (entityType, id) {
     return;
   }
 
-  if(!getSprite(eType, spriteId)) {
+  if(!isSpriteExists(eType, spriteId)) {
     // sprite does not exists
     console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
@@ -657,6 +666,7 @@ var setupEventListeners = function () {
     }
 
     _isJoinSent = true;
+    selfCharacterId = cId;
     // send request to app.js of joining a session
     Q.input.trigger('sessionCast', {
       eventName:'join', 
@@ -707,7 +717,7 @@ var setupEventListeners = function () {
       eventData: {
         spriteId: selfId, 
         sessionId: sessionId, 
-        characterId: welcomeCharSelected
+        characterId: selfCharacterId
       }
     });
     
@@ -1044,8 +1054,7 @@ var hideScoreScreen = function () {
 };
 
 var displayEndGameScreen = function(){
-  hideScoreScreen();
-
+  Q.clearStage(STAGE_SCORE);
   Q.stageScene(SCENE_END_GAME, STAGE_END_GAME, {endGame: _isEndGame});
 };
 
@@ -1105,7 +1114,7 @@ var loadGameSession = function (receivedGameState) {
       if (!gameState.sprites[entityType][eId]) {
         // Invalid sprite entry
         continue;
-      } else if(getSprite(entityType,eId)) {
+      } else if(isSpriteExists(entityType,eId)) {
         // Already has a sprite created!
         console.log("Sprites "+entityType+" "+eId+" already exists");
         continue;
@@ -1118,12 +1127,16 @@ var loadGameSession = function (receivedGameState) {
     }
   }
 
+  // console.log("before adding "+isCyclic(gameState.sprites.p));
+  
   for(var i =0; i< spritesToAdd.length; i++) {
     addSprite(spritesToAdd[i].entityType, 
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
 
+  // console.log("after adding "+isCyclic(gameState.sprites.p));
+  
   // show connected status
   displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
   
@@ -1235,6 +1248,7 @@ socket.on('joinSuccessful', function (data) {
   // console.log("Joined : "+getJSON(data));
 
   _isSessionConnected = true;
+  _isEndGame = false;
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
   synchronizeClocksWithServer();
