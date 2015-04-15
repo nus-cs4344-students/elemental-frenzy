@@ -351,7 +351,7 @@ Q.Sprite.extend("Player",{
 
       // player side shows its death
       msg = "You are killed by "+killerName;
-      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respwaning in"});
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respawning in"});
 
       // client side trigger respan event
       setTimeout(function(){
