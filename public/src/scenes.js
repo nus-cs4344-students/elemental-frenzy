@@ -946,6 +946,9 @@ Q.scene(SCENE_HUD, function(stage) {
     /*
     ** Timer
     */
+    var timerPosY = secondHudContainer === null ? 
+                    hudContainer.p.y + hudContainer.p.h/2 : secondHudContainer.p.y + secondHudContainer.p.h/2 ;
+                    
     var timeLeft = Q.state.get('timeLeft');
     if(timeLeft === undefined){
       timeLeft = Q.state.get('totalTime');
@@ -955,7 +958,7 @@ Q.scene(SCENE_HUD, function(stage) {
       timerText = stage.insert(new Q.UI.Text({
       label : getTimeFormat(timeLeft),
       x: Q.width/2,
-      y: 13*Q.height/50,
+      y: timerPosY,
       size: SIZE_NORMAL,
       font: FONT_FAMILY
       }));
@@ -1007,7 +1010,7 @@ Q.scene(SCENE_HUD, function(stage) {
     */
     var currentMana = Math.round(currentPlayer.p.currentMana);
     var maxMana     = currentPlayer.p.maxMana;
-    
+
     color           = '#3BB9FF'; //blue
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
