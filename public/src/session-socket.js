@@ -159,6 +159,20 @@ var clone = function(item){
   }
 };
 
+var cloneValueOnly = function(obj){
+  var clone = {};
+  for(var key in obj){
+    var item = obj[key];
+    if(typeof item === 'array' || typeof item === 'object' || typeof item === 'function') {
+      // skip array / object / function
+      continue;
+    }else{
+      clone[key] = item;
+    }
+  }
+  return clone;
+};
+
 var isCyclic =function (obj) {
   var seenObjects = [];
 
@@ -396,8 +410,7 @@ var updateSprite = function(eType, spriteId, updateProps) {
     spriteToUpdate.p.y = updateProps.y;
   }
 
-  gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
-
+  gameState.sprites[eType][spriteId].p = cloneValueOnly(spriteToUpdate.p);
   return;
 }
 
@@ -460,7 +473,6 @@ var addSprite = function(entityType, id, properties) {
     return;
   }
 
-  // console.log("Cloning properties for sprite " + eType + " id " + spriteId + " before creating it: " + getJSON(properties));
   var clonedProps = clone(properties);
   if(!clonedProps){
     clonedProps = {};
@@ -478,7 +490,6 @@ var addSprite = function(entityType, id, properties) {
   clonedProps.sessionId = session.sessionId;
 
   var sprite = creates[eType](clonedProps);
-  // console.log("Added sprite " + eType + " id " + spriteId + " which has properties p: " + getJSON(sprite.p));
 
   // disable keyboard controls and listen to controls' event
   if(eType == 'PLAYER' && sprite.has('platformerControls')){
@@ -494,7 +505,7 @@ var addSprite = function(entityType, id, properties) {
   allSprites[eType][spriteId] = sprite;
 
   // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: clonedProps}; 
+  gameState.sprites[eType][spriteId] = {p: cloneValueOnly(sprite.p)}; 
   
   // Insert into the stage
   insertIntoStage(sprite);
@@ -925,11 +936,13 @@ var loadGameSession = function(sessionId) {
     }
     if( !isSpriteExists(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
-      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+
+      // console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      
       // store sprite reference
       allSprites[eType][spriteId] = item;
       // store sprite properties into game state
-      gameState.sprites[eType][spriteId] = {p: item.p}; 
+      gameState.sprites[eType][spriteId] = {p: clone(item.p)}; 
       // Tell the clients about this
       Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: item.p}});
     }

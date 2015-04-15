@@ -185,6 +185,20 @@ var clone = function (item) {
   }
 };
 
+var cloneValueOnly = function(obj){
+  var clone = {};
+  for(var key in obj){
+    var item = obj[key];
+    if(typeof item === 'array' || typeof item === 'object' || typeof item === 'function') {
+      // skip array / object / function
+      continue;
+    }else{
+      clone[key] = item;
+    }
+  }
+  return clone;
+};
+
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
 var checkGoodSprite = function (eType, spriteId, callerName) {
   callerName = callerName || 'nameNotSpecifiedFunction';
@@ -266,8 +280,7 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p = clonedProps;
   }
   
-  if(isCyclic(spriteToUpdate.p)){console.log("Detected cyclic at after update "+eType+" "+spriteId);}
-  // gameState.sprites[eType][spriteId].p = clone(spriteToUpdate.p);
+  gameState.sprites[eType][spriteId].p = cloneValueOnly(spriteToUpdate.p);
 
   return;
 }
@@ -464,12 +477,9 @@ var addSprite = function (entityType, id, properties) {
   }
   clonedProps.isServerSide = false; 
 
-  if(isCyclic(clonedProps)){console.log("Detected cyclic clonedProps before creating sprite "+eType+" "+spriteId);}
   
   //console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
-  
-  if(isCyclic(sprite.p)){console.log("Detected cyclic after created sprite"+eType+" "+spriteId+" clonedProps "+getJSON(clonedProps));}
   
   // DEBUGGING PURPOSES
   if (eType == 'PLAYERELEBALL' && clonedProps.shooterId == selfId) {
@@ -515,15 +525,11 @@ var addSprite = function (entityType, id, properties) {
 
   // store sprite reference
   allSprites[eType][spriteId] = sprite;
-
-  if(isCyclic(sprite.p)){console.log("Detected cyclic before adding "+eType+" "+spriteId+" into stage");}
   
   insertIntoStage(sprite);
-
-  if(isCyclic(sprite.p)){console.log("Detected cyclic at after adding "+eType+" "+spriteId+" into stage");}
   
   // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: clonedProps};
+  gameState.sprites[eType][spriteId] = {p: cloneValueOnly(sprite.p)};
 
   return sprite;
 };
