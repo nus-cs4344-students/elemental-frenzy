@@ -628,8 +628,8 @@ Q.scene(SCENE_LEVEL, function(stage) {
         // Don't render sprites with containers (sprites do that themselves)
         // Also don't render if not onscreen
 
-        var isWithinX;
-        var isWithinY;
+        var isWithinX = false;
+        var isWithinY = false;
 
         // collision layer (titleLayer will calculate itself int its render() method by taking viewport setting into account)
         if(item.p && !item.collisionLayer && vp && startX && startY && endX && endY){
@@ -637,7 +637,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
           isWithinY = startY <= item.p.y && endY >= item.p.y;
         }
 
-        if(!item.container && (item.p.renderAlways || item.mark >= mapStage.time ||(isWithinX && isWithinY))) {
+        if(!item.container && (item.p.renderAlways ||(isWithinX && isWithinY))) {
           item.render(ctx);
         }
       }
