@@ -430,9 +430,8 @@ var isSpriteExists = function(entityType, id){
 /*
  Create and add sprite into game state and insert it into active stage
  */
-var addSprite = function(entityType, id, properties, delayToInsert) {  
-  delayToInsert = 0;
-  
+var addSprite = function(entityType, id, properties) {  
+
   var eType = entityType;
   if(!eType){
     console.log("Trying to add sprite without entityType");
@@ -468,7 +467,7 @@ var addSprite = function(entityType, id, properties, delayToInsert) {
     console.log("Trying to add sprite with default properties");
   }
 
-  if(getSprite(eType,spriteId)){
+  if(isSpriteExists(eType,spriteId)){
     // sprite already exists
     console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return false;
@@ -498,9 +497,7 @@ var addSprite = function(entityType, id, properties, delayToInsert) {
   gameState.sprites[eType][spriteId] = {p: clonedProps}; 
   
   // Insert into the stage
-  setTimeout(function() {
-    insertIntoStage(sprite);
-  }, delayToInsert);
+  insertIntoStage(sprite);
 
   return sprite;
 };
@@ -518,9 +515,8 @@ var addEnemyEleballSprite = function(ballId, properties){
   return addSprite('ENEMYELEBALL', ballId, properties);
 };
 
-var addPlayerEleballSprite = function(ballId, properties, delayToInsert){
-  delayToInsert = delayToInsert || 0;
-  return addSprite('PLAYERELEBALL', ballId, properties, delayToInsert);
+var addPlayerEleballSprite = function(ballId, properties){
+  return addSprite('PLAYERELEBALL', ballId, properties);
 };
 
 
@@ -550,7 +546,7 @@ var removeSprite = function(entityType, id){
     return;
   }
 
-  if(!getSprite(eType, spriteId)){
+  if(!isSpriteExists(eType, spriteId)){
     // sprite does not exists
     console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
@@ -927,7 +923,7 @@ var loadGameSession = function(sessionId) {
       console.log("Error in inserted event listener: entityType of spriteId is undefined");
       return;
     }
-    if( !getSprite(eType,spriteId)){
+    if( !isSpriteExists(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
       console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
       // store sprite reference
@@ -1351,7 +1347,7 @@ socket.on('mouseup', function(data) {
   setTimeout(function() {
     // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
     if (player) {
-      player.trigger('fired', {e: e, delayToInsert: oneWayDelay});
+      player.trigger('fired', {e: e});
     }      
   }, timeBeforeShooting);
   
