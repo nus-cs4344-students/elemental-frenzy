@@ -163,7 +163,6 @@ Q.Sprite.extend("Enemy",{
   },
   
   step: function(dt) {
-    this.dmgDisplay.step(dt);
     // Randomly change elements
     if (Math.random() > 0.5) {
       this.p.element = ELEBALL_ELEMENT_WATER;
