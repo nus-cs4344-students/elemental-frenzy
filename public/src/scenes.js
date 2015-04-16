@@ -280,7 +280,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({x:0,
                                           y: Math.max(20, Q.height/20),
-                                          weight: WEIGHT_NORMAL,
+                                          weight: WEIGHT_BOLD,
                                           size: SIZE_NORMAL,
                                           font: FONT_FAMILY,
                                           align: 'center',
@@ -1648,7 +1648,18 @@ Q.scene(SCENE_SCORE, function(stage) {
 
     buttonPlay.on("click", function(){
       Q.input.trigger('playAgain');
-    }); 
+    });
+
+    stage.insert(new Q.UI.Text({x: 0, 
+                                y: -Q.height*0.1,
+                                size: SIZE_TITLE,
+                                font: FONT_FAMILY,
+                                algin: "center",
+                                weight: WEIGHT_BOLD,
+                                color: 'black',
+                                label: "ROUND ENDED"
+                              }), overlayContainer
+    );
   }
 });
 

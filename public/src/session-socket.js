@@ -15,7 +15,7 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var TIME_PER_ROUND = 300; // 5 minutes per round, timeLeft stored in Q.state
+var TIME_PER_ROUND = 30; // 5 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,
@@ -30,6 +30,7 @@ var session;
 var allSprites;
 var spriteId = 0;
 var sessionToken = 0;
+var sessionId;
 var mapLevelLoaded;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 var _isMapSelectionScreenShown = false;
@@ -627,6 +628,9 @@ var setupListener = function(){
 
     _isCreated = true;
     loadGameSession(mLevel);
+
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
   });
 
   Q.input.on('broadcastAll', function(data) {
@@ -785,8 +789,6 @@ var setupListener = function(){
   });
 
   Q.input.on('endGame', function(){
-
-    console.log("end game session socket");
     
     Q.input.trigger('broadcastAll', {
       eventName: 'endGame', 
@@ -822,6 +824,10 @@ var displayMapSelectionScreen = function () {
   Q.stageScene(SCENE_MAP_SELECT, STAGE_MAP_SELECT);
 
   _isMapSelectionScreenShown = true;
+};
+
+var displayInfoScreen = function(msg){
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 };
 
 var displayScoreScreen = function(){
@@ -898,6 +904,11 @@ var loadGameSession = function(level) {
 
   resetState();
 
+  // initialize session
+  session = clone(DEFAULT_SESSION);
+  session.sessionId = sessionId;
+  sessionToken++;
+
   // initialize game state
   gameState = getDefaultGameState();
   gameState.level = level;
@@ -926,6 +937,8 @@ var loadGameSession = function(level) {
   setRoundTimer();
 
   displayGameScreen(gameState.level);  
+  
+  displayInfoScreen('New round started');
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -1125,13 +1138,10 @@ socket.on('connected', function(data) {
 
   console.log("Connected as SESSION "+sId);
 
+  sessionId = sId;
+
   // setup Quintus event listeners
   setupListener();
-
-  // initialize session
-  session = clone(DEFAULT_SESSION);
-  sessionToken++;
-  session.sessionId = sId;
 
   var interval_loadGameSession = setInterval(function() {
     if (_assetsLoaded) {
@@ -1139,9 +1149,6 @@ socket.on('connected', function(data) {
       
       // display map selection screen
       displayMapSelectionScreen();
-      
-      // update app.js regarding session info
-      Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
       
       // Don't load a second time
       clearInterval(interval_loadGameSession);
@@ -1185,8 +1192,8 @@ each(['join', 'playAgain'], function(event) {
         x: spawnPoint.x,
         y: spawnPoint.y
       });
-      
-      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has joined"});
+
+      displayInfoScreen("Player "+pId+" has joined");
 
       // add player kills/deaths to Q.state
       Q.state.trigger('playerJoined', pId);
@@ -1287,7 +1294,7 @@ socket.on('playerDisconnected', function(data) {
   }
 
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has left"});
+  displayInfoScreen("Player "+pId+" has left");
 
   var playerProps = getPlayerProperties(pId);
   // remove player from the session

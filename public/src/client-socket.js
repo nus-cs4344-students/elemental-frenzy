@@ -1021,6 +1021,10 @@ var displayNotificationScreen = function (msg, callback) {
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
 };
 
+var displayInfoScreen = function(msg){
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+};
+
 var displayStatusScreeen = function (msg) {
   if(!msg) {
     console.log("No message passed in when calling displayStatusScreeen");
@@ -1412,7 +1416,7 @@ socket.on('addSprite', function (data) {
       props.y = newY;
     }
   }else if(eType == 'PLAYER') {
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+props.name+" has joined"});
+    displayInfoScreen("Player "+props.name+" has joined");
   }
   addSprite(eType, spriteId, props);
 });
@@ -1622,7 +1626,7 @@ socket.on('playerDisconnected', function (data) {
   
   var player = getPlayerSprite(sId);
   var msg = "Player "+ (player ? player.p.name : sId)+" has left";
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+  displayInfoScreen(msg);
 
   // Destroy player and remove him from game state
   removePlayerSprite(sId);
