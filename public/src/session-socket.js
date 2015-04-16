@@ -826,6 +826,10 @@ var displayMapSelectionScreen = function () {
   _isMapSelectionScreenShown = true;
 };
 
+var displaySessionHUDScreen = function () {
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+};
+
 var displayInfoScreen = function(msg){
   Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 };
@@ -858,11 +862,6 @@ var displayGameScreen = function(level){
 
   // show connected status
   var status = STATUS_CONNECTTION.replace('[id]', session.sessionId);
-  var tLeft = Q.state.get('timeLeft');
-  if(tLeft){
-    status += " "+getTimeFormat(tLeft);
-  }
-
   displayStatusScreeen(status);
 
   // Viewport
@@ -924,9 +923,6 @@ var loadGameSession = function(level) {
       var timeLeft = Q.state.get('timeLeft');
 
       if (session.playerCount > 0 && timeLeft && timeLeft > 0) {
-        
-        displayStatusScreeen(STATUS_CONNECTTION.replace('[id]', session.sessionId)+" "+getTimeFormat(timeLeft));
-
         Q.state.dec("timeLeft", 1);
       }
     }, 1000);
@@ -937,7 +933,7 @@ var loadGameSession = function(level) {
   setRoundTimer();
 
   displayGameScreen(gameState.level);  
-  
+
   displayInfoScreen('New round started');
 
   // Create and load all sprites
@@ -1002,6 +998,9 @@ var loadGameSession = function(level) {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+
+  // load session HUD info
+  displaySessionHUDScreen();
 };
 
 var joinSession = function(playerId, characterId) {

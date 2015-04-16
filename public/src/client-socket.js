@@ -1150,7 +1150,7 @@ var loadGameSession = function (receivedGameState) {
   // show connected status
   displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
   
-    // load player HUD info
+  // load player HUD info
   displayPlayerHUDScreen();
   
   _isGameLoaded = true;

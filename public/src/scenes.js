@@ -825,11 +825,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
 });
 
 Q.scene(SCENE_HUD, function(stage) {
-  
-  // session does not need to show element selector
-  if(isSession){
-    return;
-  }
+
   var isScreenWidthTooSmall = Q.width < 480 ? true : false;
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
@@ -841,145 +837,148 @@ Q.scene(SCENE_HUD, function(stage) {
                                                       }));
 
 
-  var currentPlayer = getPlayerSprite(selfId);
-  if(!currentPlayer){
-    console.log("Cannot locate current player during HUD element selector initialization");
-    return;
-  }
-  var element = currentPlayer.p.element;
-  // convert into number
-  element = Number(element);
-  
-  if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
-    console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
-    return;
-  }
+  if(!isSession){
 
-  var eleSelectors = {};
-  var eleW = 70;
-  var eleH = 30;
-  var inactiveScale = 0.3;
-  var activeScale = 1;
-  var scalingStep = 0.1;
-  var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
-                                                         y: 0,
-                                                         activeElement: element,
-                                                         targetAngle: 0,
-                                                         angleStep: 0,
-                                                         angleShifted: 0,
-                                                         angleNeeded: 0
-                                                        }));
-
-  selector.on('step', function(dt){
-
-    var player = getPlayerSprite(selfId);
-    if(player && this.p.activeElement != player.p.element){
-      
-      console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
-      
-      updateEleSelector(player.p.element);
-    }
-
-    var a = this.p.angle;
-    var tAngle = this.p.targetAngle;
-    var aNeeded = this.p.angleNeeded;
-    var aShifted = this.p.angleShifted;
-
-    var aStep = this.p.angleStep;
-    
-    if(aNeeded >= aShifted){
-
-      // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
-      
-      var aS = aStep * dt;
-      this.p.angleShifted += aS;
-      if(this.p.angleShifted > this.p.angleNeeded){
-        aS = this.p.angleNeeded - (this.p.angleShifted - aS);
-        this.p.angleShifted = this.p.angleNeeded;
-      }
-      var nextAngle = a - aS;
-
-      if(nextAngle<0){
-        nextAngle = 360 + nextAngle;
-      }
-
-      // console.log('next angle '+nextAngle);
-      var nAngle = Math.max(nextAngle % 360, 0);
-      this.p.angle = nAngle;
-    }
-  });
-
-  for(var eId in ELEBALL_ELEMENTNAMES){
-    var eleId = Number(eId);
-    var eleAngle = eleId * 90;
-    var isActive = eleId == element;
-    var scaling = isActive ? activeScale : inactiveScale;
-    eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
-                                                          sprite: ELEBALL_ANIMATION,
-                                                          angle: eleAngle,
-                                                          scale: scaling,
-                                                          targetScale: 1
-                                                          }));
-
-    eleSelectors[eId].on('step', function(dt){
-      var s = this.p.scale;
-      var tScale = this.p.targetScale;
-
-      if(s != tScale){
-        
-        var sign = s > tScale ? -1 : 1;
-        this.p.scale += sign*scalingStep;
-
-        if(Math.abs(this.p.scale - tScale)< 0.01){
-          this.p.scale = tScale;
-        }
-      }
-    });
-  }
-
-  var updateEleSelector = function(nextElement){
-
-    if(nextElement == undefined){
-      console.log("Invalid element during HUD next element toggling");
+    var currentPlayer = getPlayerSprite(selfId);
+    if(!currentPlayer){
+      console.log("Cannot locate current player during HUD element selector initialization");
       return;
     }
+    var element = currentPlayer.p.element;
+    // convert into number
+    element = Number(element);
     
-    for(var eId in eleSelectors){
-      var eleId = Number(eId);
-      var isActive = eleId == nextElement;
-      var eleAngle = eleId * 90;
-      var scaling = isActive ? activeScale : inactiveScale;
+    if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
+      console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
+      return;
+    }
 
-      var eS = eleSelectors[eId];
-      eS.p.targetScale = scaling;
-      eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
-      eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
+    var eleSelectors = {};
+    var eleW = 70;
+    var eleH = 30;
+    var inactiveScale = 0.3;
+    var activeScale = 1;
+    var scalingStep = 0.1;
+    var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
+                                                           y: 0,
+                                                           activeElement: element,
+                                                           targetAngle: 0,
+                                                           angleStep: 0,
+                                                           angleShifted: 0,
+                                                           angleNeeded: 0
+                                                          }));
 
-      if(isActive){
-        eS.add('animation');
-        eS.play('fire');
-      }else if(eS.has('animation')){
-        eS.del('animation');
+    selector.on('step', function(dt){
+
+      var player = getPlayerSprite(selfId);
+      if(player && this.p.activeElement != player.p.element){
+        
+        console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
+        
+        updateEleSelector(player.p.element);
       }
+
+      var a = this.p.angle;
+      var tAngle = this.p.targetAngle;
+      var aNeeded = this.p.angleNeeded;
+      var aShifted = this.p.angleShifted;
+
+      var aStep = this.p.angleStep;
+      
+      if(aNeeded >= aShifted){
+
+        // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
+        
+        var aS = aStep * dt;
+        this.p.angleShifted += aS;
+        if(this.p.angleShifted > this.p.angleNeeded){
+          aS = this.p.angleNeeded - (this.p.angleShifted - aS);
+          this.p.angleShifted = this.p.angleNeeded;
+        }
+        var nextAngle = a - aS;
+
+        if(nextAngle<0){
+          nextAngle = 360 + nextAngle;
+        }
+
+        // console.log('next angle '+nextAngle);
+        var nAngle = Math.max(nextAngle % 360, 0);
+        this.p.angle = nAngle;
+      }
+    });
+
+    for(var eId in ELEBALL_ELEMENTNAMES){
+      var eleId = Number(eId);
+      var eleAngle = eleId * 90;
+      var isActive = eleId == element;
+      var scaling = isActive ? activeScale : inactiveScale;
+      eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
+                                                            sprite: ELEBALL_ANIMATION,
+                                                            angle: eleAngle,
+                                                            scale: scaling,
+                                                            targetScale: 1
+                                                            }));
+
+      eleSelectors[eId].on('step', function(dt){
+        var s = this.p.scale;
+        var tScale = this.p.targetScale;
+
+        if(s != tScale){
+          
+          var sign = s > tScale ? -1 : 1;
+          this.p.scale += sign*scalingStep;
+
+          if(Math.abs(this.p.scale - tScale)< 0.01){
+            this.p.scale = tScale;
+          }
+        }
+      });
     }
 
-    var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
-    var angleNeeded = selector.p.angle - targetAngle;
-    
-    if(angleNeeded < 0){
-      angleNeeded = 360 + angleNeeded;
-    }
+    var updateEleSelector = function(nextElement){
 
-    selector.p.targetAngle = targetAngle;
-    selector.p.angleNeeded = angleNeeded;
-    selector.p.angleStep = angleNeeded/0.3;
-    selector.p.angleShifted = 0;
-    selector.p.activeElement = nextElement;
+      if(nextElement == undefined){
+        console.log("Invalid element during HUD next element toggling");
+        return;
+      }
+      
+      for(var eId in eleSelectors){
+        var eleId = Number(eId);
+        var isActive = eleId == nextElement;
+        var eleAngle = eleId * 90;
+        var scaling = isActive ? activeScale : inactiveScale;
 
-    // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
-  };
+        var eS = eleSelectors[eId];
+        eS.p.targetScale = scaling;
+        eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
+        eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
 
-  updateEleSelector(element);
+        if(isActive){
+          eS.add('animation');
+          eS.play('fire');
+        }else if(eS.has('animation')){
+          eS.del('animation');
+        }
+      }
+
+      var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
+      var angleNeeded = selector.p.angle - targetAngle;
+      
+      if(angleNeeded < 0){
+        angleNeeded = 360 + angleNeeded;
+      }
+
+      selector.p.targetAngle = targetAngle;
+      selector.p.angleNeeded = angleNeeded;
+      selector.p.angleStep = angleNeeded/0.3;
+      selector.p.angleShifted = 0;
+      selector.p.activeElement = nextElement;
+
+      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
+    };
+
+    updateEleSelector(element);
+  }
 
   var initHud  = true;
   var initHud2 = true;
@@ -993,7 +992,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var timerText;
 
   var secondHudContainer = null;
-  if (isScreenWidthTooSmall && initHud2) {
+  if (!isSession && isScreenWidthTooSmall && initHud2) {
     secondHudContainer = stage.insert(new Q.UI.Container({ 
                                                      x: Q.width/2, 
                                                      y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
@@ -1099,128 +1098,131 @@ Q.scene(SCENE_HUD, function(stage) {
       timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
 
-    var currentPlayer = getPlayerSprite(selfId);
-    if(!currentPlayer) {
-      console.log("Cannot locate current player during HUD player attribute drawing");
-      resetPowerupIcons();
-      return;
-    }
-    
-    /* 
-    ** HP CIRCLE
-    ** represented by a hollow circle with text inside
-    */
-    var radius    = this.p.h*0.3;
-    var lineWidth = radius / 2;
-    ctx.lineWidth = lineWidth;
-    ctx.textAlign = "center";
-
-    //if circles will overlap each other, then adjust based on width instead
-    if (radius + lineWidth > this.p.w/15) {
-      radius        = this.p.w / 20;
-      lineWidth     = radius / 2;
+    var currentPlayer;
+    if(!isSession){
+      currentPlayer = getPlayerSprite(selfId);
+      if(!currentPlayer) {
+        console.log("Cannot locate current player during HUD player attribute drawing");
+        resetPowerupIcons();
+        return;
+      }
+      
+      /* 
+      ** HP CIRCLE
+      ** represented by a hollow circle with text inside
+      */
+      var radius    = this.p.h*0.3;
+      var lineWidth = radius / 2;
       ctx.lineWidth = lineWidth;
-    }
+      ctx.textAlign = "center";
 
-    var currentHp = Math.round(currentPlayer.p.currentHealth);
-    var maxHp     = currentPlayer.p.maxHealth;
-    var scaledHp  = currentHp / maxHp;
+      //if circles will overlap each other, then adjust based on width instead
+      if (radius + lineWidth > this.p.w/15) {
+        radius        = this.p.w / 20;
+        lineWidth     = radius / 2;
+        ctx.lineWidth = lineWidth;
+      }
 
-    //green -> yellow -> red
-    var color       = scaledHp > 0.5 ? 'green' : scaledHp > 0.25 ? 'yellow' : 'brown';
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    var centerX     = 4*this.p.w/15;
-    var centerY     = 0;
-    
-    drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
+      var currentHp = Math.round(currentPlayer.p.currentHealth);
+      var maxHp     = currentPlayer.p.maxHealth;
+      var scaledHp  = currentHp / maxHp;
 
-    /* 
-    ** MANA CIRCLE
-    ** represented by a hollow circle with text inside
-    */
-    var currentMana = Math.round(currentPlayer.p.currentMana);
-    var maxMana     = currentPlayer.p.maxMana;
+      //green -> yellow -> red
+      var color       = scaledHp > 0.5 ? 'green' : scaledHp > 0.25 ? 'yellow' : 'brown';
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      var centerX     = 4*this.p.w/15;
+      var centerY     = 0;
+      
+      drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
 
-    color           = '#3BB9FF'; //blue
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerX         = 6*this.p.w/15;
-    centerY         = 0;
+      /* 
+      ** MANA CIRCLE
+      ** represented by a hollow circle with text inside
+      */
+      var currentMana = Math.round(currentPlayer.p.currentMana);
+      var maxMana     = currentPlayer.p.maxMana;
 
-    drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
+      color           = '#3BB9FF'; //blue
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = 6*this.p.w/15;
+      centerY         = 0;
 
-    //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
-    var scaleIcons = this.p.h / 3 / 34;
-    /*
-    ** Mana cost per shot
-    ** represented by a light blue line with blue text beside
-    */
+      drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
 
-    color           = '#3BB9FF'; //blue
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerX         = selector.p.x - eleW / 1.2;
-    centerY         = selector.p.y;
-    var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
+      var scaleIcons = this.p.h / 3 / 34;
+      /*
+      ** Mana cost per shot
+      ** represented by a light blue line with blue text beside
+      */
 
-    ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+      color           = '#3BB9FF'; //blue
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = selector.p.x - eleW / 1.2;
+      centerY         = selector.p.y;
+      var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
+      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
-                                    x: centerX,
-                                    y: centerY,
-                                    scale: scaleIcons
+      ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
+                                      x: centerX,
+                                      y: centerY,
+                                      scale: scaleIcons
+                                      }));
+      }
+
+      /*
+      ** Attack Damage per shot
+      ** represented by a sword with orangey text beside
+      */
+      color             = '#F88017'; //orangey
+      ctx.strokeStyle   = color;
+      ctx.fillStyle     = color;
+      centerY           = selector.p.y - this.p.h / 3;
+      var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
+      ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+
+      ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
+                                      x: centerX,
+                                      y: centerY,
+                                      scale: scaleIcons
+                                      }));
+      }
+
+      /*
+      ** Movement Speed
+      ** represented by a shoe with green text beside
+      */
+      color           = '#00FF00'; //green
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerY         = selector.p.y + this.p.h / 3;
+      var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
+      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+
+      ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
+                                      x    : centerX,
+                                      y    : centerY,
+                                      scale: scaleIcons
                                     }));
-    }
-
-    /*
-    ** Attack Damage per shot
-    ** represented by a sword with orangey text beside
-    */
-    color             = '#F88017'; //orangey
-    ctx.strokeStyle   = color;
-    ctx.fillStyle     = color;
-    centerY           = selector.p.y - this.p.h / 3;
-    var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
-    ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
-
-    ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
-
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
-                                    x: centerX,
-                                    y: centerY,
-                                    scale: scaleIcons
-                                    }));
-    }
-
-    /*
-    ** Movement Speed
-    ** represented by a shoe with green text beside
-    */
-    color           = '#00FF00'; //green
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerY         = selector.p.y + this.p.h / 3;
-    var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
-    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
-
-    ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
-
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
-                                    x    : centerX,
-                                    y    : centerY,
-                                    scale: scaleIcons
-                                  }));
+      }
     }
     
     /*
     ** Power ups
     */
-    if (secondHudContainer === null) {
+    if (!isSession && secondHudContainer === null) {
       var powerupIconWidth        = 34;
       var spaceBetweenPowerupIcon = 15;
       var borderWidth             = 4;
@@ -1247,6 +1249,12 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     y    : powerupIconCenterY[2],
                                                                     scale: scaleToHeight
                                       }));
+
+        //reset hud powerup icons when player dies
+        currentPlayer.on('destroyed', function() {
+          resetPowerupIcons();
+        });
+
       } else {
         var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
         var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
@@ -1277,12 +1285,6 @@ Q.scene(SCENE_HUD, function(stage) {
     }
 
     initHud = false;
-
-  });
-
-  //reset hud powerup icons when player dies
-  currentPlayer.on('destroyed', function() {
-    resetPowerupIcons();
   });
 
   var roundToOneDecimalPlace = function (number) {
