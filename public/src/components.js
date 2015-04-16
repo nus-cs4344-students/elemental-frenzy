@@ -30,6 +30,12 @@ Q.component("healthBar", {
       color = '#00FF00'; // player healthbar is green
     }
     var hf = this.entity.p.currentHealth / this.entity.p.maxHealth;
+    if (this.entity.isA('Player') && hf <= 0.5) {
+      color = 'yellow';
+      if (hf <= 0.25) {
+        color = 'brown';
+      }
+    }
     var width = this.entity.p.w * HEALTHBAR_WIDTH_SF;
     var height = this.entity.p.h * HEALTHBAR_HEIGHT_SF;
     ctx.fillStyle = color;
@@ -55,12 +61,18 @@ Q.component("manaBar", {
     if (this.entity.isA('Player')) {
       color = '#1589FF'; // player manaBar is light blue
     }
-    var hf = this.entity.p.currentMana / this.entity.p.maxMana;
+    var mf = this.entity.p.currentMana / this.entity.p.maxMana;
+    if (mf <= 0.5) {
+      color = '#3BB9FF';
+      if (mf <= 0.25) {
+        color = 'cyan';
+      }
+    }
     var width = this.entity.p.w * MANABAR_WIDTH_SF;
     var height = this.entity.p.h * MANABAR_HEIGHT_SF;
     ctx.fillStyle = color;
     ctx.fillRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
-          width * hf, height);
+          width * mf, height);
     ctx.fillStyle = "black";
     ctx.strokeRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
           width, height);
@@ -87,59 +99,118 @@ Q.component("nameBar", {
   }
 });
 
-// ## DmgDisplay component to be attached to a sprite which displays the damages they take
+// ## feedbackDisplay component to be attached to a sprite which displays text feedback
 // Usage:
-//  1. Call the addDmg(dmg) function when damage is taken to add the dmg to the display buffer
+//  1. Call the displayFeedback function of the sprite to add a text, [fontcolor], [fontsize in px], [font family] to the buffer
 //  2. Call the step(dt) function in the step function of the entity.
 //  3. Call the draw(ctx) function in the draw function of the entity.
-Q.component("dmgDisplay", {
+Q.component("feedbackDisplay", {
   added: function() {
-    this.dmgDisplayDmgList = [];      // damages to be displayed
-    this.dmgDisplayTimeLeftList = [];  // timeLeft for each damage to be displayed
-    this.dmgDisplayPosList = [];    // positions x and y of the display for each damage
-    this.dmgDisplayVx = 0;    // 
-    this.dmgDisplayVy = -1;  // velocities for the display
+    this.feedbackList = [];           // feedback to be displayed
+    this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
+    this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
+    this.feedbackDisplayVx = 0;       // 
+    this.feedbackDisplayVy = -2;      // velocities for the display
     
     this.entity.on('draw', this, 'draw');
     this.entity.on('step', this, 'step');
-    this.entity.on('takeDamage', this, 'addDmg');
-  },
-  
-  addDmg: function(dmgAndShooter) {
-    if(this.entity.p.takeDamageCooldown > 0){
-      return;
-    }
-
-    var dmg = dmgAndShooter.dmg;
-    this.dmgDisplayDmgList.push(dmg);
-    this.dmgDisplayTimeLeftList.push(1); // display for 1 second
-    this.dmgDisplayPosList.push([this.entity.p.cx + 10, 0]); // starting position of the display is on the right of the entity
   },
   
   step: function(dt) {
-    for (var i = 0; i < this.dmgDisplayTimeLeftList.length; i++) {
-      this.dmgDisplayTimeLeftList[i] -= dt;
-      if (this.dmgDisplayTimeLeftList[i] <= 0) {
+    for (var i = 0; i < this.feedbackTimeLeftList.length; i++) {
+      this.feedbackTimeLeftList[i] -= dt;
+      if (this.feedbackTimeLeftList[i] <= 0) {
         // No need to display anymore, so remove it
-        this.dmgDisplayTimeLeftList.splice(i, 1);
-        this.dmgDisplayDmgList.splice(i, 1);
-        this.dmgDisplayPosList.splice(i, 1);
+        this.feedbackTimeLeftList.splice(i, 1);
+        this.feedbackList.splice(i, 1);
+        this.feedbackDisplayPosList.splice(i, 1);
       } else {
         // Need to display, so shift by vx, vy
-        this.dmgDisplayPosList[i][0] += this.dmgDisplayVx;
-        this.dmgDisplayPosList[i][1] += this.dmgDisplayVy;
+        var vx = this.feedbackList[i].options.displayVx;
+        var vy = this.feedbackList[i].options.displayVy;
+        this.feedbackDisplayPosList[i][0] += vx;
+        this.feedbackDisplayPosList[i][1] += vy;
       }
     }
   },
   
   draw: function(ctx) {
-    ctx.font = "15px "+FONT_FAMILY;
-    ctx.textAlign = "left";
-    ctx.fillStyle = 'red';
-    for (var i = 0; i < this.dmgDisplayDmgList.length; i++) {
-      ctx.fillText(this.dmgDisplayDmgList[i], 
-            this.dmgDisplayPosList[i][0], this.dmgDisplayPosList[i][1]);
+    for (var i = 0; i < this.feedbackList.length; i++) {
+      var feedback = this.feedbackList[i].text;
+      var options = this.feedbackList[i].options;
+      ctx.font = options.fontSize + "px " + options.fontFamily;
+      ctx.textAlign = options.textAlign;
+      ctx.fillStyle = options.fillStyle;
+      ctx.fillText(feedback, 
+            this.feedbackDisplayPosList[i][0], this.feedbackDisplayPosList[i][1]);
     }
+  },
+  
+  extend: {
+    displayFeedback: function(text, options) {
+      // No text, don't bother doing anything
+      if (!text) {
+        return;
+      }
+      
+      options = options || {};
+      Q._defaults(options, {
+        fillStyle: 'black',
+        fontSize: 20,
+        fontFamily: FONT_FAMILY,
+        textAlign: 'left',
+        displayTime: 2, // in seconds
+        displayVx: this.feedbackDisplay.feedbackDisplayVx,
+        displayVy: this.feedbackDisplay.feedbackDisplayVy,
+        offset: 10 // the offset of the text from the center of the sprite
+      });
+      
+      // Adds the feedback into the buffer
+      var feedbackDisplay = this.feedbackDisplay;
+      feedbackDisplay.feedbackList.push({text: text, options: options});
+      feedbackDisplay.feedbackTimeLeftList.push(options.displayTime); 
+      feedbackDisplay.feedbackDisplayPosList.push([this.p.cx + options.offset, 0]);
+    }
+  }
+});
+
+Q.component("healDisplay", {
+  added: function() {
+    var entity = this.entity;
+    entity.on('heal', this, 'showHealFeedback');
+  },
+  
+  showHealFeedback: function(healAmt) {
+    var entity = this.entity;
+    if (!entity.has('feedbackDisplay')) {
+      entity.add('feedbackDisplay');
+    }
+    entity.displayFeedback("+" + healAmt, {
+      fillStyle: '#00B000'
+    });
+  }
+});
+
+// ## DmgDisplay component to be attached to a sprite which displays the damages they take
+// Usage:
+//  1. Call the showDmgFeedback(dmg) function when damage is taken to add the dmg to the display buffer
+//  2. Call the step(dt) function in the step function of the entity.
+//  3. Call the draw(ctx) function in the draw function of the entity.
+Q.component("dmgDisplay", {
+  added: function() {
+    var entity = this.entity;
+    entity.on('takeDamage', this, 'showDmgFeedback');
+  },
+  
+  showDmgFeedback: function(dmgAndShooter) {
+    var dmg = dmgAndShooter.dmg;
+    var entity = this.entity;
+    if (!entity.has('feedbackDisplay')) {
+      entity.add('feedbackDisplay');
+    }
+    entity.displayFeedback("-" + dmg, {
+      fillStyle: 'red'
+    });    
   }
 });
 
@@ -230,14 +301,14 @@ Q.component('2dEleball', {
     var other = col.obj;
     if (other.has("2dEleball")) {
       // Eleball - eleball collision
-      console.log("Eleball-eleball collision");
+      //console.log("Eleball-eleball collision");
       var i = entity.p.element,
         j = other.p.element;
       console.log("i = " + i + " j = " + j);
       if (i == j) {
         // Case 1, destroy each other
-        console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
         removeSprite(entity.p.entityType, entity.p.spriteId);
 
@@ -247,8 +318,8 @@ Q.component('2dEleball', {
         }
       } else if ( (j-i == 1) || (j-i == 1-ELEBALL_ELEMENTNAMES.length) ){
         // Case 2, this eleball destroys the other and passes through
-        console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
-              + " destroys " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 2, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " destroys " + ELEBALL_ELEMENTNAMES[j]);
         
         removeSprite(other.p.entityType, other.p.spriteId);
 
@@ -257,12 +328,12 @@ Q.component('2dEleball', {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[j]);
         }
       } else if (Math.abs(i-j) == 2) {
-        console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
-              + " passes through " + ELEBALL_ELEMENTNAMES[j]);
+        //console.log("Case 3, " + ELEBALL_ELEMENTNAMES[i] 
+        //      + " passes through " + ELEBALL_ELEMENTNAMES[j]);
       }
       entity.trigger("onHit", col);
     } else {
-      console.log("In 2dEleball: triggering onHit");
+      //console.log("In 2dEleball: triggering onHit");
       entity.trigger("onHit", col);
 
       removeSprite(entity.p.entityType, entity.p.spriteId);

@@ -37,14 +37,17 @@ Q.Sprite.extend("Actor", {
       update: true
     });
     
-    this.add('healthBar, nameBar, dmgDisplay, animation, 2d, powerupable, 2dLadder');
+    this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder');
     
     this.on("takeDamage");
 
     var that = this;
     var selfDestruct = setInterval(function() {
       //console.log("ACTOR id " + that.p.spriteId + " update " + that.p.update);
-      
+      if (!that || !that.p) {
+        clearInterval(selfDestruct);
+        return;
+      }
       if (!that.p.update) {
         clearInterval(selfDestruct);
         removeSprite(that.p.entityType, that.p.spriteId);

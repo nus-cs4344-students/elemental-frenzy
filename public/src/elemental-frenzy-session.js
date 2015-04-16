@@ -80,7 +80,11 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     map_tiles.png, \
     ladder.png, ladder.json, \
     hud.png, hud.json, \
-    powerups.png, powerups.json", function() {
+    powerups.png, powerups.json,\
+    scoreboard.png, scoreboard.json, \
+    hastePowerUp.ogg, healthPowerUp.ogg, \
+    manaPowerUp.ogg, manaInsufficient.ogg, \
+    damagePowerUp.ogg, damagePowerUp2.ogg", function() {
 
    // Sprites sheets can be created manually
   Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
@@ -97,6 +101,7 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("ladder.png", "ladder.json");
   Q.compileSheets("hud.png", "hud.json");
   Q.compileSheets("powerups.png", "powerups.json");
+  Q.compileSheets("scoreboard.png", "scoreboard.json");
   // console.log('Asset loaded');
 
   require([ 'keyboard-controls',

@@ -663,13 +663,20 @@ Quintus["2D"] = function(Q) {
       // reduce the max dtStep if necessary to prevent
       // skipping through objects.
       while(dtStep > 0) {
-        dt = Math.min(1/30,dtStep);
+        dt = Math.min(1/35,dtStep);
         // Updated based on the velocity and acceleration
         p.vx += p.ax * dt + (p.gravityX === void 0 ? Q.gravityX : p.gravityX) * dt * p.gravity;
         p.vy += p.ay * dt + (p.gravityY === void 0 ? Q.gravityY : p.gravityY) * dt * p.gravity;
+        
+        p.vx = Math.min(800, p.vx);
+        p.vx = Math.max(-800, p.vx);
+        p.vy = Math.min(800, p.vy);
+        p.vy = Math.max(-800, p.vy);
+        
+        
         p.x += p.vx * dt;
-        p.y += p.vy * dt;
-
+        p.y += p.vy * dt;        
+        
         this.entity.stage.collide(this.entity);
         dtStep -= dt;
       }

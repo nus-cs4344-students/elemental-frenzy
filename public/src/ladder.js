@@ -26,14 +26,13 @@ Q.component('2dLadder', {
       collisionMask: Q.SPRITE_ACTIVE, // ladder only collides with player
       onLadder: false
     });
-    entity.on('hit',this,"collision");
+    entity.on('sensor',this,"sensorCollision");
   },
-
-  collision: function(col,last) {
+  
+  sensorCollision: function(obj) {
     var entity = this.entity;
-    if(entity.isA('Ladder') && col.obj.isA('Player') && col.obj.has('2dLadder') && 
-    col.obj.p.x <= (entity.p.x + entity.p.cx) && col.obj.p.x >= (entity.p.x - entity.p.cx) ){
-      col.obj.climbLadder(entity);
+    if (obj.has('2dLadder')) {
+      obj.climbLadder(entity);
     }
   },
   
@@ -64,7 +63,7 @@ function shuffleArray(array) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex -= 1;
     
-    console.log("Shuffling index randomIndex " + randomIndex + " and currentIndex " + currentIndex);
+    //console.log("Shuffling index randomIndex " + randomIndex + " and currentIndex " + currentIndex);
 
     // And swap it with the current element.
     temporaryValue = array[currentIndex];
@@ -101,24 +100,12 @@ Q.component('ladderSystem',{
         continue;
       }
 
-      // for loop for inserting one ladder
-      // insert one extra tile on top
-      var x = path[0].x;
-      var y = path[0].y - ladderH;
-      var ladder = new Q.Ladder({
-        name: 'ladder_'+ladderCount,
-        spriteId: getNextSpriteId(),
-        x: x,
-        y: y
-      });
-
-      // Insert the ladder
-      this.entity.insert(ladder);
+      // Insert one ladder (multiple ladder tiles)
       for(var p in path){
         var x = path[p].x;
         var y = path[p].y;
 
-        console.log("Insert ladder " + ladderCount + " at "+x+" "+y);
+        //console.log("Insert ladder " + ladderCount + " at "+x+" "+y);
         
         // Creates ladder
         var ladder = new Q.Ladder({

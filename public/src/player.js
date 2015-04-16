@@ -12,7 +12,7 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
 var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
-var PLAYER_DEFAULT_DMG = 5;
+var PLAYER_DEFAULT_DMG = 10;
 var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 // ## Animation
 var PLAYER_ANIMATION = "character";
@@ -26,6 +26,8 @@ var PLAYER_RUN_ANIMATION_TIME = 0.5;
 var PLAYER_DEFAULT_FIRING_COOLDOWN = PLAYER_FIRE_ANIMATION_TIME;
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
+
+var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
 
 var time_fromFire;
 
@@ -84,7 +86,7 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, 2dLadder, powerupable');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, healDisplay, feedbackDisplay, 2dLadder, powerupable');
     
     this.takeDamageIntervalId = -1;
 
@@ -108,8 +110,12 @@ Q.Sprite.extend("Player",{
     }
     
     //console.log("cooldown " + this.p.cooldown + " canFire " + this.p.canFire);
-    if (this.p.isDead || !this.p.canFire ||
-        this.p.currentMana < this.p.manaPerShot) {
+    if (this.p.isDead || !this.p.canFire) {
+      return;
+    }
+    if (this.p.currentMana < this.p.manaPerShot) {
+      // Play not enough mana sound
+      Q.audio.play(SOUND_NOTENOUGHMANA);
       return;
     }
     time_fromFire = getCurrentTime();
@@ -305,6 +311,12 @@ Q.Sprite.extend("Player",{
     }
   },
   
+  heal: function(healAmt) {
+    var diff = this.p.maxHealth - this.p.currentHealth;
+    healAmt = Math.min(diff, healAmt);
+    this.trigger('heal', healAmt);
+  },
+  
   die: function(killerEntityType, killerId) {
     this.p.isDead = true;
 
@@ -339,7 +351,7 @@ Q.Sprite.extend("Player",{
 
       // player side shows its death
       msg = "You are killed by "+killerName;
-      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respwaning in"});
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respawning in"});
 
       // client side trigger respan event
       setTimeout(function(){
@@ -364,12 +376,27 @@ Q.Sprite.extend("Player",{
     
     if(this.p.onLadder) {
       this.p.gravity = 0;
-
-      if(Q.inputs['up']) {
-        this.p.vy = -this.p.speed;
+      if( !this.p.isServerSide && Q.inputs['up']) {
+        if (this.p.vx > 0) {
+          this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
+          this.p.vy = -Math.sqrt(this.p.speed*this.p.speed/2);
+        } else if (this.p.vx < 0) {
+          this.p.vx = -Math.sqrt(this.p.speed*this.p.speed/2);
+          this.p.vy = -Math.sqrt(this.p.speed*this.p.speed/2);
+        } else {
+          this.p.vy = -this.p.speed; // only going upwards, so vy is the absolute speed
+        }
         this.play("run_in");
-      } else if(Q.inputs['down']) {
-        this.p.vy = this.p.speed;
+      } else if( !this.p.isServerSide && Q.inputs['down']) {
+        if (this.p.vx > 0) {
+          this.p.vx = Math.sqrt(this.p.speed*this.p.speed/2); // diagonal speed should be equal to absolute speed
+          this.p.vy = Math.sqrt(this.p.speed*this.p.speed/2);
+        } else if (this.p.vx < 0) {
+          this.p.vx = -Math.sqrt(this.p.speed*this.p.speed/2);
+          this.p.vy = Math.sqrt(this.p.speed*this.p.speed/2);
+        } else {
+          this.p.vy = this.p.speed; // only going downwards, so vy is the absolute speed
+        }
         this.play("run_in");
       } else{
         this.p.vy = 0;
@@ -377,35 +404,35 @@ Q.Sprite.extend("Player",{
       }
     }else{
       this.p.gravity = 1;
-    }
-
-    if(!this.p.onLadder && this.has('animation')){
-      // player not jumping
-      if(this.p.vy == 0){
-        // play running animation
-        if (this.p.vx > 0) {
-          this.play("run_right");
-        } else if (this.p.vx < 0) {
-          this.play("run_left");
-        } else {
-          this.play("stand_front");
-        }
-      }else{
-        // player is jumping
-        // play the still frame where the direction is
-        if (this.p.vx > 0) {
-          this.play("run_right_still");
-        } else if (this.p.vx < 0) {
-          this.play("run_left_still");
-        }
-        else {
-          this.play("stand_front");
+      if(this.has('animation')){
+        // player not jumping
+        if(this.p.vy == 0){
+          // play running animation
+          if (this.p.vx > 0) {
+            this.play("run_right");
+          } else if (this.p.vx < 0) {
+            this.play("run_left");
+          } else {
+            this.play("stand_front");
+          }
+        }else{
+          // player is jumping
+          // play the still frame where the direction is
+          if (this.p.vx > 0) {
+            this.play("run_right_still");
+          } else if (this.p.vx < 0) {
+            this.play("run_left_still");
+          }
+          else {
+            this.play("stand_front");
+          }
         }
       }
     }
     
-
+    
     this.p.onLadder = false;
+    
     this.p.takeDamageCooldown = Math.max(this.p.takeDamageCooldown - dt, 0);
     this.p.toggleElementCooldown = Math.max(this.p.toggleElementCooldown - dt, 0);
 

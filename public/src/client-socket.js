@@ -16,12 +16,19 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 //socket.on('connected',function (data) {console.log('first connected: '+JSON.stringify(data,null,4));});
 
 var sessions = {};
+var sessionToken;
 var selfId;
 var sessionId;
 var allSprites;
 var gameState;
+var infoState;
 var isSession = false;
 var _isJoinSent = false;
+
+var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
+
+// Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
+var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
 
 // Networking
 var threshold_clientDistanceFromServerUpdate = 30;
@@ -35,13 +42,17 @@ var INTERVAL_TIME_SYNCCLOCKS = 60000; // try to sync clocks with server every 60
 
 // RTT-related
 var avgRtt = 0;
-var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
 
 // Global flags for synchronization
 var _isSessionConnected = false;
 var _isWelcomeScreenShown = false;
 var _clockSynchronized = false;
-var _gameLoaded = false;
+var _isGameLoaded = false;
+var _isEndGame = false;
+var selfCharacterId;
+
+var STATUS_CONNECTION = "Connected to 'Session [id]'";
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRtt = function (oneWayDelay) {
@@ -70,7 +81,7 @@ var creates = {
   ENEMYELEBALL:   function (p) { return new Q.EnemyEleball(p); },
   ENEMY:          function (p) { return new Q.Enemy(p); },
   POWERUP:        function (p) { return new Q.Powerup(p); },
-  LADDER:         function(p) { return new Q.Ladder(p); }
+  LADDER:         function (p) { return new Q.Ladder(p); }
 };
 
 var getDefaultSprites = function () {  
@@ -174,6 +185,20 @@ var clone = function (item) {
   }
 };
 
+var cloneValueOnly = function(obj){
+  var clone = {};
+  for(var key in obj){
+    var item = obj[key];
+    if(typeof item === 'array' || typeof item === 'object' || typeof item === 'function') {
+      // skip array / object / function
+      continue;
+    }else{
+      clone[key] = item;
+    }
+  }
+  return clone;
+};
+
 // Make sure that the sprite is good, and returns true if so, false otherwise (and logs console messages)
 var checkGoodSprite = function (eType, spriteId, callerName) {
   callerName = callerName || 'nameNotSpecifiedFunction';
@@ -250,12 +275,12 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
+
   } else {
     spriteToUpdate.p = clonedProps;
   }
   
-  gameState.sprites[eType][spriteId] = {p: spriteToUpdate.p}; 
-  //console.log("Updated "+eType+" id " + spriteId);
+  gameState.sprites[eType][spriteId].p = cloneValueOnly(spriteToUpdate.p);
 
   return;
 }
@@ -336,13 +361,14 @@ var getSpriteProperties = function (entityType, id) {
     return;
   }
 
-  var s = getSprite(entityType,id);
+  var s = getSprite(eType,spriteId);
+  var properties;
 
-  if(s) {
-    // console.log("Sprite properties: "+getJSON(s.p));
+  if(s){
+    properties = clone(gameState.sprites[eType][spriteId].p);
   }
 
-  return s ? s.p : undefined;
+  return properties;
 };
 
 var getPlayerProperties = function (playerId) {
@@ -407,6 +433,10 @@ var addSprite = function (entityType, id, properties) {
     console.log("Trying to add sprite without entityType");
     return;
   }
+  if (!allSprites[eType]) {
+    console.log("Trying to add sprite of type " + eType + " that currently is not in allSprites array");
+    return;
+  }
 
   var spriteId = id;
   switch(eType) {
@@ -445,47 +475,41 @@ var addSprite = function (entityType, id, properties) {
     console.log("Sprite " + eType + " id " + spriteId + " already exists");
     return;
   }
-
   clonedProps.isServerSide = false; 
-  console.log("Added sprite " + eType + " id " + spriteId);
+
+  
+  //console.log("Added sprite " + eType + " id " + spriteId);
   var sprite = creates[eType](clonedProps);
   
   // DEBUGGING PURPOSES
-  if (eType == 'PLAYERELEBALL') {
+  if (eType == 'PLAYERELEBALL' && clonedProps.shooterId == selfId) {
     var now = getCurrentTime();
     console.log("Creating player eleball after " + (now - time_sentMouseUp) + "ms from sending mouse up event to server");
   }
 
-  if (eType == 'PLAYER') {
+  if(spriteId == selfId && eType == 'PLAYER') {
     
     // Update server about the player's position (player authority on his movement)
     var interval_updateServer = setInterval(function () {
       //console.log("interval for sprite "+sprite.p.spriteId);
       if (!sprite || sprite.p.isServerSide || 
-          sprite.p.isDead || !_isSessionConnected) {
+          sprite.p.isDead || !_isSessionConnected || !_isGameLoaded) {
         // (Defensive) Remove interval because it is gone/not on the client side
         console.log("clearing interval for sprite "+sprite.p.spriteId);
         clearInterval(interval_updateServer);
       }
 
-      Q.input.trigger('sessionCast', {eventName:'authoritativeSpriteUpdate', eventData: {
-        entityType: 'PLAYER',
-        spriteId: sprite.p.spriteId,
-        p: sprite.p
+      Q.input.trigger('sessionCast', {
+        eventName:'authoritativeSpriteUpdate', 
+        eventData: {
+          entityType: 'PLAYER',
+          spriteId: sprite.p.spriteId,
+          p: sprite.p
       }});
 
     }, interval_updateServer_timeInterval);
-  }
 
-  // store sprite reference
-  allSprites[eType][spriteId] = sprite;
 
-  insertIntoStage(sprite);
-  // store sprite properties into game state
-  gameState.sprites[eType][spriteId] = {p: sprite.p};
-
-  if(sprite.p.spriteId == selfId && eType == 'PLAYER') {
-    
     if(!Q.stage(STAGE_LEVEL).has('viewport')) {
       Q.stage(STAGE_LEVEL).add('viewport');
     }
@@ -498,6 +522,14 @@ var addSprite = function (entityType, id, properties) {
 
     Q.stage(STAGE_MINIMAP).softFollow(sprite);
   }
+
+  // store sprite reference
+  allSprites[eType][spriteId] = sprite;
+  
+  insertIntoStage(sprite);
+  
+  // store sprite properties into game state
+  gameState.sprites[eType][spriteId] = {p: cloneValueOnly(sprite.p)};
 
   return sprite;
 };
@@ -559,7 +591,7 @@ var removeSprite = function (entityType, id) {
     return;
   }
 
-  if(!getSprite(eType, spriteId)) {
+  if(!isSpriteExists(eType, spriteId)) {
     // sprite does not exists
     console.log("Trying to remove non existing sprite "+eType+" "+spriteId);
     return false;
@@ -607,8 +639,7 @@ var updateSessions = function (sessionsInfo) {
   sessions = sessionsInfo;
 
   if(_isSessionConnected) {
-    console.log("Sessions updated but bypassing welcome screen session update event"+
-                "when player is connected to one of the sessions");
+    console.log("Sessions updated but player already in game, Skipping welcome screen update");
     return;
   }
 
@@ -641,8 +672,16 @@ var setupEventListeners = function () {
     }
 
     _isJoinSent = true;
+    selfCharacterId = cId;
     // send request to app.js of joining a session
-    Q.input.trigger('sessionCast', {eventName:'join', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
+    Q.input.trigger('sessionCast', {
+      eventName:'join', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sId, 
+        characterId: cId
+      }
+    });
   });
 
   Q.input.on('respawn', function (data) {
@@ -668,7 +707,26 @@ var setupEventListeners = function () {
     }
 
     // send request to app.js of respawning in a session
-    Q.input.trigger('sessionCast', {eventName:'respawn', eventData: {spriteId: selfId, sessionId: sId, characterId: cId}});
+    Q.input.trigger('sessionCast', {
+      eventName:'respawn', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sId, 
+        characterId: cId
+      }
+    });
+  });
+
+  Q.input.on('playAgain', function(){
+    Q.input.trigger('sessionCast', {
+      eventName:'playAgain', 
+      eventData: {
+        spriteId: selfId, 
+        sessionId: sessionId, 
+        characterId: selfCharacterId
+      }
+    });
+    
   });
 
     
@@ -727,22 +785,10 @@ var setupEventListeners = function () {
   each(['left', 'leftUp', 'right', 'rightUp', 'up', 'upUp', 'down', 'downUp'], actionDispatch ,this);
 
   Q.input.on('displayScoreScreen', function () {
-    
-    if(!_isSessionConnected || !_gameLoaded) {
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
     displayScoreScreen();
   });
 
   Q.input.on('displayScoreScreenUp', function () {
-    
-    if(!_isSessionConnected || !_gameLoaded) {
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
     hideScoreScreen();
   });
 
@@ -827,12 +873,11 @@ var setupEventListeners = function () {
         isUpPrev = isUp;
 
     }, false);
-
   }
 
   Q.input.on('toggleNextElementUp', function () {
 
-    if(!_gameLoaded) {
+    if(!_isGameLoaded) {
       // client side need to be connected to the server in order
       // to show score screen
       return;
@@ -858,12 +903,11 @@ var setupEventListeners = function () {
     Q.input.trigger('sessionCast', {eventName:'toggleNextElementUp', eventData: eData});
   });
 
-
   var handleMouseOrTouchEvent = function (e) {
     
     var player = getPlayerSprite(selfId);
     
-    if(!_gameLoaded || !player) {
+    if(!_isGameLoaded || !player) {
       // game state need to be loaded
       return;
     }
@@ -874,9 +918,13 @@ var setupEventListeners = function () {
       player.p.firingCooldown = 0;
     }
     
-    if(!player.p.canFire || player.p.isDead
-      || player.p.currentMana < player.p.manaPerShot) {
+    if(!player.p.canFire || player.p.isDead) {
         //console.log("cannot shoot canFire? " + player.p.canFire);
+      return;
+    }
+    if (player.p.currentMana < player.p.manaPerShot) {
+      // Play not enough mana sound
+      Q.audio.play(SOUND_NOTENOUGHMANA);
       return;
     }
 
@@ -903,7 +951,7 @@ var setupEventListeners = function () {
     };
 
     time_sentMouseUp = getCurrentTime();
-    console.log("Sent mouseup event to server at time " + time_sentMouseUp);
+    //console.log("Sent mouseup event to server at time " + time_sentMouseUp);
 
     Q.input.trigger('sessionCast', {eventName:'mouseup', eventData: eData});
     
@@ -987,12 +1035,33 @@ var displayPlayerHUDScreen = function () {
 };
 
 var displayScoreScreen = function () {
+
+  if(!_isSessionConnected || !_isGameLoaded) {
+    // client side need to be connected to the server in order
+    // to show score screen
+    return;
+  }
+
   hideScoreScreen();
-  Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+
+  if(!_isEndGame){
+    Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+  }
 };
 
 var hideScoreScreen = function () {
+  if(!_isSessionConnected || !_isGameLoaded) {
+    // client side need to be connected to the server in order
+    // to show score screen
+    return;
+  }
+
   Q.clearStage(STAGE_SCORE);
+};
+
+var displayEndGameScreen = function(){
+  Q.clearStage(STAGE_SCORE);
+  Q.stageScene(SCENE_END_GAME, STAGE_END_GAME, {endGame: _isEndGame});
 };
 
 // ## Loads welcome screen
@@ -1013,14 +1082,33 @@ var displayGameScreen = function (level) {
   
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
 
+  // Shrink the bounding box for the sprites' width to fit its real width
+  // for PLAYER and ACTOR sprites only
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
+      Q._generatePoints(item, true);
+    }
+  });
 };
 
 // ## Loads the game state.
-var loadGameSession = function () {
+var loadGameSession = function (receivedGameState) {
   console.log("Loading game state...");
 
+  // there is old game state,
+  // remove all of them
+  if(gameState){
+    for (var entityType in gameState.sprites) {
+      for (var eId in gameState.sprites[entityType]) {
+        removeSprite(entityType, eId);
+      }
+    }
+  } 
+  resetState(clone(infoState));
+
   // load default values
-  gameState = gameState ? gameState : getDefaultGameState();
+  gameState = receivedGameState || getDefaultGameState();
   allSprites = getDefaultSprites();
 
   displayGameScreen(gameState.level);
@@ -1032,7 +1120,7 @@ var loadGameSession = function () {
       if (!gameState.sprites[entityType][eId]) {
         // Invalid sprite entry
         continue;
-      } else if(getSprite(entityType,eId)) {
+      } else if(isSpriteExists(entityType,eId)) {
         // Already has a sprite created!
         console.log("Sprites "+entityType+" "+eId+" already exists");
         continue;
@@ -1045,24 +1133,29 @@ var loadGameSession = function () {
     }
   }
 
+  // console.log("before adding "+isCyclic(gameState.sprites.p));
+  
   for(var i =0; i< spritesToAdd.length; i++) {
     addSprite(spritesToAdd[i].entityType, 
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
 
+  // console.log("after adding "+isCyclic(gameState.sprites.p));
+  
   // show connected status
-  displayStatusScreeen("Connected to 'Session "+sessionId+"'");
+  displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
   
     // load player HUD info
   displayPlayerHUDScreen();
   
-  _gameLoaded = true;
+  _isGameLoaded = true;
 }
 
 var sendToApp = function (eventName, eventData) {
   eventData.timestamp = (new Date()).getTime();
   eventData.timestamp += timestampOffset || 0;
+  eventData.sessionToken = sessionToken;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
 }
 
@@ -1115,6 +1208,13 @@ socket.on('updateSessions', function (data) {
 
 socket.on('gameStateChanged', function (data) {
   //console.log("Received event gameStateChanged");
+
+  var sToken = data.sessionToken;
+  if(sessionToken !== undefined && (!sToken || sToken != sessionToken)){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during gameStateChanged");
+    return;
+  }
+
   if (typeof data.kills === 'undefined') {
     console.log("Error in event gameStateChanged: data.kills is undefined");
     return;
@@ -1132,9 +1232,15 @@ socket.on('gameStateChanged', function (data) {
     return;
   }
   
-  //console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
+  // console.log("timeleft: " + data.timeLeft + " totaltime = " + data.totalTime);
   
-  Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+  if(!_isGameLoaded){
+    // received game state update before game is loaded
+    infoState = {kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime};
+  }else{
+    // recieve game state update after game is loaded
+    Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+  }
 });
 
 // player successfully joined a session and receive game state + session info 
@@ -1142,9 +1248,13 @@ socket.on('joinSuccessful', function (data) {
   console.log("Successfully joined session " + data.sessionId);
 
   sessionId = data.sessionId;
-  gameState = data.gameState;
+  sessionToken = data.sessionToken;
+  infoState = data.infoState;
+
+  // console.log("Joined : "+getJSON(data));
 
   _isSessionConnected = true;
+  _isEndGame = false;
   
   // Try to synchronize clock with session (timestamp is automatically appended when sending in sendToApp())
   synchronizeClocksWithServer();
@@ -1159,16 +1269,29 @@ socket.on('joinSuccessful', function (data) {
   
   // Asset for the game state should be loaded ahen welcome screen is loaded
   // Load the initial game state
+  var receivedGameState = data.gameState;
   var interval_loadGameSession = setInterval(function () {
     
     // Only load the game after the clock is synchronized
     if (_clockSynchronized) {
 
       console.log("Clock synchronized with timestampOffset = " + timestampOffset);
-      loadGameSession();
+      loadGameSession(receivedGameState);
       clearInterval(interval_loadGameSession);
     }
   }, 100);
+});
+
+socket.on('endGame', function(data){
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during endGame");
+    return;
+  }
+
+  _isGameLoaded = false;
+  _isEndGame = true;
+  displayEndGameScreen();
 });
 
 var synchronizeClocksWithServer = function () {
@@ -1183,6 +1306,13 @@ var synchronizeClocksWithServer = function () {
 }
 
 socket.on('synchronizeClocks', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during clock synchronization");
+    return;
+  }
+
   // Using http://en.wikipedia.org/wiki/Network_Time_Protocol#Clock_synchronization_algorithm
   var clientReceiveTime = getCurrentTime();         // t3
   var sessionSendTime = data.timestamp;             // t2
@@ -1206,14 +1336,22 @@ socket.on('joinFailed', function (data) {
   console.log("Player "+selfId+" failed to join sesssion "+data.sessionId+" due to '"+data.msg+"'");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
+  _isEndGame = false;
   
-  displayNotificationScreen("Failed to join session "+data.sessionId+" due to "+data.msg, displayWelcomeScreen);
+  displayNotificationScreen("Failed to join session "+data.sessionId+" due to\n["+data.msg+"]", displayWelcomeScreen);
 });
 
 // add sprite
 socket.on('addSprite', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during addSprite");
+    return;
+  }
+
   var props = data.p;
   if(!props) {
     console.log("addSprite without properties");
@@ -1281,6 +1419,14 @@ socket.on('addSprite', function (data) {
 
 // update sprite
 socket.on('updateSprite', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during updateSprite");
+    return;
+  }
+
+
   if (_clockSynchronized) {
     var receivedTimeStamp = data.timestamp;
     var curTimeStamp = (new Date()).getTime() + timestampOffset;
@@ -1293,7 +1439,7 @@ socket.on('updateSprite', function (data) {
   
   //console.log("Message: updateSprite: timeStamp: ");
   //console.log("Received time: " + receivedTimeStamp + " current time: " + curTimeStamp + " one-way delay: " + oneWayDelay);
-  if (!_isSessionConnected || !_clockSynchronized || !_gameLoaded) {
+  if (!_isSessionConnected || !_clockSynchronized || !_isGameLoaded) {
     return;
   }
 
@@ -1326,6 +1472,12 @@ socket.on('updateSprite', function (data) {
 
 // remove sprite
 socket.on('removeSprite', function (data) {
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during removeSprite");
+    return;
+  }
+
   var props = data.p;
   if(!props) {
     console.log("removeSprite without properties");
@@ -1353,12 +1505,21 @@ socket.on('removeSprite', function (data) {
 });
 
 socket.on('powerupTaken', function (data) {
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during powerupTaken");
+    return;
+  }
+
   //console.log("Event: powerupTaken: data: " + getJSON(data));
   
   var eType = data.entityType,
       spriteId = data.spriteId,
+      powerupId = data.powerupId,
       powerupName = data.powerupName,
-      powerupDuration = data.powerupDuration;
+      powerupDuration = data.powerupDuration,
+      powerupFeedbackOnTaken = data.powerupFeedbackOnTaken,
+      powerupSoundOnTaken = data.powerupSoundOnTaken;
       
   if (eType == 'PLAYER' && spriteId != selfId) {
     eType = 'ACTOR';
@@ -1368,13 +1529,19 @@ socket.on('powerupTaken', function (data) {
   }
   
   var sprite = getSprite(eType, spriteId);
-  sprite.addPowerup(powerupName, powerupDuration);
+  sprite.addPowerup(powerupName, powerupDuration, powerupFeedbackOnTaken, powerupSoundOnTaken);
+  removeSprite('POWERUP', powerupId);
 });
 
 // sprite took damage
 socket.on('spriteTookDmg', function (data) {
-  
-  console.log("Event: spriteTookDmg: data: " + getJSON(data));
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during spriteTookDmg");
+    return;
+  }
+
+  // console.log("Event: spriteTookDmg: data: " + getJSON(data));
 
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
@@ -1394,6 +1561,13 @@ socket.on('spriteTookDmg', function (data) {
 
 // sprite died
 socket.on('spriteDied', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during spriteDied");
+    return;
+  }
+
   var victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       killerEntityType = data.killer.entityType,
@@ -1412,12 +1586,16 @@ socket.on('spriteDied', function (data) {
 
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
+
+  // session disconnected does not require seesion token as it is being sent by app.js
+
   console.log("Session disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
   _isJoinSent = false;
-  
+  _isEndGame = false;
+
   // ask player to join a session again
   displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
 
@@ -1426,15 +1604,28 @@ socket.on('sessionDisconnected', function (data) {
 });
 
 // when one or more players disconnected from app.js
-socket.on('playerDisconnected', function (data) {  
-  console.log("Player " + data.spriteId + " from session " + sessionId + " disconnected!");
+socket.on('playerDisconnected', function (data) {
+
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during playerDisconnected");
+    return;
+  }
+
+  var sId = data.p.spriteId;
+  if(!sId){
+    console.log("Player disconnected without sprite id");
+    return;
+  }
+
+  console.log("Player " + sId + " from session " + sessionId + " disconnected!");
   
-  var player = getPlayerSprite(data.spriteId);
-  var msg = "Player "+ (player ? player.p.name : data.spriteId)+" has left";
+  var player = getPlayerSprite(sId);
+  var msg = "Player "+ (player ? player.p.name : sId)+" has left";
   Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
   // Destroy player and remove him from game state
-  removePlayer(data.spriteId);
+  removePlayerSprite(sId);
 });
 
 // when app.js is disconnected
@@ -1442,7 +1633,9 @@ socket.on('disconnect', function () {
   console.log("App.js disconnected");
 
   _isSessionConnected = false;
-  _gameLoaded = false;
+  _isGameLoaded = false;
+  _isEndGame = false;
+  _isJoinSent = false;
 
   // ask player to refresh browser again
   displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");

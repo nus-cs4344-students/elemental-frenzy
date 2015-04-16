@@ -10,6 +10,7 @@ var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
 var STAGE_NOTIFICATION = 2;
 var SCENE_NOTIFICATION = 'notificationScreen';
+var STAGE_END_GAME = 2;
 
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
@@ -21,6 +22,7 @@ var SCENE_STATUS = 'statusScreen';
 var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
 var STAGE_MINIMAP = 7;
+var SCENE_END_GAME = SCENE_SCORE;
 
 
 // ## UI constants
@@ -84,7 +86,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
   }
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
-                                            y:Q.height/20,
+                                            y:Q.height/30,
                                             weight: WEIGHT_TITLE,
                                             size: SIZE_TITLE,
                                             font: FONT_FAMILY,
@@ -156,7 +158,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // session selection section
   var sessionsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
-                                                          y: 6.3*Q.height/11,
+                                                          y: 7.05*Q.height/11,
                                                           w: 3*Q.width/4,
                                                           h: Q.height/4,
                                                           fill: DARKER_GREY
@@ -243,7 +245,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   // characterSprites selection section
   var characterSection = stage.insert(new Q.UI.Container({x: Q.width/2, 
-                                                          y: 4*Q.height/13,
+                                                          y: 3.1*Q.height/13,
                                                           w: 3*Q.width/4,
                                                           h: Q.height/4,
                                                           fill: DARK_GREY
@@ -383,13 +385,14 @@ Q.scene(SCENE_WELCOME,function(stage) {
   characterSection.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
 
 
-
+  var controlsTitleColor = 'hotpink';
+  var controlsTextColor = 'white';
   //control panel
   var controlsContainer = stage.insert(new Q.UI.Container({    x   : Q.width/2, 
-                                                               y   : 8.55*Q.height/11,
+                                                               y   : 9.2*Q.height/11,
                                                                w   : 3*Q.width/4,
-                                                               h   : Q.height/8,
-                                                               fill: DARKER_GREY
+                                                               h   : Q.height/10,
+                                                               fill: DARKEST_GREY
                                                         }));
 
   //controls in text form
@@ -400,8 +403,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
-                                                  label : 'Change to next element'
+                                                  color : controlsTitleColor,
+                                                  label : 'Change attack element'
                                               }));
 
   var changeElementText = stage.insert(new Q.UI.Text({ 
@@ -411,7 +414,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nSPACE'
                                               }));
 
@@ -422,7 +425,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Movement'
                                               }));
 
@@ -433,7 +436,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nW,A,S,D'
                                               }));
 
@@ -444,7 +447,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Shoot'
                                               }));
 
@@ -455,7 +458,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nMouse Click'
                                               }));
 
@@ -466,7 +469,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'black',
+                                                  color : controlsTitleColor,
                                                   label : 'Scoreboard'
                                               }));
 
@@ -477,19 +480,24 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'white',
+                                                  color : controlsTextColor,
                                                   label : '\nHold TAB'
                                               }));
 
   //instrctions panel
   var instructionsContainer = stage.insert(new Q.UI.Container({
                                                               x   : Q.width/2, 
-                                                              y   : 9.6*Q.height/11,
+                                                              y   : 4.85*Q.height/11,
                                                               w   : 3*Q.width/4,
-                                                              h   : Q.height/28,
+                                                              h   : Q.height/9,
                                                               fill: DARKEST_GREY
                                                         }));
 
+  var instructions = 'Instructions:'+
+  '\nTake down opponents by consuming their elements!'+
+  '\nFire > Earth > Lightning > Water > Fire'+
+  '\n(\">\" means passes through)';
+                                              
   var instructionText = stage.insert(new Q.UI.Text({ 
                                                   x     : instructionsContainer.p.x,
                                                   y     : instructionsContainer.p.y - (2*instructionsContainer.p.h/5),
@@ -497,9 +505,9 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
-                                                  color : 'hotpink',
-                                                  label : 'Remember, Fire > Earth > Lightning > Water > Fire!'
-                                              }));
+                                                  color : 'limegreen',
+                                                  label : instructions
+                                                  }));
 
   controlsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   instructionsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
@@ -626,8 +634,8 @@ Q.scene(SCENE_LEVEL, function(stage) {
         // Don't render sprites with containers (sprites do that themselves)
         // Also don't render if not onscreen
 
-        var isWithinX;
-        var isWithinY;
+        var isWithinX = false;
+        var isWithinY = false;
 
         // collision layer (titleLayer will calculate itself int its render() method by taking viewport setting into account)
         if(item.p && !item.collisionLayer && vp && startX && startY && endX && endY){
@@ -635,7 +643,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
           isWithinY = startY <= item.p.y && endY >= item.p.y;
         }
 
-        if(!item.container && (item.p.renderAlways || item.mark >= mapStage.time ||(isWithinX && isWithinY))) {
+        if(!item.container && (item.p.renderAlways ||(isWithinX && isWithinY))) {
           item.render(ctx);
         }
       }
@@ -858,7 +866,6 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupIconCenterY = [];
 
   var timerText;
-  var timeLeft           = Q.state.p.totalTime;
 
   var secondHudContainer = null;
   if (isScreenWidthTooSmall && initHud2) {
@@ -910,29 +917,29 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     scale: scaleToHeight
                                       }));
       } else {
-        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
-        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-        var is150MovespeedActive    = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+        var is150MovespeedActive    = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
         
         powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
         powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
         powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
         
         if (isZeroManaActive) {
-          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST, 
                                      powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (isDoubleDmgActive) {
-          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_150PERCENTDMG, 
                                      powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (is150MovespeedActive) {
-          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
-          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150PERCENTSPEED, 
                                      powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
       }
@@ -941,6 +948,31 @@ Q.scene(SCENE_HUD, function(stage) {
   }
 
   hudContainer.on('draw', hudContainer, function(ctx) {
+
+    /*
+    ** Timer
+    */
+    var timerPosY = secondHudContainer === null ? 
+                    hudContainer.p.y + hudContainer.p.h/2 : secondHudContainer.p.y + secondHudContainer.p.h/2 ;
+                    
+    var timeLeft = Q.state.get('timeLeft');
+    if(timeLeft === undefined){
+      timeLeft = Q.state.get('totalTime');
+     }
+
+    if (initHud) {
+      timerText = stage.insert(new Q.UI.Text({
+      label : getTimeFormat(timeLeft),
+      x: Q.width/2,
+      y: timerPosY,
+      size: SIZE_NORMAL,
+      font: FONT_FAMILY
+      }));
+
+    } else {
+      timerText.p.label = getTimeFormat(timeLeft);
+      timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
+    }
 
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer) {
@@ -965,12 +997,12 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.lineWidth = lineWidth;
     }
 
-    var currentHp = currentPlayer.p.currentHealth;
+    var currentHp = Math.round(currentPlayer.p.currentHealth);
     var maxHp     = currentPlayer.p.maxHealth;
     var scaledHp  = currentHp / maxHp;
 
     //green -> yellow -> red
-    var color       = scaledHp > 0.5 ? '#00FF00' : scaledHp > 0.2 ? '#FFFF00' : '#FF0000';
+    var color       = scaledHp > 0.5 ? 'green' : scaledHp > 0.25 ? 'yellow' : 'brown';
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
     var centerX     = 4*this.p.w/15;
@@ -1005,7 +1037,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.fillStyle   = color;
     centerX         = selector.p.x - eleW / 1.2;
     centerY         = selector.p.y;
-    var manaPerShot = currentPlayer.p.manaPerShot;
+    var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
@@ -1026,7 +1058,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.strokeStyle   = color;
     ctx.fillStyle     = color;
     centerY           = selector.p.y - this.p.h / 3;
-    var damagePerShot = currentPlayer.p.dmg;
+    var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
     ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
@@ -1047,7 +1079,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.strokeStyle = color;
     ctx.fillStyle   = color;
     centerY         = selector.p.y + this.p.h / 3;
-    var moveSpeed   = currentPlayer.p.speed;
+    var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
     ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
     ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
@@ -1091,77 +1123,52 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     scale: scaleToHeight
                                       }));
       } else {
-        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_ZEROMANACOST];
-        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-        var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150SPEED];
+        var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+        var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+        var is150MovespeedActive = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
         
         powerupMana_ZeroMana.p.sheet        = isZeroManaActive        ? HUD_ACTIVE_ZERO_MANA_COST : HUD_INACTIVE_ZERO_MANA_COST;
         powerupAtk_DoubleDmg.p.sheet        = isDoubleDmgActive       ? HUD_ACTIVE_DOUBLE_DMG     : HUD_INACTIVE_DOUBLE_DMG;
         powerupMovement_150Speed.p.sheet    = is150MovespeedActive    ? HUD_ACTIVE_150_MOVESPEED  : HUD_INACTIVE_150_MOVESPEED;
         
         if (isZeroManaActive) {
-          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_ZEROMANACOST];
-          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_ZEROMANACOST, 
+          var timeLeftForZeroMana = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
+          drawSquareWithRoundedCorners(timeLeftForZeroMana,POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST, 
                                      powerupIconCenterX[0], powerupIconCenterY[0], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (isDoubleDmgActive) {
-          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_DOUBLEDMG];
-          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_DOUBLEDMG, 
+          var timeLeftForDoubleDmg = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_ATTACK_150PERCENTDMG];
+          drawSquareWithRoundedCorners(timeLeftForDoubleDmg,POWERUP_DURATION_ATTACK_150PERCENTDMG, 
                                      powerupIconCenterX[1], powerupIconCenterY[1], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
 
         if (is150MovespeedActive) {
-          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150SPEED];
-          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150SPEED, 
+          var timeLeftFor150Movespeed = currentPlayer.p.powerupsTimeLeft[POWERUP_CLASS_MOVESPEED_150PERCENTSPEED];
+          drawSquareWithRoundedCorners(timeLeftFor150Movespeed,POWERUP_DURATION_MOVESPEED_150PERCENTSPEED, 
                                      powerupIconCenterX[2], powerupIconCenterY[2], powerupIconWidth, borderWidth, scaleToHeight, ctx);
         }
       }
     }
 
-    /*
-    ** Timer
-    */
-    var secLeft = Math.floor(timeLeft % 60);
-    var minLeft = Math.floor(timeLeft / 60);
-
-    minLeft = minLeft < 10 ? "0" + minLeft : minLeft;
-    secLeft = secLeft < 10 ? "0" + secLeft : secLeft;
-
-    if (initHud) {
-      timerText = stage.insert(new Q.UI.Text({
-      label : minLeft + ":" + secLeft,
-      x: Q.width/2,
-      y: 13*Q.height/50,
-      size: SIZE_NORMAL,
-      font: FONT_FAMILY
-      }));
-
-    } else {
-      timerText.p.label = minLeft + ":" + secLeft;
-      timerText.p.color = minLeft == "00" ? 'red' : 'black'; 
-    }
-
     initHud = false;
 
   });
-  
-  
 
   //reset hud powerup icons when player dies
   currentPlayer.on('destroyed', function() {
     resetPowerupIcons();
   });
 
-  Q.state.on('change.timeLeft', function() {
-   timeLeft = Q.state.p.timeLeft;
-  });
+  var roundToOneDecimalPlace = function (number) {
+    return Math.round(number * 10) / 10;
+  };
 
   var resetPowerupIcons = function () {
     powerupMana_ZeroMana.p.sheet        = HUD_INACTIVE_ZERO_MANA_COST;
     powerupAtk_DoubleDmg.p.sheet        = HUD_INACTIVE_DOUBLE_DMG;
     powerupMovement_150Speed.p.sheet    = HUD_INACTIVE_150_MOVESPEED;
-  }
+  };
 
   var initialisePowerupPlacementsInHud = function (numPowerupsType, arrayX, arrayY, iconWidth, scale, spaceBetweenIcons) {
     var centerX = -(numPowerupsType/2) * iconWidth * scale;
@@ -1171,7 +1178,7 @@ Q.scene(SCENE_HUD, function(stage) {
       arrayY.push(centerY);
       centerX += iconWidth * scale + spaceBetweenIcons;
     }
-  }
+  };
 
   /*
   ** This function fils a solid circle accordingly to value and maxValue, much like the HP circle.
@@ -1223,7 +1230,7 @@ Q.scene(SCENE_HUD, function(stage) {
     ctx.stroke();
 
     ctx.restore();
-  }
+  };
 
   var drawHollowCircleWithTextInside = function (value, maxValue, centerX, centerY, radius, ctx) {
     var scaledValue = value / maxValue;
@@ -1264,7 +1271,7 @@ Q.scene(SCENE_INFO ,function(stage) {
 
   infoMsgList.push(msg);
   infoTimeLeftList.push(3); // display for 3 second
-  infoPositionList.push([0, -40]);
+  infoPositionList.push([0, -20]);
 
   infoHolder.on('step', infoHolder, function(dt){
 
@@ -1320,7 +1327,10 @@ Q.scene(SCENE_SCORE, function(stage) {
   var rankIconSize       = 34;
   var scaleRankIcons     = rankIconSize < maxSizeOfRankIcons ? 1 : maxSizeOfRankIcons / rankIconSize;
 
-  var currentPlayer = getPlayerSprite(selfId);
+  var currentPlayer;
+  if(!isSession){
+    currentPlayer = getPlayerSprite(selfId);
+  }
 
   /*
   ** Set up UI containers
@@ -1414,8 +1424,8 @@ Q.scene(SCENE_SCORE, function(stage) {
   /*
   ** Loop through total number of players and add their scores line by line
   */
-  var kills  = Q.state.p.kills;  
-  var deaths = Q.state.p.deaths;
+  var kills  = Q.state.get('kills');  
+  var deaths = Q.state.get('deaths');
   
   //push to an array first, then sort. because javascript cannot directly sort Object by value
   var sortedByKillsAndDeath = [];
@@ -1441,12 +1451,12 @@ Q.scene(SCENE_SCORE, function(stage) {
     //values will be retrieved from original Object
     name = sortedByKillsAndDeath[item][0];
 
-    if (typeof Q.state.p.deaths[name] === 'undefined' || typeof Q.state.p.kills[name] === 'undefined') {
+    if (typeof deaths[name] === 'undefined' || typeof kills[name] === 'undefined') {
       continue;
     }
 
     var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
-    if (currentPlayer.p.name == name) {
+    if (currentPlayer && currentPlayer.p.name == name) {
       scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
     }
 
@@ -1492,13 +1502,29 @@ Q.scene(SCENE_SCORE, function(stage) {
 
       ++line;
   }
-  
+
   //padding between stuff in container and border of container
   rankContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
   nameContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   killsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   deathsContainer.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
   overlayContainer.fit(2*UI_PADDING_VALUE, UI_PADDING_VALUE);
+
+  var endGame = stage.options.endGame;
+  if(endGame){
+    var buttonPlay = stage.insert(new Q.UI.Button({ x: 0, 
+                                                    y: (line+2)*offsetY,
+                                                    w: overlayContainer.p.w/3,
+                                                    h: SIZE_BOLD*2,
+                                                    font: FONT_BOLD,
+                                                    fill: 'limegreen',
+                                                    label: 'Play Again'
+                                            }), overlayContainer);
+
+    buttonPlay.on("click", function(){
+      Q.input.trigger('playAgain');
+    }); 
+  }
 });
 
 Q.scene(SCENE_NOTIFICATION, function(stage){
@@ -1530,21 +1556,21 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                   }));
 
 
-    var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
-                                                  y: 0,
-                                                  w: container.p.w/3,
-                                                  h: buttonOkH,
-                                                  font: FONT_BOLD,
-                                                  fill: LIGHT_GREY,
-                                                  label: 'OK'
-                                            }), container);
+  var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
+                                                y: 0,
+                                                w: container.p.w/3,
+                                                h: buttonOkH,
+                                                font: FONT_BOLD,
+                                                fill: LIGHT_GREY,
+                                                label: 'OK'
+                                          }), container);
 
-    buttonOk.on("click", function(){
-      
-      if(callback) callback();
+  buttonOk.on("click", function(){
+    
+    if(callback) callback();
 
-      container.destroy();
-    }); 
+    container.destroy();
+  }); 
 
   var label = stage.insert(new Q.UI.Text({x: 0, 
                                           y: -SIZE_BOLD*msgCount - buttonOkH,
@@ -1560,7 +1586,6 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
   container.fit(Q.height/20, Q.width/30);
 
 });
-
 
 Q.scene(SCENE_STATUS, function(stage){
 
