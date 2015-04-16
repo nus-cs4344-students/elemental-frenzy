@@ -1010,7 +1010,6 @@ var setupEventListeners = function () {
 var resetDisplayScreen = function () {
   // clear all screens
   Q.clearStages();
-  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 
   _isWelcomeScreenShown = false;
 };
@@ -1082,7 +1081,7 @@ var displayGameScreen = function (level) {
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, background: true});
   
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
 

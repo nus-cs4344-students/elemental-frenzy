@@ -2,17 +2,15 @@
 
 
 // ## Stage constants (higher number will render OVER lower number)
-var STAGE_BACKGROUND = 0;
-var SCENE_BACKGROUND = 'background';
-var STAGE_LEVEL = 1;
+var STAGE_LEVEL = 0;
 var SCENE_LEVEL = 'levelScreen';
-var STAGE_WELCOME = 1;
+var STAGE_WELCOME = 0;
 var SCENE_WELCOME = 'welcomeScreen';
-var STAGE_MAP_SELECT = 1;
+var STAGE_MAP_SELECT = 0;
 var SCENE_MAP_SELECT = 'mapSelectionScreen';
 var STAGE_NOTIFICATION = 2;
 var SCENE_NOTIFICATION = 'notificationScreen';
-var STAGE_END_GAME = 2;
+var STAGE_END_GAME = 1;
 
 // Quintus do not trigger button click for stage higher than 2
 var STAGE_SCORE = 3;
@@ -86,6 +84,13 @@ var STATS_OFFSET = 25;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
+
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                speedX: 0.5, 
+                                speedY: 0.5 })
+  );
+
 
   // clear sessioned selected when the session is longer available
   if(welcomeSessionSelected && !sessions[welcomeSessionSelected]){
@@ -516,6 +521,12 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
 Q.scene(SCENE_MAP_SELECT, function(stage){
 
+  // Add in a repeater for a little parallax action
+  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                speedX: 0.5, 
+                                speedY: 0.5 })
+  );
+
 
   var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
                                             y:Q.height/20,
@@ -676,56 +687,25 @@ Q.scene(SCENE_MAP_SELECT, function(stage){
 });
 
 
-// create background screen
-Q.scene(SCENE_BACKGROUND,function(stage) {
-
-  // Add in a repeater for a little parallax action
-  stage.insert(new Q.Repeater({ asset: "background-wall.png", 
-                                speedX: 0.5, 
-                                speedY: 0.5 })
-  );
-});
-
-// ## Level1 scene
-// Create a new scene called level 1
-Q.scene('level1',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level1.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-Q.scene('level2',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-// ## Level3 scene - Main gameplay map
-// Create a new scene called level 3
-// To set Main gameplay map, go to Scene.js -> 'tiles' with 'map_tiles'
-// Go to Session-socket.js and replace default from level1 to level3
-Q.scene('level3',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level3.json',
-                                            sheet: 'tiles' })
-                       
-  );
-    
-}); 
-
 Q.scene(SCENE_LEVEL, function(stage) {
 
-  var backgroundStage = Q.stage(STAGE_BACKGROUND);
   var miniStage = stage.options.miniStage;
   var mapStage = Q.stage(miniStage);
 
   var level = stage.options.level;
   var buttonBackNeeded = stage.options.buttonBack;
+  var isFullScreenBackgroundNeeded = stage.options.background;
+
+
+  if(isFullScreenBackgroundNeeded){
+
+    // Add in a repeater for a little parallax action
+    stage.insert(new Q.Repeater({ asset: "background-wall.png", 
+                                  speedX: 0.5, 
+                                  speedY: 0.5 })
+    );
+  }
+
 
   if(miniStage && mapStage){
     
@@ -818,6 +798,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('render', ctx);   
     });    
   }else{
+
     // Add in a tile layer, and make it the collision layer
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })

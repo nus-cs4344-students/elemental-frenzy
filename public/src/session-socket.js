@@ -806,7 +806,6 @@ var setupListener = function(){
 var resetDisplayScreen = function(){
   // clear all screens
   Q.clearStages();
-  Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 }
 
 var displayNotificationScreen = function(msg, btnDisabled, callback, duration){
@@ -856,7 +855,7 @@ var displayGameScreen = function(level){
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, buttonBack: true});
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, buttonBack: true, background: true});
 
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {level: level, miniStage: STAGE_LEVEL});  
 
