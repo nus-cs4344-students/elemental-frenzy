@@ -8,6 +8,8 @@ var STAGE_LEVEL = 1;
 var SCENE_LEVEL = 'levelScreen';
 var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
+var STAGE_MAP_SELECT = 1;
+var SCENE_MAP_SELECT = 'mapSelectionScreen';
 var STAGE_NOTIFICATION = 2;
 var SCENE_NOTIFICATION = 'notificationScreen';
 var STAGE_END_GAME = 2;
@@ -23,6 +25,7 @@ var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
 var STAGE_MINIMAP = 7;
 var SCENE_END_GAME = SCENE_SCORE;
+var STAGE_HIDDEN = 15;
 
 
 // ## UI constants
@@ -35,10 +38,14 @@ var DARK_GREY = "rgba(0,0,0,0.4)";
 var DARKER_GREY = "rgba(0,0,0,0.5)";
 var DARKEST_GREY = "rgba(0,0,0,0.7)";
 
+var MAP_LEVELS = {level1: 'Ironham', level2: 'Millhedge', level3: 'Oakmarsh'}
+
 var welcomeCharSelected;
 var welcomeSessionSelected; 
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
+
+var mapSelected;
 
 var infoMsgList = [];
 var infoTimeLeftList= [];
@@ -507,6 +514,167 @@ Q.scene(SCENE_WELCOME,function(stage) {
   instructionsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 });
 
+Q.scene(SCENE_MAP_SELECT, function(stage){
+
+
+  var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
+                                            y:Q.height/20,
+                                            weight: WEIGHT_TITLE,
+                                            size: SIZE_TITLE,
+                                            font: FONT_FAMILY,
+                                            align: 'center',
+                                            color: 'red',
+                                            label: "Elemental Frenzy Session"
+                                          }));
+
+  // create button
+  var isShow = (mapSelected !== undefined && mapSelected);
+
+  var buttonCreate = stage.insert(new Q.UI.Button({ fill: 'limegreen',
+                                                    opacity: isShow ? 1 : 0,
+                                                    x: Q.width/2,
+                                                    y: Q.height*0.9,
+                                                    w: Q.width/10,
+                                                    h: Q.height/20,
+                                                    label: 'Create',
+                                                    font: FONT_BOLD,
+                                                    fontColor: 'black'
+                                                }));
+
+  buttonCreate.on("click", function() {
+    if(mapSelected !== undefined && mapSelected){
+      Q.input.trigger('create', {level: mapSelected});
+    }
+  });
+
+   // map selection section
+  var mapsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                      y: Q.height/2,
+                                                      w: Q.width*0.75,
+                                                      h: Q.height*0.7,
+                                                      fill: DARKER_GREY
+                                                    }));
+
+  var baseStage = STAGE_HIDDEN;
+  for(var m in MAP_LEVELS){
+    Q.stageScene(SCENE_LEVEL, baseStage,{level: m});
+    Q.stage(baseStage).add('viewport');
+    baseStage++;
+  }
+
+  var mapCount = baseStage - STAGE_HIDDEN;
+  var screenH = mapsSection.p.h*0.70/mapCount;
+  var screenW = mapsSection.p.w/3;
+  var mapStartX = mapsSection.p.x - mapsSection.p.w*0.17;
+  var mapStartY = mapsSection.p.y - mapsSection.p.h*0.35;
+
+  for(var b = STAGE_HIDDEN; b < baseStage; b++){
+      
+      var mapStage = Q.stage(b);
+      var mapIndex = b - STAGE_HIDDEN;
+      
+      var cLayer = mapStage._collisionLayers[0];
+      var vpScale = 0.1;
+      var mapH = screenH;
+      var mapW = screenW;
+      
+      if(cLayer) {
+        mapH = cLayer.p.h;
+        mapW = cLayer.p.w;
+        vpScale = Math.min(1, Math.min(screenW/mapW, screenH/mapH));
+        vpScale = Math.round(vpScale * 100) / 100;
+      }
+
+      var vpStartX = -(mapStartX - mapW*vpScale/2) / vpScale;
+      var vpStartY = -(mapStartY + mapIndex*screenH*1.2) / vpScale;
+
+      mapStage.viewport.scale = vpScale;
+      mapStage.viewport.moveTo(vpStartX, vpStartY);
+  }
+
+  // map listing
+  var mapListing = stage.insert(new Q.UI.Text({ x:mapsSection.p.x - mapsSection.p.w*0.17,
+                                                y:mapsSection.p.y - 4*mapsSection.p.h/9,
+                                                weight: WEIGHT_BOLD,
+                                                size: SIZE_BOLD,
+                                                font: FONT_FAMILY,
+                                                align: 'center',
+                                                color: 'black',
+                                                label: "Map Listings"
+                                              }));
+
+  // please select a map
+  var mapSelection = stage.insert(new Q.UI.Text({ x:mapsSection.p.x + mapsSection.p.w*0.25,
+                                                  y:mapsSection.p.y - 4*mapsSection.p.h/9,
+                                                  weight: WEIGHT_BOLD,
+                                                  size: SIZE_BOLD,
+                                                  font: FONT_FAMILY,
+                                                  align: 'center',
+                                                  color: 'black',
+                                                  label: "Please select a map"
+                                                }));
+ 
+
+  // insert map into container
+  var container_map = stage.insert(new Q.UI.Container({ x:mapsSection.p.x + mapsSection.p.w*0.25,
+                                                        y:mapsSection.p.y - 4*mapsSection.p.h/9
+                                                      }));
+
+  var mNameSpriteW = mapsSection.p.w*0.30;
+  var mNameSpriteH = 2*mapsSection.p.h/19;
+  var numMap = 0;
+  var mNameSprites = {};
+  for(var m in MAP_LEVELS){
+    // map name sprites
+    var mapName = MAP_LEVELS[m];
+
+    var mNameSprite = new Q.UI.Button({fill: m == mapSelected ? LIGHT_GREY : null,
+                                          x: 0,
+                                          y: mapStartY - screenH*0.6 + numMap*screenH*1.2,
+                                          w: mNameSpriteW,
+                                          h: mNameSpriteH,
+                                          label: mapName,
+                                          font: FONT_NORMAL,
+                                          mapId: m,
+                                          fontColor:  'black'
+                                        });
+    mNameSprites[numMap] = mNameSprite;
+    container_map.insert(mNameSprite);
+    numMap++;
+  }
+
+  container_map.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+
+  for(var mns in mNameSprites){
+
+    mNameSprites[mns].on("click", function() {  
+
+      if(this.p.fill){
+        this.p.fill = null;
+        mapSelected = undefined;
+
+      }else{
+        this.p.fill = LIGHT_GREY;
+        mapSelected = this.p.mapId;
+
+        // reset others
+        for(var o in mNameSprites){
+          if(mapSelected !== mNameSprites[o].p.mapId){
+            mNameSprites[o].p.fill = null;
+          }
+        }
+      }
+
+      // show create button if a map is selected
+      if(mapSelected){
+        buttonCreate.p.opacity = 1;
+      }else{
+        buttonCreate.p.opacity = 0;
+      }
+    });
+  }
+});
+
 
 // create background screen
 Q.scene(SCENE_BACKGROUND,function(stage) {
@@ -567,12 +735,12 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('prerender', ctx);
 
       var vp = stage.viewport;
-      var cLayer = mapStage._collisionLayers[0];
-      var vpScale = 0.1;
       var screenH = Q.height/3;
       var screenW = Q.width/3;
       var startX, startY, endX, endY;
 
+      var cLayer = mapStage._collisionLayers[0];
+      var vpScale = 0.1;
       if(cLayer) {
         vpScale = Math.max(0.1, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
         vpScale = Math.round(vpScale * 100) / 100;
@@ -646,50 +814,13 @@ Q.scene(SCENE_LEVEL, function(stage) {
       mapStage.viewport = preVp;
       
       // call viewport to pop matrix if viewport exists
-      stage.trigger('render', ctx);
-
-      
-    });
-      
+      stage.trigger('render', ctx);   
+    });    
   }else{
     // Add in a tile layer, and make it the collision layer
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
-  );
-  /*
-    stage.insert(new Q.Ladder({x:1457, y:784}));
-    stage.insert(new Q.Ladder({x:1457, y:752}));
-    stage.insert(new Q.Ladder({x:1457, y:720}));
-    stage.insert(new Q.Ladder({x:1457, y:688}));
-    stage.insert(new Q.Ladder({x:1457, y:656}));
-    stage.insert(new Q.Ladder({x:1457, y:624}));
-    stage.insert(new Q.Ladder({x:1457, y:592}));
-    stage.insert(new Q.Ladder({x:1457, y:560}));
-    stage.insert(new Q.Ladder({x:1457, y:528}));
-    stage.insert(new Q.Ladder({x:1457, y:496}));
-    stage.insert(new Q.Ladder({x:1457, y:464}));
-    stage.insert(new Q.Ladder({x:1457, y:432}));
-    stage.insert(new Q.Ladder({x:1457, y:400}));
-    stage.insert(new Q.Ladder({x:1457, y:368}));
-    stage.insert(new Q.Ladder({x:1457, y:336}));
-    stage.insert(new Q.Ladder({x:1457, y:304}));
-    stage.insert(new Q.Ladder({x:1457, y:272}));
-    stage.insert(new Q.Ladder({x:1457, y:240}));
-    stage.insert(new Q.Ladder({x:1457, y:208}));
-
-    stage.insert(new Q.Ladder({x:500, y:764}));
-    stage.insert(new Q.Ladder({x:500, y:702}));
-    stage.insert(new Q.Ladder({x:500, y:640}));
-
-    stage.insert(new Q.Ladder({x:465, y:480}));
-    stage.insert(new Q.Ladder({x:465, y:542}));
-
-    stage.insert(new Q.Ladder({x:272, y:288}));
-    stage.insert(new Q.Ladder({x:272, y:350}));
-    stage.insert(new Q.Ladder({x:272, y:412}));
-    stage.insert(new Q.Ladder({x:272, y:474}));
-    
-   */
+    );
   }
 });
 

@@ -30,7 +30,11 @@ var session;
 var allSprites;
 var spriteId = 0;
 var sessionToken = 0;
+var mapLevelLoaded;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
+var _isMapSelectionScreenShown = false;
+var _isCreated = false;
+
 var STATUS_CONNECTTION = "Connected as 'Session [id]'";
 
 // Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
@@ -605,7 +609,25 @@ var insertIntoStage = function(sprite) {
   return Q.stage(STAGE_LEVEL).insert(sprite);
 };
 
-var initialization = function(){
+var setupListener = function(){
+
+  Q.input.on('create', function (data) {
+    // prevent create button spamming
+    if(_isCreated) {
+      return ;
+    }
+
+    console.log("create "+getJSON(data));
+
+    var mLevel = data.level;
+    if(!mLevel) {
+      console.log("Trying to create a session without map level");
+      return;
+    }
+
+    _isCreated = true;
+    loadGameSession(mLevel);
+  });
 
   Q.input.on('broadcastAll', function(data) {
 
@@ -772,7 +794,7 @@ var initialization = function(){
     });
 
     // reload game session
-    loadGameSession(session.sessionId);
+    loadGameSession(mapLevelLoaded);
 
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
@@ -791,6 +813,15 @@ var displayNotificationScreen = function(msg, btnDisabled, callback, duration){
                       duration: duration, 
                       callback: callback};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
+};
+
+var displayMapSelectionScreen = function () {
+  resetDisplayScreen();
+
+  // character selection
+  Q.stageScene(SCENE_MAP_SELECT, STAGE_MAP_SELECT);
+
+  _isMapSelectionScreenShown = true;
 };
 
 var displayScoreScreen = function(){
@@ -846,18 +877,9 @@ var displayGameScreen = function(level){
 };
 
 
-var loadGameSession = function(sessionId) {
-  if(!sessionId){
-    console.log("Trying to load game session without session id");
-    return;
-  }
+var loadGameSession = function(level) {
 
   console.log("Loading game state...");
-
-  // initialize session
-  session = clone(DEFAULT_SESSION);
-  sessionToken++;
-  session.sessionId = sessionId;
 
   // there is old game state,
   // remove all of them
@@ -878,6 +900,8 @@ var loadGameSession = function(sessionId) {
 
   // initialize game state
   gameState = getDefaultGameState();
+  gameState.level = level;
+  mapLevelLoaded = level;
   allSprites = getDefaultSprites();
   
 
@@ -901,10 +925,7 @@ var loadGameSession = function(sessionId) {
 
   setRoundTimer();
 
-  displayGameScreen(gameState.level);
-
-
-  
+  displayGameScreen(gameState.level);  
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -1105,14 +1126,19 @@ socket.on('connected', function(data) {
   console.log("Connected as SESSION "+sId);
 
   // setup Quintus event listeners
-  initialization();
+  setupListener();
+
+  // initialize session
+  session = clone(DEFAULT_SESSION);
+  sessionToken++;
+  session.sessionId = sId;
 
   var interval_loadGameSession = setInterval(function() {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
       
-      // Load the initial game state
-      loadGameSession(sId);
+      // display map selection screen
+      displayMapSelectionScreen();
       
       // update app.js regarding session info
       Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
