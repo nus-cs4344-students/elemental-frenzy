@@ -365,7 +365,7 @@ var getSpriteProperties = function (entityType, id) {
   var properties;
 
   if(s){
-    properties = clone(gameState.sprites[eType][spriteId].p);
+    properties = cloneValueOnly(allSprites[eType][spriteId].p);
   }
 
   return properties;

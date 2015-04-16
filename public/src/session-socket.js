@@ -337,7 +337,7 @@ var getSpriteProperties = function(entityType, id) {
   var properties;
 
   if(s){
-    properties = clone(gameState.sprites[eType][spriteId].p);
+    properties = cloneValueOnly(allSprites[eType][spriteId].p);
   }
 
   return properties;
@@ -1289,6 +1289,7 @@ socket.on('playerDisconnected', function(data) {
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
   Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has left"});
 
+  var playerProps = getPlayerProperties(pId);
   // remove player from the session
   leaveSession(pId);
   
@@ -1296,11 +1297,11 @@ socket.on('playerDisconnected', function(data) {
   Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
 
   // inform every other player about the player disconnection
-  var otherPlayersData = {p: getPlayerProperties(pId)};
+  var otherPlayersData = {p: playerProps || {} };
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'playerDisconnected', eventData: otherPlayersData});
   
   // Update the state (remove this player from the state)
-  Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);
+  Q.state.trigger('playerDisconnected', playerProps ? playerProps.name : "" );
   
   // If the viewport is following this player, toggle it
   if (Q.stage(STAGE_LEVEL).viewport.following && Q.stage(STAGE_LEVEL).viewport.following.p.spriteId == pId) {
@@ -1381,7 +1382,9 @@ socket.on('mouseup', function(data) {
   
   console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
               " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
-  player.trigger('fire', e);
+  if(player){
+    player.trigger('fire', e);
+  }
 
   setTimeout(function() {
     // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there
