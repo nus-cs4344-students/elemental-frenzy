@@ -856,7 +856,7 @@ var displayGameScreen = function(level){
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, buttonBack: true});
 
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {level: level, miniStage: STAGE_LEVEL});  
 

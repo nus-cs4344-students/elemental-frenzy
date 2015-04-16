@@ -586,7 +586,7 @@ Q.scene(SCENE_MAP_SELECT, function(stage){
       }
 
       var vpStartX = -(mapStartX - mapW*vpScale/2) / vpScale;
-      var vpStartY = -(mapStartY + mapIndex*screenH*1.2) / vpScale;
+      var vpStartY = -(mapStartY + (screenH/2 - mapH*vpScale/2) + mapIndex*screenH*1.2) / vpScale;
 
       mapStage.viewport.scale = vpScale;
       mapStage.viewport.moveTo(vpStartX, vpStartY);
@@ -725,6 +725,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
   var mapStage = Q.stage(miniStage);
 
   var level = stage.options.level;
+  var buttonBackNeeded = stage.options.buttonBack;
 
   if(miniStage && mapStage){
     
@@ -821,6 +822,29 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
     );
+
+    if(buttonBackNeeded){
+      var container = stage.insert(new Q.UI.Container({ x: Q.width/10, 
+                                                        y: Q.height/35
+                                                      }));
+
+      var buttonBack = container.insert(new Q.UI.Button({ fill: 'limegreen',
+                                                          opacity: 1,
+                                                          x: 0,//Q.width/10,
+                                                          y: 0,//Q.height/50,
+                                                          // w: Q.width/10,
+                                                          h: SIZE_BOLD*1.7,//Q.height/20,
+                                                          label: 'Back',
+                                                          font: FONT_BOLD,
+                                                          fontColor: 'black'
+                                                        }));
+
+      buttonBack.on('click', function(){
+        Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {});
+      });
+
+      container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
+    }
   }
 });
 
