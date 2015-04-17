@@ -10,14 +10,10 @@ var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
 var STAGE_MAP_SELECT = 1;
 var SCENE_MAP_SELECT = 'mapSelectionScreen';
-var STAGE_NOTIFICATION = 2;
-var SCENE_NOTIFICATION = 'notificationScreen';
 var STAGE_END_GAME = 2;
-
-// Quintus do not trigger button click for stage higher than 2
-var STAGE_SCORE = 3;
+var STAGE_SCORE = 2;
 var SCENE_SCORE = 'scoreScreen';
-var STAGE_HUD = 4;
+var STAGE_HUD = 3;
 var SCENE_HUD = 'hudScreen';
 var STAGE_STATUS = 5;
 var SCENE_STATUS = 'statusScreen';
@@ -25,8 +21,9 @@ var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
 var STAGE_MINIMAP = 7;
 var SCENE_END_GAME = SCENE_SCORE;
-var STAGE_HIDDEN = 15;
-
+var STAGE_HIDDEN = 10;
+var STAGE_NOTIFICATION = 15;
+var SCENE_NOTIFICATION = 'notificationScreen';
 
 // ## UI constants
 var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
