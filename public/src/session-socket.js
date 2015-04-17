@@ -801,10 +801,10 @@ var setupListener = function(){
   Q.input.on('switch', function(){
     console.log('switch');
 
-    resetGameState();
-
     // tell everyone in the session that currnet session is switching map
-    Q.input.trigger('broadcastAll', {'eventName': 'switch', eventData: {}});
+    Q.input.trigger('broadcastAll', {'eventName': 'sessionDisconnected', eventData: {msg: "Switching Map"}});
+
+    resetGameState();
 
     // update app.js regarding session info
     Q.input.trigger('appCast', {eventName:'removeSession', eventData: {}});
@@ -944,8 +944,10 @@ var loadGameState = function(level) {
     
     var roundTimer = setInterval(function() {
       var timeLeft = Q.state.get('timeLeft');
+      var totalTime = Q.state.get('totalTime');
 
-      if (session.playerCount > 0 && timeLeft && timeLeft > 0) {
+      if (session.playerCount > 0 && timeLeft && timeLeft > 0 || 
+          (totalTime && timeLeft < totalTime)) {
         Q.state.dec("timeLeft", 1);
       }
     }, 1000);
@@ -1028,6 +1030,18 @@ var loadGameState = function(level) {
 
 var joinSession = function(playerId, characterId) {
   var result = {status: false, msg: ""};
+
+  if(!_isMapCreated){
+    console.log("Trying to let a player to join session when map is not created");
+    result.msg = "Session is unavailable";
+    return result;
+  } 
+
+  if(_isMapSelectionScreenShown){
+    console.log("Trying to let a player to join session when map selection screen is shown");
+    result.msg = "Session is switching map";
+    return result;
+  }
 
   var pId = playerId;
   if(!pId){

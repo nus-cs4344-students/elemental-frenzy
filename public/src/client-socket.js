@@ -1587,7 +1587,6 @@ socket.on('spriteDied', function (data) {
   sprite.die(killerEntityType, killerId);
 });
 
-
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
 
@@ -1600,8 +1599,19 @@ socket.on('sessionDisconnected', function (data) {
   _isJoinSent = false;
   _isEndGame = false;
 
+  var msg;
+  if(data){
+    msg = data.msg;
+  } 
+
+  if(msg === undefined){
+    msg = "";
+  }else{
+    msg = "Due to ["+msg+ "]\n";
+  }
+
   // ask player to join a session again
-  displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
+  displayNotificationScreen("You are disconnected\n"+msg+"Please join another session", displayWelcomeScreen);
 
   // create disconnected status
   displayStatusScreeen("Disconnected");

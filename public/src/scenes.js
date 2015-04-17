@@ -808,13 +808,14 @@ Q.scene(SCENE_HUD, function(stage) {
                                                         y: Q.height/35
                                                       }));
 
+  var backLabel = isSession ? "Switch Map" : "Switch Session";
   var buttonBack = container_back.insert(new Q.UI.Button({fill: 'limegreen',
                                                           opacity: 1,
-                                                          x: 0,
+                                                          x: SIZE_BOLD*backLabel.length/10,
                                                           y: 0,
-                                                          h: SIZE_BOLD*1.7,
-                                                          label: isSession ? "Switch Map" : "Switch Session",
-                                                          font: FONT_BOLD,
+                                                          h: SIZE_BOLD*1.4,
+                                                          label: backLabel,
+                                                          font: FONT_NORMAL,
                                                           fontColor: 'black'
                                                         }));
 
