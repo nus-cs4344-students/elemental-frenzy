@@ -719,7 +719,7 @@ var setupEventListeners = function () {
 
   Q.input.on('playAgain', function(){
     Q.input.trigger('sessionCast', {
-      eventName:'playAgain', 
+      eventName: 'playAgain', 
       eventData: {
         spriteId: selfId, 
         sessionId: sessionId, 
@@ -727,6 +727,22 @@ var setupEventListeners = function () {
       }
     });
     
+  });
+
+  Q.input.on('switch', function(){
+    console.log('switch session');
+
+    // tell everyone in the session that currnet session is switching map
+    Q.input.trigger('sessionCast', {'eventName': 'playerDisconnected', eventData: {spriteId: selfId}});
+
+    resetGameState();
+
+    _isSessionConnected = false;
+    _isGameLoaded = false;
+    _isJoinSent = false;
+    _isEndGame = false;
+
+    displayWelcomeScreen();
   });
 
     
@@ -1096,10 +1112,7 @@ var displayGameScreen = function (level) {
   });
 };
 
-// ## Loads the game state.
-var loadGameSession = function (receivedGameState) {
-  console.log("Loading game state...");
-
+var resetGameState = function(){
   // there is old game state,
   // remove all of them
   if(gameState){
@@ -1109,7 +1122,13 @@ var loadGameSession = function (receivedGameState) {
       }
     }
   } 
+
   resetState(clone(infoState));
+};
+
+// ## Loads the game state.
+var loadGameSession = function (receivedGameState) {
+  console.log("Loading game state...");
 
   // load default values
   gameState = receivedGameState || getDefaultGameState();

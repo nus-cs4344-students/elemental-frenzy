@@ -799,7 +799,7 @@ var setupListener = function(){
   });
 
   Q.input.on('switch', function(){
-    console.log('switch');
+    console.log('switch map');
 
     // tell everyone in the session that currnet session is switching map
     Q.input.trigger('broadcastAll', {'eventName': 'sessionDisconnected', eventData: {msg: "Switching Map"}});
@@ -1324,7 +1324,7 @@ socket.on('playerDisconnected', function(data) {
   
   // player disconnected does not require session token as it is being sent by app.js
 
-  var pId = data.spriteId
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id is disconnected from session " + session.sessionId);
   }
