@@ -839,7 +839,6 @@ Q.scene(SCENE_HUD, function(stage) {
   container_back.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 
   if(!isSession){
-
     var currentPlayer = getPlayerSprite(selfId);
     if(!currentPlayer){
       console.log("Cannot locate current player during HUD element selector initialization");
@@ -1098,6 +1097,36 @@ Q.scene(SCENE_HUD, function(stage) {
       timerText.p.label = getTimeFormat(timeLeft);
       timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
+
+    if(isSession){
+      var pList = session.players;
+      var rtts = {};
+      var numPlayer = 0;
+
+      if(pList){
+        
+        for(var p in pList){
+          rtts[p] = getAvgRttOfPlayer(p);
+          numPlayer++;
+        }  
+      }
+
+
+      if(numPlayer > 0){
+
+      }else{
+        color           = '#3BB9FF'; //blue
+        ctx.strokeStyle = color;
+        ctx.fillStyle   = color;
+        centerX         = 0;
+        centerY         = -hudContainer.p.h/3;
+        // var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
+        ctx.font        = WEIGHT_BOLD + " "+SIZE_BOLD+"px "+FONT_FAMILY;
+        ctx.fillText("No player has connected to this session", centerX, centerY);
+        // ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+      }
+    }
+
 
     var currentPlayer;
     if(!isSession){
