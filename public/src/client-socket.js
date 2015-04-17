@@ -1017,7 +1017,7 @@ var resetDisplayScreen = function () {
 
 var displayNotificationScreen = function (msg, callback) {
   var stageOptions = {msg: msg,
-                      callback: callback};
+                      buttons: [{label: 'OK', callback: callback}]};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
 };
 

@@ -809,11 +809,9 @@ var resetDisplayScreen = function(){
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 }
 
-var displayNotificationScreen = function(msg, btnDisabled, callback, duration){
-  var stageOptions = {msg: msg, 
-                      btnDisabled: btnDisabled,
-                      duration: duration, 
-                      callback: callback};
+var displayNotificationScreen = function(msg, callback){
+  var stageOptions = {msg: msg,
+                      buttons: [{label: 'OK', callback: callback}]};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
 };
 
@@ -856,7 +854,7 @@ var displayGameScreen = function(level){
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, buttonBack: true});
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
 
   Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {level: level, miniStage: STAGE_LEVEL});  
 
@@ -1323,7 +1321,7 @@ socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
   // ask host to refresh browser again
-  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while", false);
+  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");
 
   displayStatusScreeen("Unable to connect to the server");
 });

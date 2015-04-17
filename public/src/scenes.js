@@ -689,46 +689,12 @@ Q.scene(SCENE_BACKGROUND,function(stage) {
   );
 });
 
-// ## Level1 scene
-// Create a new scene called level 1
-Q.scene('level1',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level1.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-Q.scene('level2',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-// ## Level3 scene - Main gameplay map
-// Create a new scene called level 3
-// To set Main gameplay map, go to Scene.js -> 'tiles' with 'map_tiles'
-// Go to Session-socket.js and replace default from level1 to level3
-Q.scene('level3',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level3.json',
-                                            sheet: 'tiles' })
-                       
-  );
-    
-}); 
-
 Q.scene(SCENE_LEVEL, function(stage) {
 
-  var backgroundStage = Q.stage(STAGE_BACKGROUND);
   var miniStage = stage.options.miniStage;
   var mapStage = Q.stage(miniStage);
 
   var level = stage.options.level;
-  var buttonBackNeeded = stage.options.buttonBack;
 
   if(miniStage !== undefined && mapStage !== undefined){
     // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
@@ -823,29 +789,6 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
     );
-
-    if(buttonBackNeeded){
-      var container = stage.insert(new Q.UI.Container({ x: Q.width/10, 
-                                                        y: Q.height/35
-                                                      }));
-
-      var buttonBack = container.insert(new Q.UI.Button({ fill: 'limegreen',
-                                                          opacity: 1,
-                                                          x: 0,//Q.width/10,
-                                                          y: 0,//Q.height/50,
-                                                          // w: Q.width/10,
-                                                          h: SIZE_BOLD*1.7,//Q.height/20,
-                                                          label: 'Back',
-                                                          font: FONT_BOLD,
-                                                          fontColor: 'black'
-                                                        }));
-
-      buttonBack.on('click', function(){
-        Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {});
-      });
-
-      container.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
-    }
   }
 });
 
@@ -861,6 +804,34 @@ Q.scene(SCENE_HUD, function(stage) {
                                                        radius: 0 //0 = no rounded corners
                                                       }));
 
+  var container_back = stage.insert(new Q.UI.Container({x: Q.width/10, 
+                                                        y: Q.height/35
+                                                      }));
+
+  var buttonBack = container_back.insert(new Q.UI.Button({fill: 'limegreen',
+                                                          opacity: 1,
+                                                          x: 0,
+                                                          y: 0,
+                                                          h: SIZE_BOLD*1.7,
+                                                          label: isSession ? "Switch Map" : "Switch Session",
+                                                          font: FONT_BOLD,
+                                                          fontColor: 'black'
+                                                        }));
+
+  buttonBack.on('click', function(){
+    var msg;
+    if(isSession){
+      msg = "Switching map will disconnect all players in this session\nAre you sure to switch it?";
+    }else{
+      msg = "Switching session will cause you to lose all your current game progress\nAre you sure to switch it?";
+    }
+
+    var callback;
+    var buttons = [{label: "YES", callback: callback}, {label: "NO"}];
+    Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: msg, buttons: buttons});
+  });
+
+  container_back.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 
   if(!isSession){
 
@@ -1693,14 +1664,12 @@ Q.scene(SCENE_SCORE, function(stage) {
 Q.scene(SCENE_NOTIFICATION, function(stage){
 
   var msg = stage.options.msg;
-  var callback = stage.options.callback;
-
   if(!msg){
     console.log("No message passed when creating notificationScreen");
     return;
   }
 
-  var buttonOkH = Q.height/20;
+  var buttonH = Q.height/20;
   var msgArray = msg.split('\n');
   var maxMsgLength = 0;
   var msgLength;
@@ -1719,24 +1688,32 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                   }));
 
 
-  var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
+  var buttons = stage.options.buttons;
+  for(var b=0; buttons && b<buttons.length; b++){
+    var bLen = buttons.length;
+    var bW = Q.width/20;
+    var bLabel = buttons[b].label;
+    var bCallback = buttons[b].callback;
+
+    var button = stage.insert(new Q.UI.Button({ x: -bLen*bW/2 + b*bW + bW/2, 
                                                 y: 0,
-                                                w: container.p.w/3,
-                                                h: buttonOkH,
+                                                w: bW*0.8,
+                                                h: buttonH,
                                                 font: FONT_BOLD,
                                                 fill: LIGHT_GREY,
-                                                label: 'OK'
+                                                label: bLabel
                                           }), container);
 
-  buttonOk.on("click", function(){
-    
-    if(callback) callback();
+    button.on("click", function(){
+      
+      if(bCallback) callback();
 
-    container.destroy();
-  }); 
+      container.destroy();
+    }); 
+  }
 
   var label = stage.insert(new Q.UI.Text({x: 0, 
-                                          y: -SIZE_BOLD*msgCount - buttonOkH,
+                                          y: -SIZE_BOLD*msgCount - buttonH,
                                           size: SIZE_BOLD,
                                           font: FONT_FAMILY,
                                           algin: "center",
@@ -1745,7 +1722,6 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                           label: msg
                                         }), container);
 
-  // button is shown, increase message box size
   container.fit(Q.height/20, Q.width/30);
 
 });
