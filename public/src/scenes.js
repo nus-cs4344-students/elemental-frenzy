@@ -713,8 +713,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
   }
 
 
-  if(miniStage && mapStage){
-    
+  if(miniStage !== undefined && mapStage !== undefined){
     // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
     mapStage.on("postrender", function(ctx){
 
@@ -734,7 +733,6 @@ Q.scene(SCENE_LEVEL, function(stage) {
       }
       
       if(vp) {
-
         vp.scale = vpScale;
         vp.screenW = screenW;
         vp.screenH = screenH;
@@ -773,7 +771,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       var preVp = mapStage.viewport;
       if(preVp && vp){
         // change to minimap viewport
-        mapStage.viewport = vp;   
+        mapStage.viewport = vp;
       }
 
       // render miniStage
@@ -792,7 +790,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
           isWithinY = startY <= item.p.y && endY >= item.p.y;
         }
 
-        if(!item.container && (item.p.renderAlways ||(isWithinX && isWithinY))) {
+        if(!item.container && !item.isA('Repeater') &&(item.p.renderAlways ||(isWithinX && isWithinY))) {
           item.render(ctx);
         }
       }
