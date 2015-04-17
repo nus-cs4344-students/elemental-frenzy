@@ -1725,7 +1725,7 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
   var buttons = stage.options.buttons;
   for(var b=0; buttons && b<buttons.length; b++){
     var bLen = buttons.length;
-    var bW = Q.width/20;
+    var bW = Q.width/10;
     var bLabel = buttons[b].label;
     var bCallback = buttons[b].callback;
 
