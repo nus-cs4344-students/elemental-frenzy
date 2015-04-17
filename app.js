@@ -128,11 +128,9 @@ var removeSessionFromSocket = function (sessionId) {
 };
 
 var removeSession = function (sessionId) {
-  setTimeout(function () {
-    removeSessionFromPlayer(sessionId);
-    removeSessionFromSocket(sessionId);
-    delete sessions[sessionId];
-  }, delay_s2p * 5);
+  removeSessionFromPlayer(sessionId);
+  removeSessionFromSocket(sessionId);
+  delete sessions[sessionId];
 };
 
 var removePlayersFromSession = function (sessionId) {
@@ -207,7 +205,7 @@ var getAllPlayers = function () {
   var pList = {};
   var p;
   for(p in playerIdToSocketMap) {
-    pList[p] = playerId[p];
+    pList[p] = p;
   }
 
   return pList;
