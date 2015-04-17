@@ -128,11 +128,9 @@ var removeSessionFromSocket = function (sessionId) {
 };
 
 var removeSession = function (sessionId) {
-  setTimeout(function () {
-    removeSessionFromPlayer(sessionId);
-    removeSessionFromSocket(sessionId);
-    delete sessions[sessionId];
-  }, delay_s2p * 5);
+  removeSessionFromPlayer(sessionId);
+  removeSessionFromSocket(sessionId);
+  delete sessions[sessionId];
 };
 
 var removePlayersFromSession = function (sessionId) {
@@ -207,7 +205,7 @@ var getAllPlayers = function () {
   var pList = {};
   var p;
   for(p in playerIdToSocketMap) {
-    pList[p] = playerId[p];
+    pList[p] = p;
   }
 
   return pList;
@@ -342,6 +340,17 @@ io.on('connection', function (socket) {
     var sId = getSessionIdOfSocketId(socket.conn.id);
 
     switch (data.eventName) {
+      case 'removeSession':{
+        // removal for the session
+        if(sId) {
+          delete sessions[sId];
+          sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
+          console.log("Session "+sId+" removed");
+        }else{
+          console.log("Failed to remove session of Unknown");
+        }
+        break;
+      }
       case 'updateSession':{
         // update for the session
         if(sId) {
@@ -349,7 +358,7 @@ io.on('connection', function (socket) {
           sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
           console.log("Update session : " + getJSON(data.eventData));
         }else{
-          console.log("Failed to update session");
+          console.log("Failed to update session of Unknown");
         }
         break;
       }
