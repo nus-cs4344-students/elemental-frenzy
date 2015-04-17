@@ -34,7 +34,7 @@ var sessionId;
 var mapLevelLoaded;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 var _isMapSelectionScreenShown = false;
-var _isCreated = false;
+var _isMapCreated = false;
 
 var STATUS_CONNECTTION = "Connected as 'Session [id]'";
 
@@ -614,7 +614,7 @@ var setupListener = function(){
 
   Q.input.on('create', function (data) {
     // prevent create button spamming
-    if(_isCreated) {
+    if(_isMapCreated) {
       return ;
     }
 
@@ -626,11 +626,9 @@ var setupListener = function(){
       return;
     }
 
-    _isCreated = true;
-    loadGameSession(mLevel);
-
-    // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+    _isMapCreated = true;
+    
+    createGameSession(mLevel);
   });
 
   Q.input.on('broadcastAll', function(data) {
@@ -795,15 +793,29 @@ var setupListener = function(){
       eventData: {}
     });
 
+
     // reload game session
-    loadGameSession(mapLevelLoaded);
+    createGameSession(mapLevelLoaded);
+  });
+
+  Q.input.on('switch', function(){
+    console.log('switch');
+
+    resetGameState();
+
+    // tell everyone in the session that currnet session is switching map
+    Q.input.trigger('broadcastAll', {'eventName': 'switch', eventData: {}});
 
     // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+    Q.input.trigger('appCast', {eventName:'removeSession', eventData: {}});
+
+    displayMapSelectionScreen();
   });
 };
 
 var resetDisplayScreen = function(){
+  _isMapSelectionScreenShown = false;
+
   // clear all screens
   Q.clearStages();
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
@@ -822,6 +834,7 @@ var displayMapSelectionScreen = function () {
   Q.stageScene(SCENE_MAP_SELECT, STAGE_MAP_SELECT);
 
   _isMapSelectionScreenShown = true;
+  _isMapCreated = false;
 };
 
 var displaySessionHUDScreen = function () {
@@ -879,11 +892,17 @@ var displayGameScreen = function(level){
   
 };
 
+var createGameSession = function(level){
 
-var loadGameSession = function(level) {
+    resetGameState();
 
-  console.log("Loading game state...");
+    loadGameState(level || mapLevelLoaded);
 
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+};
+
+var resetGameState = function(){
   // there is old game state,
   // remove all of them
   if(gameState){
@@ -908,9 +927,15 @@ var loadGameSession = function(level) {
 
   // initialize game state
   gameState = getDefaultGameState();
+  allSprites = getDefaultSprites();
+};
+
+var loadGameState = function(level) {
+
+  console.log("Loading game state...");
+
   gameState.level = level;
   mapLevelLoaded = level;
-  allSprites = getDefaultSprites();
   
 
   var setRoundTimer = function() {
@@ -1140,7 +1165,7 @@ socket.on('connected', function(data) {
   // setup Quintus event listeners
   setupListener();
 
-  var interval_loadGameSession = setInterval(function() {
+  var interval_loadGameState = setInterval(function() {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
       
@@ -1148,7 +1173,7 @@ socket.on('connected', function(data) {
       displayMapSelectionScreen();
       
       // Don't load a second time
-      clearInterval(interval_loadGameSession);
+      clearInterval(interval_loadGameState);
     }
   }, 100);
 });

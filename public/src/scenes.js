@@ -820,13 +820,17 @@ Q.scene(SCENE_HUD, function(stage) {
 
   buttonBack.on('click', function(){
     var msg;
+    var callback;
     if(isSession){
       msg = "Switching map will disconnect all players in this session\nAre you sure to switch it?";
     }else{
       msg = "Switching session will cause you to lose all your current game progress\nAre you sure to switch it?";
-    }
+   }
 
-    var callback;
+    var callback = function(){
+      Q.input.trigger('switch');
+    };
+
     var buttons = [{label: "YES", callback: callback}, {label: "NO"}];
     Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: msg, buttons: buttons});
   });
@@ -1701,12 +1705,13 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                 h: buttonH,
                                                 font: FONT_BOLD,
                                                 fill: LIGHT_GREY,
-                                                label: bLabel
+                                                label: bLabel,
+                                                callback: bCallback
                                           }), container);
 
     button.on("click", function(){
-      
-      if(bCallback) callback();
+
+      if(this.p.callback) this.p.callback();
 
       container.destroy();
     }); 

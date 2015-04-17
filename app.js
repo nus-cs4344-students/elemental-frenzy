@@ -342,6 +342,17 @@ io.on('connection', function (socket) {
     var sId = getSessionIdOfSocketId(socket.conn.id);
 
     switch (data.eventName) {
+      case 'removeSession':{
+        // removal for the session
+        if(sId) {
+          delete sessions[sId];
+          sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
+          console.log("Session "+sId+" removed");
+        }else{
+          console.log("Failed to remove session of Unknown");
+        }
+        break;
+      }
       case 'updateSession':{
         // update for the session
         if(sId) {
@@ -349,7 +360,7 @@ io.on('connection', function (socket) {
           sendToPlayers(getAllPlayers(), 'updateSessions', {sessions: sessions});
           console.log("Update session : " + getJSON(data.eventData));
         }else{
-          console.log("Failed to update session");
+          console.log("Failed to update session of Unknown");
         }
         break;
       }
