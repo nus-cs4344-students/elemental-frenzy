@@ -95,6 +95,16 @@ Q.Sprite.extend("Actor", {
 
     removeActorSprite(this.p.spriteId);
   },
+  
+  outOfBounds: function() {
+    console.log(this.p.name + " went out of bounds!");
+
+    var msg = this.p.name + " went crazy and went out of the game map!";
+    
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+
+    removeActorSprite(this.p.spriteId);
+  },
 
   step: function(dt) {
      // stop interval when player can take damage

@@ -1603,8 +1603,8 @@ socket.on('spriteDied', function (data) {
   }
 
   var victimEntityType = data.victim.entityType,
-      victimId = data.victim.spriteId,
-      killerEntityType = data.killer.entityType,
+      victimId = data.victim.spriteId;
+  var killerEntityType = data.killer.entityType,
       killerId = data.killer.spriteId;
   
   // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
@@ -1615,6 +1615,27 @@ socket.on('spriteDied', function (data) {
   }
   
   sprite.die(killerEntityType, killerId);
+});
+
+// sprite went out of bounds of the game map
+socket.on('spriteOutOfBounds', function(data) {
+  var sToken = data.sessionToken;
+  if(!sToken || sToken != sessionToken){
+    console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during spriteDied");
+    return;
+  }
+
+  var victimEntityType = data.victim.entityType,
+      victimId = data.victim.spriteId;
+  
+  // getSprite will convert entity type to ACTOR when PLAYER is passed it but id != selfId
+  var sprite = getSprite(victimEntityType, victimId);
+  if (!sprite) {
+    console.log("Error in spriteDied socket event: " + victimEntityType + " " + victimId + " does not exist");
+    return;
+  }
+  
+  sprite.outOfBounds();
 });
 
 // when session is disconnected
