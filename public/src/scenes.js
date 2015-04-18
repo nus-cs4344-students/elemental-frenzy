@@ -738,7 +738,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
 
         // draw background and add title for minimap
         ctx.save();
-
+        
         var textSize = Math.floor(SIZE_NORMAL/vpScale);
         var backgroundStartX = vp.centerX-(screenW/2/vpScale);
         var backgroundStartY = vp.centerY-(screenH/2/vpScale) - textSize*1.5;
@@ -761,6 +761,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       if(preVp && vp){
         // change to minimap viewport
         mapStage.viewport = vp;
+        vp.softCenterOn(preVp.centerX, preVp.centerY);
       }
 
       // render miniStage
