@@ -30,8 +30,8 @@ var playerId = 0;
 var sessionId = 0;
 
 // Artificial delay
-var delay_s2p = 200;    // delay in ms
-var delay_p2s = 200;    //
+var delay_s2p = 0;    // delay in ms
+var delay_p2s = 0;    //
 var delayVar_s2p = 0.2; // delay variance, in the range [0, 1] (percentage)
 var delayVar_p2s = 0.2; //
 
