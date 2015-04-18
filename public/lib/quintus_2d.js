@@ -323,18 +323,20 @@ Quintus["2D"] = function(Q) {
             }
             foundLeftOrRightTile = false;
             currentPath = [];
-          } else if (leftTile) {
-            // There is a left tile, check if it has at least 2 empty tile spaces above it.
-            // If so then we have found a good left tile!
-            var isLeftUpOneEmpty = (y < 1 || !this.getTile(x-1, y-1));
-            var isLeftUpTwoEmpty = (y < 2 || !this.getTile(x-1, y-2));
-            foundLeftOrRightTile = isLeftUpOneEmpty && isLeftUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
-          } else if (rightTile) {
-            // There is a right tile, check if it has at least 2 empty tile spaces above it.
-            // If so then we have found a good right tile!
-            var isRightUpOneEmpty = (y < 1 || !this.getTile(x+1, y-1));
-            var isRightUpTwoEmpty = (y < 2 || !this.getTile(x+1, y-2));
-            foundLeftOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
+          } else if (!foundLeftOrRightTile) {
+            if (leftTile) {
+              // There is a left tile, check if it has at least 2 empty tile spaces above it.
+              // If so then we have found a good left tile!
+              var isLeftUpOneEmpty = (y < 1 || !this.getTile(x-1, y-1));
+              var isLeftUpTwoEmpty = (y < 2 || !this.getTile(x-1, y-2));
+              foundLeftOrRightTile = isLeftUpOneEmpty && isLeftUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
+            } else if (rightTile) {
+              // There is a right tile, check if it has at least 2 empty tile spaces above it.
+              // If so then we have found a good right tile!
+              var isRightUpOneEmpty = (y < 1 || !this.getTile(x+1, y-1));
+              var isRightUpTwoEmpty = (y < 2 || !this.getTile(x+1, y-2));
+              foundLeftOrRightTile = isRightUpOneEmpty && isRightUpTwoEmpty && (y < 1 || !this.getTile(x, y-1)) && (y < 2 || !this.getTile(x, y-2));
+            }
           }
           
           if ( foundLeftOrRightTile ){
