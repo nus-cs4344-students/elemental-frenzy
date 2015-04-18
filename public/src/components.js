@@ -383,7 +383,7 @@ Q.component("serverSprite", {
     this.serverUpdateInterval = setInterval(function() {    
       // console.log("EntityType " + entity.p.entityType + " id " + entity.p.spriteId + " in session "+entity.p.sessionId+" sending update from server");
       
-      Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: that.p} });
+      Q.input.trigger('broadcastAll', {eventName:'updateSprite', eventData: {p: cloneValueOnly(that.p)} });
     }, updateInterval);
     
     that.on('destroyed', this, 'destroy');
