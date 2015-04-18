@@ -21,7 +21,8 @@ var DEFAULT_SESSION = {
   playerCount: 0,
   playerMaxCount: 4,
   players: {},
-  sessionId: 0
+  sessionId: 0,
+  level: ""
 };
 
 var isSession = true;
@@ -36,7 +37,7 @@ var _playerToFollowId; // To be used when toggling between players to follow, fo
 var _isMapSelectionScreenShown = false;
 var _isMapCreated = false;
 
-var STATUS_CONNECTTION = "Connected as 'Session [id]'";
+var STATUS_CONNECTTION = "Connected as 'Session [id]' ([level])";
 
 // Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
 var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
@@ -873,6 +874,10 @@ var displayGameScreen = function(level){
 
   // show connected status
   var status = STATUS_CONNECTTION.replace('[id]', session.sessionId);
+  var mapName = MAP_LEVELS[level];
+  if(mapName){
+    status = status.replace('[level]', mapName);
+  }
   displayStatusScreeen(status);
 
   // Viewport
@@ -936,7 +941,7 @@ var loadGameState = function(level) {
 
   gameState.level = level;
   mapLevelLoaded = level;
-  
+  session.level = level;
 
   var setRoundTimer = function() {
     Q.state.p.totalTime = TIME_PER_ROUND;

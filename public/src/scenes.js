@@ -181,6 +181,12 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // session sprites
     var sInfo = sessions[s];
     var sLabel = "[ "+sInfo.playerCount+"/"+sInfo.playerMaxCount+" ] Session "+sInfo.sessionId;
+
+    var mapName = MAP_LEVELS[sInfo.level];
+    if(mapName){
+      sLabel +=" ("+mapName+")";
+    }
+    
     var isFull = sInfo.playerCount >= sInfo.playerMaxCount;
 
     var pList = sInfo.players;
@@ -1082,7 +1088,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var timeLeft = Q.state.get('timeLeft');
     if(timeLeft === undefined){
       timeLeft = Q.state.get('totalTime');
-     }
+    }
 
     if (initHud) {
       timerText = stage.insert(new Q.UI.Text({
