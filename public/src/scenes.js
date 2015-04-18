@@ -1123,6 +1123,7 @@ Q.scene(SCENE_HUD, function(stage) {
       color           = LIGHT_GREY;
       ctx.strokeStyle = color;
       ctx.fillStyle   = color;
+      ctx.textAlign   = "center";
       centerX         = 0;
       centerY         = -hudContainer.p.h/5;
       ctx.font        = WEIGHT_NORMAL + " "+SIZE_BOLD+"px "+FONT_FAMILY;
