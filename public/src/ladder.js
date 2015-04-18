@@ -84,7 +84,7 @@ Q.component('ladderSystem',{
     var MARGIN = 0.1 * tileLayer.p.w; // 10% away from the left/right gameworld edges
 
 
-    var maxLadderCount = 8;
+    var maxLadderCount = Math.floor(Math.max(tileLayer.p.rows, tileLayer.p.cols) / 8);
     var ladderCount = 0;
     var ladderW = tileLayer.p.tileW;
     var ladderH = tileLayer.p.tileH;

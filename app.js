@@ -9,6 +9,10 @@ app.get('/', function (req, res) {
   res.render('/index.html');
 });
 
+var port = process.env.PORT || 4344;
+console.log("Multiplayer app listening on port "+port);
+server.listen(port);
+
 var SESSION_MAX_COUNT = 5;
 
 var sessionIdToSocketMap = {};
@@ -26,8 +30,8 @@ var playerId = 0;
 var sessionId = 0;
 
 // Artificial delay
-var delay_s2p = 200;    // delay in ms
-var delay_p2s = 200;    //
+var delay_s2p = 0;    // delay in ms
+var delay_p2s = 0;    //
 var delayVar_s2p = 0.2; // delay variance, in the range [0, 1] (percentage)
 var delayVar_p2s = 0.2; //
 
@@ -252,8 +256,9 @@ var sendToSession = function (sessionId, eventName, eventData) {
 io.on('connection', function (socket) {
   console.log(socket.handshake.headers.referer);
   
-  var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
-  var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;;
+  // var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
+  var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;
+  var isClient = !isSession;
 
   var sessionSize = sizeOfObject(sessions);
   if(isSession && sessionSize >= SESSION_MAX_COUNT) {
@@ -369,6 +374,3 @@ io.on('connection', function (socket) {
     }
   });
 });
- 
-server.listen(4344);
-console.log("Multiplayer app listening on port 4344");

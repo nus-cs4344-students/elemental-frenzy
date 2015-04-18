@@ -181,6 +181,12 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // session sprites
     var sInfo = sessions[s];
     var sLabel = "[ "+sInfo.playerCount+"/"+sInfo.playerMaxCount+" ] Session "+sInfo.sessionId;
+
+    var mapName = MAP_LEVELS[sInfo.level];
+    if(mapName){
+      sLabel +=" ("+mapName+")";
+    }
+    
     var isFull = sInfo.playerCount >= sInfo.playerMaxCount;
 
     var pList = sInfo.players;
@@ -732,7 +738,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
 
         // draw background and add title for minimap
         ctx.save();
-
+        
         var textSize = Math.floor(SIZE_NORMAL/vpScale);
         var backgroundStartX = vp.centerX-(screenW/2/vpScale);
         var backgroundStartY = vp.centerY-(screenH/2/vpScale) - textSize*1.5;
@@ -755,6 +761,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       if(preVp && vp){
         // change to minimap viewport
         mapStage.viewport = vp;
+        vp.softCenterOn(preVp.centerX, preVp.centerY);
       }
 
       // render miniStage
@@ -1082,7 +1089,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var timeLeft = Q.state.get('timeLeft');
     if(timeLeft === undefined){
       timeLeft = Q.state.get('totalTime');
-     }
+    }
 
     if (initHud) {
       timerText = stage.insert(new Q.UI.Text({
@@ -1112,19 +1119,45 @@ Q.scene(SCENE_HUD, function(stage) {
       }
 
 
+      ctx.save();
+      color           = LIGHT_GREY;
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = 0;
+      centerY         = -hudContainer.p.h/5;
+      ctx.font        = WEIGHT_NORMAL + " "+SIZE_BOLD+"px "+FONT_FAMILY;
+      
       if(numPlayer > 0){
+        centerY = -hudContainer.p.h/2;
 
+        var msg = "There are "+numPlayer+" player"+(numPlayer > 1 ? "s": "")+" connected to this session";
+        ctx.fillText(msg, centerX, centerY);
+        
+        ctx.textAlign = 'left';
+        ctx.font = FONT_NORMAL;
+
+        var rttLabelW = hudContainer.p.w*0.28;
+        centerX = -rttLabelW*0.25;
+        var count = 0;
+
+        for(var r in rtts){
+          var playerRtt = roundToOneDecimalPlace(rtts[r]);
+          msg = "Player "+r+" RTT: "+playerRtt+" ms";
+
+          var startX = centerX + ((numPlayer > 1) ? 1 : count%2)*(rttLabelW/2)*(count%2 ? 1: -1);
+          var startY = centerY + (hudContainer.p.h/3)*(Math.floor(count/2)+1);
+          
+          // to visualize where the boundaries of the text are
+          // ctx.strokeRect(startX, startY, rttLabelW, (hudContainer.p.h/3));
+          
+          ctx.fillText(msg, startX , startY);
+
+          count++;
+        }
       }else{
-        color           = '#3BB9FF'; //blue
-        ctx.strokeStyle = color;
-        ctx.fillStyle   = color;
-        centerX         = 0;
-        centerY         = -hudContainer.p.h/3;
-        // var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-        ctx.font        = WEIGHT_BOLD + " "+SIZE_BOLD+"px "+FONT_FAMILY;
         ctx.fillText("No player has connected to this session", centerX, centerY);
-        // ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
       }
+      ctx.restore(); 
     }
 
 
@@ -1725,7 +1758,7 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
   var buttons = stage.options.buttons;
   for(var b=0; buttons && b<buttons.length; b++){
     var bLen = buttons.length;
-    var bW = Q.width/20;
+    var bW = Q.width/10;
     var bLabel = buttons[b].label;
     var bCallback = buttons[b].callback;
 

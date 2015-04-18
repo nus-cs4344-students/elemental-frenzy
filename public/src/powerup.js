@@ -183,6 +183,12 @@ Q.Sprite.extend("Powerup", {
 // 3. have a function spawnPowerup(powerupName, coordX, coordY)
 Q.component('powerupSystem', {
   added: function() {
+    var tileLayer = this.entity._collisionLayers[0];
+    var numPowerup;
+    if(tileLayer){
+      numPowerup = Math.floor(Math.max(tileLayer.p.rows, tileLayer.p.cols) / 15);
+    }
+
     // All the powerups of the game
     this.powerups = {
       POWERUP_CLASS_ATTACK_150PERCENTDMG:{name:           POWERUP_CLASS_ATTACK_150PERCENTDMG,
@@ -190,7 +196,7 @@ Q.component('powerupSystem', {
                                           duration:       POWERUP_DURATION_ATTACK_150PERCENTDMG,
                                           feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_ATTACK_150PERCENTDMG,
                                           soundOnTaken:   POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG,
+                                          maxNumAtATime:  numPowerup || POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG,
                                           spawnTime:      POWERUP_SPAWNTIME_ATTACK_150PERCENTDMG,
                                           existing:       0
                                         },
@@ -198,7 +204,7 @@ Q.component('powerupSystem', {
                                           sheet:          POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT, 
                                           duration:       POWERUP_DURATION_HEALTH_HEAL30PERCENT,
                                           soundOnTaken:   POWERUP_SOUNDONTAKEN_HEALTH_HEAL30PERCENT,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT,
+                                          maxNumAtATime:  numPowerup || POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT,
                                           spawnTime:      POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT,
                                           existing:       0
                                         },
@@ -207,7 +213,7 @@ Q.component('powerupSystem', {
                                           duration:       POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST,
                                           feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MANA_REDUCE70PERCENTMANACOST,
                                           soundOnTaken:   POWERUP_SOUNDONTAKEN_MANA_REDUCE70PERCENTMANACOST,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST,
+                                          maxNumAtATime:  numPowerup || POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST,
                                           spawnTime:      POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST,
                                           existing:       0
                                         },
@@ -216,7 +222,7 @@ Q.component('powerupSystem', {
                                           duration:       POWERUP_DURATION_MOVESPEED_150PERCENTSPEED,
                                           feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MOVESPEED_150PERCENTSPEED,
                                           soundOnTaken:   POWERUP_SOUNDONTAKEN_MOVESPEED_150PERCENTSPEED,
-                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED,
+                                          maxNumAtATime:  numPowerup ||  POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED,
                                           spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED,
                                           existing:       0
                                         }
