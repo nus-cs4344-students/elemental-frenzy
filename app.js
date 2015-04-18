@@ -9,6 +9,10 @@ app.get('/', function (req, res) {
   res.render('/index.html');
 });
 
+var port = process.env.PORT || 4344;
+console.log("Multiplayer app listening on port "+port);
+server.listen(port);
+
 var SESSION_MAX_COUNT = 5;
 
 var sessionIdToSocketMap = {};
@@ -369,6 +373,3 @@ io.on('connection', function (socket) {
     }
   });
 });
- 
-server.listen(4344);
-console.log("Multiplayer app listening on port 4344");
