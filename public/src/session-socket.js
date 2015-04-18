@@ -64,7 +64,8 @@ var updateAvgRttOfPlayer = function(oneWayDelay, playerId) {
     // initialize
     avgRttOfPlayers[playerId] = 0;
   }
-  avgRttOfPlayers[playerId] = (rttAlpha * avgRttOfPlayers[playerId]) + ((1.0-rttAlpha) * (2*oneWayDelay));
+  // Minimum 0 rtt
+  avgRttOfPlayers[playerId] = Math.max(0, (rttAlpha * avgRttOfPlayers[playerId]) + ((1.0-rttAlpha) * (2*oneWayDelay)));
   //console.log("For player " + playerId + ": sample onewaydelay: " + oneWayDelay + " new avgRtt " + getAvgRttOfPlayer(playerId));
   return avgRttOfPlayers[playerId];
 }
@@ -1383,7 +1384,7 @@ socket.on('authoritativeSpriteUpdate', function(data) {
     var oneWayDelay = curTimeStamp - receivedTimeStamp;
     updateAvgRttOfPlayer(oneWayDelay, data.spriteId);
     
-    //console.log("aurhoritativeSpriteUpdate: avgRtt of player " + data.spriteId + " is " + getAvgRttOfPlayer(data.spriteId));
+    //console.log("authoritativeSpriteUpdate: avgRtt of player " + data.spriteId + " is " + getAvgRttOfPlayer(data.spriteId));
   }
   
   //console.log("authoritativeSpriteUpdate from "+data.spriteId +" characterId "+data.characterId);
