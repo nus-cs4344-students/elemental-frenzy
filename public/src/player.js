@@ -27,6 +27,8 @@ var PLAYER_DEFAULT_FIRING_COOLDOWN = PLAYER_FIRE_ANIMATION_TIME;
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
 var PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN = 0.1;
 
+var MARGIN_BEFORE_DEATH_OUTSIDE_MAP = 800; // Margin outside the game map before the player's outOfBounds method is called
+
 var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
 
 var time_fromFire;
@@ -362,8 +364,58 @@ Q.Sprite.extend("Player",{
 
     removePlayerSprite(vId);
   },
+  
+  outOfBounds: function() {
+    this.p.isDead = true;
+    
+    var vType = this.p.entityType;
+    var vId = this.p.spriteId;
+    var vCharId = this.p.characterId;
+    var vSessionId = this.p.sessionId;
+
+    console.log(this.p.name + " went out of bounds of the game map!");
+  
+    if (this.p.isServerSide) {
+      
+      Q.state.trigger("playerDied", {
+        victim: {entityType: vType, spriteId: vId}
+      });
+    
+      Q.input.trigger('broadcastAll', {eventName: 'spriteOutOfBounds', eventData: {
+        victim: {entityType: vType, spriteId: vId}
+      }});
+
+      // session show player out of bounds info
+      var msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
+            "went out of bounds!";
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});  
+
+    } else{
+
+      // player side shows its death
+      msg = "You went out of bounds!";
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg, countdown: 5, countdownMsg: "Respawning in"});
+
+      // client side trigger respan event
+      setTimeout(function(){
+        Q.input.trigger('respawn', {sessionId: vSessionId, spriteId: vId, characterId: vCharId});
+      }, 5000);
+    }
+
+    removePlayerSprite(vId);
+  },
 
   step: function(dt) {
+    // kill the player if he goes out of the map
+    var tileLayer = Q.stage(STAGE_LEVEL)._collisionLayers[0];
+    var gameWorldWidth = tileLayer.p.w;
+    var gameWorldHeight = tileLayer.p.h;
+    if (this.p.isServerSide && this.p.x < -MARGIN_BEFORE_DEATH_OUTSIDE_MAP || this.p.x > gameWorldWidth + MARGIN_BEFORE_DEATH_OUTSIDE_MAP ||
+        this.p.y < -MARGIN_BEFORE_DEATH_OUTSIDE_MAP || this.p.y > gameWorldHeight + MARGIN_BEFORE_DEATH_OUTSIDE_MAP) {
+      this.outOfBounds();
+      return;
+    }
+    
     // stop interval when player can take damage
     if(this.p.takeDamageCooldown <= 0 && this.takeDamageIntervalId != -1){
       clearInterval(this.takeDamageIntervalId);
