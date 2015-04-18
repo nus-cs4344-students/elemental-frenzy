@@ -277,7 +277,7 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
 
   } else {
-    spriteToUpdate.p = clonedProps;
+    spriteToUpdate.p = Q._defaults(clonedProps, spriteToUpdate.p);
   }
   
   gameState.sprites[eType][spriteId].p = cloneValueOnly(spriteToUpdate.p);

@@ -996,7 +996,7 @@ var loadGameState = function(level) {
       // store sprite properties into game state
       gameState.sprites[eType][spriteId] = {p: clone(item.p)}; 
       // Tell the clients about this
-      Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: item.p}});
+      Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: cloneValueOnly(item.p)}});
     }
   });
 

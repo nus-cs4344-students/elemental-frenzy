@@ -70,6 +70,12 @@ Q.Sprite.extend("Actor", {
     }
     this.p.takeDamageCooldown = ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN;
   },
+
+  heal: function(healAmt) {
+    var diff = this.p.maxHealth - this.p.currentHealth;
+    healAmt = Math.min(diff, healAmt);
+    this.trigger('heal', healAmt);
+  },
   
   die: function(killerEntityType, killerId) {
 
