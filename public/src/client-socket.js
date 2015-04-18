@@ -1334,7 +1334,7 @@ var synchronizeClocksWithServer = function () {
   for (var i = NUM_SYNC_PACKETS_TOSEND; i >= 1; i--) {
     Q.input.trigger('sessionCast', {
       eventName: 'synchronizeClocks',
-      eventData: {playerId: selfId, packetNum: i}
+      eventData: {playerId: selfId, packetNum: i, clientSendTime: new Date().getTime()}
     });
   }
 }

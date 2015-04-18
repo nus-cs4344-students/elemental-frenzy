@@ -1259,7 +1259,6 @@ each(['join', 'playAgain'], function(event) {
 // When a player joins, he will try to synchronize clocks
 socket.on('synchronizeClocks', function(data) {
   data.sessionReceiveTime = getCurrentTime();
-  data.clientSendTime = data.timestamp;
 
   var sToken = data.sessionToken;
   if(!sToken || sToken != sessionToken){
