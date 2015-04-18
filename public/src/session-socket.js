@@ -47,7 +47,7 @@ var numSpriteUpdatesToPlayer = {};
 
 // RTT-related
 var avgRttOfPlayers = [];
-var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRttOfPlayer = function(oneWayDelay, playerId) {
