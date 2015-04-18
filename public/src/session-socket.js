@@ -15,7 +15,7 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var TIME_PER_ROUND = 30; // 5 minutes per round, timeLeft stored in Q.state
+var TIME_PER_ROUND = 420; // 7 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,

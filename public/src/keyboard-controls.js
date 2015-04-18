@@ -45,7 +45,7 @@ var TOUCH_CONTROLS_PLAYER = [
   ['right','>' ],
   [],  // use an empty array as a spacer
   ['up','^'],
-  ['down', 'v']
+  ['down', 'v'],
   ['toggleNextElement', 'next'],
   ['displayScoreScreen', 'score']
 ];

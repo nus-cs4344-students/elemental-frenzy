@@ -1112,19 +1112,45 @@ Q.scene(SCENE_HUD, function(stage) {
       }
 
 
+      ctx.save();
+      color           = LIGHT_GREY;
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = 0;
+      centerY         = -hudContainer.p.h/5;
+      ctx.font        = WEIGHT_NORMAL + " "+SIZE_BOLD+"px "+FONT_FAMILY;
+      
       if(numPlayer > 0){
+        centerY = -hudContainer.p.h/2;
 
+        var msg = "There are "+numPlayer+" player"+(numPlayer > 1 ? "s": "")+" connected to this session";
+        ctx.fillText(msg, centerX, centerY);
+        
+        ctx.textAlign = 'left';
+        ctx.font = FONT_NORMAL;
+
+        var rttLabelW = hudContainer.p.w*0.28;
+        centerX = -rttLabelW*0.25;
+        var count = 0;
+
+        for(var r in rtts){
+          var playerRtt = roundToOneDecimalPlace(rtts[r]);
+          msg = "Player "+r+" RTT: "+playerRtt+" ms";
+
+          var startX = centerX + ((numPlayer > 1) ? 1 : count%2)*(rttLabelW/2)*(count%2 ? 1: -1);
+          var startY = centerY + (hudContainer.p.h/3)*(Math.floor(count/2)+1);
+          
+          // to visualize where the boundaries of the text are
+          // ctx.strokeRect(startX, startY, rttLabelW, (hudContainer.p.h/3));
+          
+          ctx.fillText(msg, startX , startY);
+
+          count++;
+        }
       }else{
-        color           = '#3BB9FF'; //blue
-        ctx.strokeStyle = color;
-        ctx.fillStyle   = color;
-        centerX         = 0;
-        centerY         = -hudContainer.p.h/3;
-        // var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-        ctx.font        = WEIGHT_BOLD + " "+SIZE_BOLD+"px "+FONT_FAMILY;
         ctx.fillText("No player has connected to this session", centerX, centerY);
-        // ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
       }
+      ctx.restore(); 
     }
 
 
