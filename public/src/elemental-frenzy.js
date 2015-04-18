@@ -74,7 +74,7 @@ Q.touch(Q.SPRITE_UI, TOUCHABLE_STAGES); // to use button keyboard, must comment 
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
 // The callback will be triggered when everything is loaded
-Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wall.png, level3.json, \
+Q.load("level1.json, level2.json, background-wall.png, level3.json, \
     elemental_balls.png, elemental_balls.json, \
     character_orc.png, character_orc.json, \
     character_skeleton.png, character_skeleton.json, \
@@ -92,7 +92,6 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
     damagePowerUp.ogg, damagePowerUp2.ogg", function() {
 
   // Sprites sheets can be created manually
-  Q.sheet("tiles","tiles.png", { tilew: 32, tileh: 32 });
   Q.sheet("map_tiles", "map_tiles.png", { tilew: 32, tileh: 32 });
   // Or from a .json asset that defines sprite locations
   Q.compileSheets("character_orc.png", "character_orc.json");
@@ -101,7 +100,6 @@ Q.load("npcs.png, npcs.json, level1.json, level2.json, tiles.png, background-wal
   Q.compileSheets("character_lightning.png", "character_lightning.json");
   Q.compileSheets("character_water.png", "character_water.json");
   Q.compileSheets("character_fire.png", "character_fire.json");
-  Q.compileSheets("npcs.png", "npcs.json");
   Q.compileSheets("elemental_balls.png", "elemental_balls.json");
   Q.compileSheets("ladder.png", "ladder.json");
   Q.compileSheets("hud.png", "hud.json");
