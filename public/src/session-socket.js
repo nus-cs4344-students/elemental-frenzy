@@ -15,13 +15,14 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var TIME_PER_ROUND = 30; // 5 minutes per round, timeLeft stored in Q.state
+var TIME_PER_ROUND = 420; // 7 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,
   playerMaxCount: 4,
   players: {},
-  sessionId: 0
+  sessionId: 0,
+  level: ""
 };
 
 var isSession = true;
@@ -36,7 +37,7 @@ var _playerToFollowId; // To be used when toggling between players to follow, fo
 var _isMapSelectionScreenShown = false;
 var _isMapCreated = false;
 
-var STATUS_CONNECTTION = "Connected as 'Session [id]'";
+var STATUS_CONNECTTION = "Connected as 'Session [id]' ([level])";
 
 // Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
 var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
@@ -46,7 +47,7 @@ var numSpriteUpdatesToPlayer = {};
 
 // RTT-related
 var avgRttOfPlayers = [];
-var rttAlpha = 0.7; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
+var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRttOfPlayer = function(oneWayDelay, playerId) {
@@ -682,10 +683,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y-(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini, yMini-(viewportSpeed*scaleMini));
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x, y-(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_down", function() {
@@ -697,10 +696,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y+(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini, yMini+(viewportSpeed*scaleMini));
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x, y+(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_left", function() {
@@ -712,10 +709,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x-(viewportSpeed*scale), y);
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini-(viewportSpeed*scaleMini), yMini);
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x-(viewportSpeed*scaleMini), y);
   });
   
   Q.input.on("server_right", function() {
@@ -727,10 +722,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x+(viewportSpeed*scale), y);
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini+(viewportSpeed*scaleMini), yMini);
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x+(viewportSpeed*scaleMini), y);
   });
   
   // Allow the session to follow different players
@@ -873,6 +866,10 @@ var displayGameScreen = function(level){
 
   // show connected status
   var status = STATUS_CONNECTTION.replace('[id]', session.sessionId);
+  var mapName = MAP_LEVELS[level];
+  if(mapName){
+    status = status.replace('[level]', mapName);
+  }
   displayStatusScreeen(status);
 
   // Viewport
@@ -936,7 +933,7 @@ var loadGameState = function(level) {
 
   gameState.level = level;
   mapLevelLoaded = level;
-  
+  session.level = level;
 
   var setRoundTimer = function() {
     Q.state.p.totalTime = TIME_PER_ROUND;

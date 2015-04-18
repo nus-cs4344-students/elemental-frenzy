@@ -52,7 +52,7 @@ var _isGameLoaded = false;
 var _isEndGame = false;
 var selfCharacterId;
 
-var STATUS_CONNECTION = "Connected to 'Session [id]'";
+var STATUS_CONNECTION = "Connected to 'Session [id]' ([level])";
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRtt = function (oneWayDelay) {
@@ -1167,7 +1167,12 @@ var loadGameSession = function (receivedGameState) {
   // console.log("after adding "+isCyclic(gameState.sprites.p));
   
   // show connected status
-  displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
+  var status = STATUS_CONNECTION.replace('[id]', sessionId);
+  var mapName = MAP_LEVELS[gameState.level];
+  if(mapName){
+    status = status.replace('[level]', mapName);
+  }
+  displayStatusScreeen(status);
   
   // load player HUD info
   displayPlayerHUDScreen();
@@ -1299,6 +1304,7 @@ socket.on('joinSuccessful', function (data) {
     if (_clockSynchronized) {
 
       console.log("Clock synchronized with timestampOffset = " + timestampOffset);
+      resetGameState();
       loadGameSession(receivedGameState);
       clearInterval(interval_loadGameSession);
     }
