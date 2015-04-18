@@ -15,31 +15,12 @@ var KEYBOARD_CONTROLS_PLAYER = {
   RIGHT : "",
 };
 
-var TOUCH_CONTROLS_PLAYER = [ 
-  ['left','<' ],
-  ['right','>' ],
-  [],  // use an empty array as a spacer
-  ['up','^'],
-  ['toggleNextElement', 'next'],
-  ['displayScoreScreen', 'score']
-];
-
-var TOUCH_CONTROLS_SESSION = [ 
-  ['server_left','<' ],
-  ['server_right','>' ],
-  ['server_up','^'],
-  ['server_down','v'],
-  ['toggleFollow', 'tf'],
-  ['stopFollow', 'sf'],
-  ['displayScoreScreen', 'score']
-];
-
 var KEYBOARD_CONTROLS_SESSION = {
-  W : "up",
-  S : "down",
-  A : "left",
-  D : "right",
-  SPACE : "toggleNextElement",
+  W : "",
+  S : "",
+  A : "",
+  D : "",
+  SPACE : "",
   Z : "",
   TAB : "displayScoreScreen",
   LEFT : "server_left",
@@ -57,4 +38,24 @@ var KEYBOARD_CONTROLS_SESSION_ONLY = {
   "server_right": "server_right",
   "toggleFollow": "toggleFollow",
   "stopFollow": "stopFollow"
-}
+};
+
+var TOUCH_CONTROLS_PLAYER = [ 
+  ['left','<' ],
+  ['right','>' ],
+  [],  // use an empty array as a spacer
+  ['up','^'],
+  ['down', 'v'],
+  ['toggleNextElement', 'next'],
+  ['displayScoreScreen', 'score']
+];
+
+var TOUCH_CONTROLS_SESSION = [ 
+  ['server_left','<' ],
+  ['server_right','>' ],
+  ['server_up','^'],
+  ['server_down','v'],
+  ['toggleFollow', 'tf'],
+  ['stopFollow', 'sf'],
+  ['displayScoreScreen', 'score']
+];
