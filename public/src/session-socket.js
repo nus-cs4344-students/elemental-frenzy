@@ -683,8 +683,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y-(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var scaleMini = sMini.viewport.scale;scaleMini=1;
-    sMini.viewport.softCenterOn(xMini, yMini-(viewportSpeed*scaleMini));
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x, y-(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_down", function() {
@@ -696,8 +696,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y+(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var scaleMini = sMini.viewport.scale;scaleMini=1;
-    sMini.viewport.softCenterOn(xMini, yMini+(viewportSpeed*scaleMini));
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x, y+(viewportSpeed*scaleMini));
   });
 
   Q.input.on("server_left", function() {
