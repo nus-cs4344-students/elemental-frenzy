@@ -683,9 +683,7 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y-(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
+    var scaleMini = sMini.viewport.scale;scaleMini=1;
     sMini.viewport.softCenterOn(xMini, yMini-(viewportSpeed*scaleMini));
   });
 
@@ -698,9 +696,7 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x, y+(viewportSpeed*scale));
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
+    var scaleMini = sMini.viewport.scale;scaleMini=1;
     sMini.viewport.softCenterOn(xMini, yMini+(viewportSpeed*scaleMini));
   });
 
@@ -713,10 +709,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x-(viewportSpeed*scale), y);
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini-(viewportSpeed*scaleMini), yMini);
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x-(viewportSpeed*scaleMini), y);
   });
   
   Q.input.on("server_right", function() {
@@ -728,10 +722,8 @@ var setupListener = function(){
     sLevel.viewport.softCenterOn(x+(viewportSpeed*scale), y);
 
     var sMini = Q.stage(STAGE_MINIMAP);
-    var xMini = sMini.viewport.centerX,
-        yMini = sMini.viewport.centerY,
-        scaleMini = sMini.viewport.scale;
-    sMini.viewport.softCenterOn(xMini+(viewportSpeed*scaleMini), yMini);
+    var scaleMini = sMini.viewport.scale;
+    sMini.viewport.softCenterOn(x+(viewportSpeed*scaleMini), y);
   });
   
   // Allow the session to follow different players
