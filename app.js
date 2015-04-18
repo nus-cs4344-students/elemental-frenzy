@@ -256,8 +256,9 @@ var sendToSession = function (sessionId, eventName, eventData) {
 io.on('connection', function (socket) {
   console.log(socket.handshake.headers.referer);
   
-  var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
-  var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;;
+  // var isClient = socket.handshake.headers.referer.indexOf('index.html') != -1;
+  var isSession = socket.handshake.headers.referer.indexOf('session.html') != -1;
+  var isClient = !isSession;
 
   var sessionSize = sizeOfObject(sessions);
   if(isSession && sessionSize >= SESSION_MAX_COUNT) {
