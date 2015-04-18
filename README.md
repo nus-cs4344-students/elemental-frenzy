@@ -19,4 +19,8 @@ To play the game locally, make sure you **open a new Chrome browser** and enter 
 
 
 
+
+
 Our game video can be found at https://www.youtube.com/watch?v=IghZZvWoLi8
+
+Instructions video can be found at https://www.youtube.com/watch?v=9cDKEEsxJLg
