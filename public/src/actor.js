@@ -74,6 +74,7 @@ Q.Sprite.extend("Actor", {
   heal: function(healAmt) {
     var diff = this.p.maxHealth - this.p.currentHealth;
     healAmt = Math.min(diff, healAmt);
+    this.p.currentHealth += healAmt;
     this.trigger('heal', healAmt);
   },
   

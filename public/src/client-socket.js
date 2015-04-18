@@ -34,7 +34,7 @@ var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
 var threshold_clientDistanceFromServerUpdate = 30;
 var interval_updateServer_timeInterval = 100;       // time interval between authoritative updates to the server
 var time_sentMouseUp;
-var timestampOffset;
+var timestampOffset = 0;
 var timestampOffsetSum = 0;           // used so as to allow multiple synchronization packets
 var numSyncPacketsReceived = 0;       //
 var NUM_SYNC_PACKETS_TOSEND = 10;     // send this many packets when synchronizeClocks() is called
@@ -56,6 +56,10 @@ var STATUS_CONNECTION = "Connected to 'Session [id]' ([level])";
 
 // Updates the average RTT with the new sample oneWayDelay using a weighted average
 var updateAvgRtt = function (oneWayDelay) {
+  if (!_clockSynchronized) {
+    // Cannot accurately update the RTT
+    return;
+  }
   if (typeof oneWayDelay === 'undefined') {
     console.log("Error in updateAvgRtt(): oneWayDelay is undefined");
     return;
@@ -1182,7 +1186,7 @@ var loadGameSession = function (receivedGameState) {
 
 var sendToApp = function (eventName, eventData) {
   eventData.timestamp = (new Date()).getTime();
-  eventData.timestamp += timestampOffset || 0;
+  eventData.timestamp += timestampOffset;
   eventData.sessionToken = sessionToken;
   socket.emit('player', {eventName: eventName, eventData: eventData, senderId: selfId});
 }
@@ -1290,6 +1294,7 @@ socket.on('joinSuccessful', function (data) {
     if (!_isSessionConnected) {
       // Session disconnected, stop syncing
       clearInterval(interval_syncClocks);
+      timestampOffset = 0;
       return;
     }
     synchronizeClocksWithServer();
@@ -1329,7 +1334,7 @@ var synchronizeClocksWithServer = function () {
   for (var i = NUM_SYNC_PACKETS_TOSEND; i >= 1; i--) {
     Q.input.trigger('sessionCast', {
       eventName: 'synchronizeClocks',
-      eventData: {playerId: selfId, packetNum: i}
+      eventData: {playerId: selfId, packetNum: i, clientSendTime: new Date().getTime()}
     });
   }
 }

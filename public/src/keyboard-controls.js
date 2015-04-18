@@ -43,6 +43,8 @@ var KEYBOARD_CONTROLS_SESSION_ONLY = {
 var TOUCH_CONTROLS_PLAYER = [ 
   ['left','<' ],
   ['right','>' ],
+  [],
+  [],
   [],  // use an empty array as a spacer
   ['up','^'],
   ['down', 'v'],
@@ -54,6 +56,9 @@ var TOUCH_CONTROLS_SESSION = [
   ['server_left','<' ],
   ['server_right','>' ],
   ['server_up','^'],
+  [],
+  [],
+  [],
   ['server_down','v'],
   ['toggleFollow', 'tf'],
   ['stopFollow', 'sf'],
