@@ -47,6 +47,8 @@ require(['./../lib/domReady'], function (domReady) {
   });
 });
 
+var TOUCHABLE_STAGES = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];
+
 var startClient = function() {
 
 // Set up an instance of the Quintus engine  and include
@@ -62,10 +64,11 @@ var Q = window.Q
         .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
         // Maximize this game to whatever the size of the browser is
         .setup({ maximize: true })
-        // And turn on default input controls and touch input (for UI)
-        .touch() // to user buttom keyboard, must comment out .controls()
-        // .controls(true) // to use joypad, must comment out .touch()
         .enableSound();
+
+// And turn on default input controls and touch input (for UI)
+Q.touch(Q.SPRITE_UI, TOUCHABLE_STAGES); // to use button keyboard, must comment out .controls()
+// .controls(true) // to use joypad, must comment out .touch()
 
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets

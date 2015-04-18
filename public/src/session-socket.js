@@ -15,7 +15,7 @@ var socket = io.connect("http://" + HOSTNAME + ":" + PORT);
 
 //socket.on('connected',function(data){console.log('first connected: '+JSON.stringify(data,null,4));});
 
-var TIME_PER_ROUND = 300; // 5 minutes per round, timeLeft stored in Q.state
+var TIME_PER_ROUND = 30; // 5 minutes per round, timeLeft stored in Q.state
 
 var DEFAULT_SESSION = {
   playerCount: 0,
@@ -30,7 +30,12 @@ var session;
 var allSprites;
 var spriteId = 0;
 var sessionToken = 0;
+var sessionId;
+var mapLevelLoaded;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
+var _isMapSelectionScreenShown = false;
+var _isMapCreated = false;
+
 var STATUS_CONNECTTION = "Connected as 'Session [id]'";
 
 // Sprites being used for players currently are a bit fatter (width is larger) than they actually look like
@@ -333,7 +338,7 @@ var getSpriteProperties = function(entityType, id) {
   var properties;
 
   if(s){
-    properties = clone(gameState.sprites[eType][spriteId].p);
+    properties = cloneValueOnly(allSprites[eType][spriteId].p);
   }
 
   return properties;
@@ -605,7 +610,26 @@ var insertIntoStage = function(sprite) {
   return Q.stage(STAGE_LEVEL).insert(sprite);
 };
 
-var initialization = function(){
+var setupListener = function(){
+
+  Q.input.on('create', function (data) {
+    // prevent create button spamming
+    if(_isMapCreated) {
+      return ;
+    }
+
+    console.log("create "+getJSON(data));
+
+    var mLevel = data.level;
+    if(!mLevel) {
+      console.log("Trying to create a session without map level");
+      return;
+    }
+
+    _isMapCreated = true;
+    
+    createGameSession(mLevel);
+  });
 
   Q.input.on('broadcastAll', function(data) {
 
@@ -763,34 +787,62 @@ var initialization = function(){
   });
 
   Q.input.on('endGame', function(){
-
-    console.log("end game session socket");
     
     Q.input.trigger('broadcastAll', {
       eventName: 'endGame', 
       eventData: {}
     });
 
+
     // reload game session
-    loadGameSession(session.sessionId);
+    createGameSession(mapLevelLoaded);
+  });
+
+  Q.input.on('switch', function(){
+    console.log('switch map');
+
+    // tell everyone in the session that currnet session is switching map
+    Q.input.trigger('broadcastAll', {'eventName': 'sessionDisconnected', eventData: {msg: "Switching Map"}});
+
+    resetGameState();
 
     // update app.js regarding session info
-    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+    Q.input.trigger('appCast', {eventName:'removeSession', eventData: {}});
+
+    displayMapSelectionScreen();
   });
 };
 
 var resetDisplayScreen = function(){
+  _isMapSelectionScreenShown = false;
+
   // clear all screens
   Q.clearStages();
   Q.stageScene(SCENE_BACKGROUND, STAGE_BACKGROUND);
 }
 
-var displayNotificationScreen = function(msg, btnDisabled, callback, duration){
-  var stageOptions = {msg: msg, 
-                      btnDisabled: btnDisabled,
-                      duration: duration, 
-                      callback: callback};
+var displayNotificationScreen = function(msg, callback){
+  var stageOptions = {msg: msg,
+                      buttons: [{label: 'OK', callback: callback}]};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
+};
+
+var displayMapSelectionScreen = function () {
+  resetDisplayScreen();
+
+  // character selection
+  Q.stageScene(SCENE_MAP_SELECT, STAGE_MAP_SELECT);
+
+  _isMapSelectionScreenShown = true;
+  _isMapCreated = false;
+};
+
+var displaySessionHUDScreen = function () {
+  Q.stageScene(SCENE_HUD, STAGE_HUD);
+};
+
+var displayInfoScreen = function(msg){
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 };
 
 var displayScoreScreen = function(){
@@ -821,11 +873,6 @@ var displayGameScreen = function(level){
 
   // show connected status
   var status = STATUS_CONNECTTION.replace('[id]', session.sessionId);
-  var tLeft = Q.state.get('timeLeft');
-  if(tLeft){
-    status += " "+getTimeFormat(tLeft);
-  }
-
   displayStatusScreeen(status);
 
   // Viewport
@@ -845,20 +892,17 @@ var displayGameScreen = function(level){
   
 };
 
+var createGameSession = function(level){
 
-var loadGameSession = function(sessionId) {
-  if(!sessionId){
-    console.log("Trying to load game session without session id");
-    return;
-  }
+    resetGameState();
 
-  console.log("Loading game state...");
+    loadGameState(level || mapLevelLoaded);
 
-  // initialize session
-  session = clone(DEFAULT_SESSION);
-  sessionToken++;
-  session.sessionId = sessionId;
+    // update app.js regarding session info
+    Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+};
 
+var resetGameState = function(){
   // there is old game state,
   // remove all of them
   if(gameState){
@@ -876,9 +920,22 @@ var loadGameSession = function(sessionId) {
 
   resetState();
 
+  // initialize session
+  session = clone(DEFAULT_SESSION);
+  session.sessionId = sessionId;
+  sessionToken++;
+
   // initialize game state
   gameState = getDefaultGameState();
   allSprites = getDefaultSprites();
+};
+
+var loadGameState = function(level) {
+
+  console.log("Loading game state...");
+
+  gameState.level = level;
+  mapLevelLoaded = level;
   
 
   var setRoundTimer = function() {
@@ -887,11 +944,10 @@ var loadGameSession = function(sessionId) {
     
     var roundTimer = setInterval(function() {
       var timeLeft = Q.state.get('timeLeft');
+      var totalTime = Q.state.get('totalTime');
 
-      if (session.playerCount > 0 && timeLeft && timeLeft > 0) {
-        
-        displayStatusScreeen(STATUS_CONNECTTION.replace('[id]', session.sessionId)+" "+getTimeFormat(timeLeft));
-
+      if (session.playerCount > 0 && timeLeft && timeLeft > 0 || 
+          (totalTime && timeLeft < totalTime)) {
         Q.state.dec("timeLeft", 1);
       }
     }, 1000);
@@ -901,10 +957,9 @@ var loadGameSession = function(sessionId) {
 
   setRoundTimer();
 
-  displayGameScreen(gameState.level);
+  displayGameScreen(gameState.level);  
 
-
-  
+  displayInfoScreen('New round started');
 
   // Create and load all sprites
   var spritesToAdd = [];
@@ -968,10 +1023,25 @@ var loadGameSession = function(sessionId) {
               spritesToAdd[i].eId, 
               spritesToAdd[i].props);
   }
+
+  // load session HUD info
+  displaySessionHUDScreen();
 };
 
 var joinSession = function(playerId, characterId) {
   var result = {status: false, msg: ""};
+
+  if(!_isMapCreated){
+    console.log("Trying to let a player to join session when map is not created");
+    result.msg = "Session is unavailable";
+    return result;
+  } 
+
+  if(_isMapSelectionScreenShown){
+    console.log("Trying to let a player to join session when map selection screen is shown");
+    result.msg = "Session is switching map";
+    return result;
+  }
 
   var pId = playerId;
   if(!pId){
@@ -1104,21 +1174,20 @@ socket.on('connected', function(data) {
 
   console.log("Connected as SESSION "+sId);
 
-  // setup Quintus event listeners
-  initialization();
+  sessionId = sId;
 
-  var interval_loadGameSession = setInterval(function() {
+  // setup Quintus event listeners
+  setupListener();
+
+  var interval_loadGameState = setInterval(function() {
     if (_assetsLoaded) {
       // Assets must be loaded before trying to load the game session. This flag will will be set once assets have been loaded.
       
-      // Load the initial game state
-      loadGameSession(sId);
-      
-      // update app.js regarding session info
-      Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
+      // display map selection screen
+      displayMapSelectionScreen();
       
       // Don't load a second time
-      clearInterval(interval_loadGameSession);
+      clearInterval(interval_loadGameState);
     }
   }, 100);
 });
@@ -1159,8 +1228,8 @@ each(['join', 'playAgain'], function(event) {
         x: spawnPoint.x,
         y: spawnPoint.y
       });
-      
-      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has joined"});
+
+      displayInfoScreen("Player "+pId+" has joined");
 
       // add player kills/deaths to Q.state
       Q.state.trigger('playerJoined', pId);
@@ -1255,14 +1324,15 @@ socket.on('playerDisconnected', function(data) {
   
   // player disconnected does not require session token as it is being sent by app.js
 
-  var pId = data.spriteId
+  var pId = data.spriteId;
   if(!pId){
     console.log("Player without id is disconnected from session " + session.sessionId);
   }
 
   console.log("Player " + pId + " is disconnected from session " + session.sessionId);
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+pId+" has left"});
+  displayInfoScreen("Player "+pId+" has left");
 
+  var playerProps = getPlayerProperties(pId);
   // remove player from the session
   leaveSession(pId);
   
@@ -1270,11 +1340,11 @@ socket.on('playerDisconnected', function(data) {
   Q.input.trigger('appCast', {eventName:'updateSession', eventData: session});
 
   // inform every other player about the player disconnection
-  var otherPlayersData = {p: getPlayerProperties(pId)};
+  var otherPlayersData = {p: playerProps || {} };
   Q.input.trigger('broadcastOthers', {senderId:pId, eventName:'playerDisconnected', eventData: otherPlayersData});
   
   // Update the state (remove this player from the state)
-  Q.state.trigger('playerDisconnected', getPlayerProperties(pId).name);
+  Q.state.trigger('playerDisconnected', playerProps ? playerProps.name : "" );
   
   // If the viewport is following this player, toggle it
   if (Q.stage(STAGE_LEVEL).viewport.following && Q.stage(STAGE_LEVEL).viewport.following.p.spriteId == pId) {
@@ -1290,7 +1360,7 @@ socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
   // ask host to refresh browser again
-  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while", false);
+  displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");
 
   displayStatusScreeen("Unable to connect to the server");
 });
@@ -1355,7 +1425,9 @@ socket.on('mouseup', function(data) {
   
   console.log("Player firing, timestamp received = " + data.timestamp + " timestamp now = " + now + 
               " one-way delay: " + oneWayDelay + " time before shooting: " + timeBeforeShooting);
-  player.trigger('fire', e);
+  if(player){
+    player.trigger('fire', e);
+  }
 
   setTimeout(function() {
     // Fire in (ANIM_TIME - RTT) so that the client will receive it once the animation is finished there

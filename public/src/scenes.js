@@ -8,14 +8,12 @@ var STAGE_LEVEL = 1;
 var SCENE_LEVEL = 'levelScreen';
 var STAGE_WELCOME = 1;
 var SCENE_WELCOME = 'welcomeScreen';
-var STAGE_NOTIFICATION = 2;
-var SCENE_NOTIFICATION = 'notificationScreen';
+var STAGE_MAP_SELECT = 1;
+var SCENE_MAP_SELECT = 'mapSelectionScreen';
 var STAGE_END_GAME = 2;
-
-// Quintus do not trigger button click for stage higher than 2
-var STAGE_SCORE = 3;
+var STAGE_SCORE = 2;
 var SCENE_SCORE = 'scoreScreen';
-var STAGE_HUD = 4;
+var STAGE_HUD = 3;
 var SCENE_HUD = 'hudScreen';
 var STAGE_STATUS = 5;
 var SCENE_STATUS = 'statusScreen';
@@ -23,7 +21,9 @@ var STAGE_INFO = 6;
 var SCENE_INFO = 'infoScreen';
 var STAGE_MINIMAP = 7;
 var SCENE_END_GAME = SCENE_SCORE;
-
+var STAGE_HIDDEN = 10;
+var STAGE_NOTIFICATION = 15;
+var SCENE_NOTIFICATION = 'notificationScreen';
 
 // ## UI constants
 var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
@@ -35,10 +35,14 @@ var DARK_GREY = "rgba(0,0,0,0.4)";
 var DARKER_GREY = "rgba(0,0,0,0.5)";
 var DARKEST_GREY = "rgba(0,0,0,0.7)";
 
+var MAP_LEVELS = {level1: 'Ironham', level2: 'Millhedge', level3: 'Oakmarsh'}
+
 var welcomeCharSelected;
 var welcomeSessionSelected; 
 var isWelcomeSelectedSessionFull;
 var isWelcomeSelectedCharInUse;
+
+var mapSelected;
 
 var infoMsgList = [];
 var infoTimeLeftList= [];
@@ -273,7 +277,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
     // characterSprites nameSpritesSprites
     nameSprites[numChar] = new Q.UI.Text({x:0,
                                           y: Math.max(20, Q.height/20),
-                                          weight: WEIGHT_NORMAL,
+                                          weight: WEIGHT_BOLD,
                                           size: SIZE_NORMAL,
                                           font: FONT_FAMILY,
                                           align: 'center',
@@ -513,6 +517,167 @@ Q.scene(SCENE_WELCOME,function(stage) {
   instructionsContainer.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 });
 
+Q.scene(SCENE_MAP_SELECT, function(stage){
+
+
+  var title = stage.insert(new Q.UI.Text({  x:Q.width/2,
+                                            y:Q.height/20,
+                                            weight: WEIGHT_TITLE,
+                                            size: SIZE_TITLE,
+                                            font: FONT_FAMILY,
+                                            align: 'center',
+                                            color: 'red',
+                                            label: "Elemental Frenzy Session"
+                                          }));
+
+  // create button
+  var isShow = (mapSelected !== undefined && mapSelected);
+
+  var buttonCreate = stage.insert(new Q.UI.Button({ fill: 'limegreen',
+                                                    opacity: isShow ? 1 : 0,
+                                                    x: Q.width/2,
+                                                    y: Q.height*0.9,
+                                                    w: Q.width/10,
+                                                    h: Q.height/20,
+                                                    label: 'Create',
+                                                    font: FONT_BOLD,
+                                                    fontColor: 'black'
+                                                }));
+
+  buttonCreate.on("click", function() {
+    if(mapSelected !== undefined && mapSelected){
+      Q.input.trigger('create', {level: mapSelected});
+    }
+  });
+
+   // map selection section
+  var mapsSection = stage.insert(new Q.UI.Container({ x: Q.width/2, 
+                                                      y: Q.height/2,
+                                                      w: Q.width*0.75,
+                                                      h: Q.height*0.7,
+                                                      fill: DARKER_GREY
+                                                    }));
+
+  var baseStage = STAGE_HIDDEN;
+  for(var m in MAP_LEVELS){
+    Q.stageScene(SCENE_LEVEL, baseStage,{level: m});
+    Q.stage(baseStage).add('viewport');
+    baseStage++;
+  }
+
+  var mapCount = baseStage - STAGE_HIDDEN;
+  var screenH = mapsSection.p.h*0.70/mapCount;
+  var screenW = mapsSection.p.w/3;
+  var mapStartX = mapsSection.p.x - mapsSection.p.w*0.17;
+  var mapStartY = mapsSection.p.y - mapsSection.p.h*0.35;
+
+  for(var b = STAGE_HIDDEN; b < baseStage; b++){
+      
+      var mapStage = Q.stage(b);
+      var mapIndex = b - STAGE_HIDDEN;
+      
+      var cLayer = mapStage._collisionLayers[0];
+      var vpScale = 0.1;
+      var mapH = screenH;
+      var mapW = screenW;
+      
+      if(cLayer) {
+        mapH = cLayer.p.h;
+        mapW = cLayer.p.w;
+        vpScale = Math.min(1, Math.min(screenW/mapW, screenH/mapH));
+        vpScale = Math.round(vpScale * 100) / 100;
+      }
+
+      var vpStartX = -(mapStartX - mapW*vpScale/2) / vpScale;
+      var vpStartY = -(mapStartY + (screenH/2 - mapH*vpScale/2) + mapIndex*screenH*1.2) / vpScale;
+
+      mapStage.viewport.scale = vpScale;
+      mapStage.viewport.moveTo(vpStartX, vpStartY);
+  }
+
+  // map listing
+  var mapListing = stage.insert(new Q.UI.Text({ x:mapsSection.p.x - mapsSection.p.w*0.17,
+                                                y:mapsSection.p.y - 4*mapsSection.p.h/9,
+                                                weight: WEIGHT_BOLD,
+                                                size: SIZE_BOLD,
+                                                font: FONT_FAMILY,
+                                                align: 'center',
+                                                color: 'black',
+                                                label: "Map Listings"
+                                              }));
+
+  // please select a map
+  var mapSelection = stage.insert(new Q.UI.Text({ x:mapsSection.p.x + mapsSection.p.w*0.25,
+                                                  y:mapsSection.p.y - 4*mapsSection.p.h/9,
+                                                  weight: WEIGHT_BOLD,
+                                                  size: SIZE_BOLD,
+                                                  font: FONT_FAMILY,
+                                                  align: 'center',
+                                                  color: 'black',
+                                                  label: "Please select a map"
+                                                }));
+ 
+
+  // insert map into container
+  var container_map = stage.insert(new Q.UI.Container({ x:mapsSection.p.x + mapsSection.p.w*0.25,
+                                                        y:mapsSection.p.y - 4*mapsSection.p.h/9
+                                                      }));
+
+  var mNameSpriteW = mapsSection.p.w*0.30;
+  var mNameSpriteH = 2*mapsSection.p.h/19;
+  var numMap = 0;
+  var mNameSprites = {};
+  for(var m in MAP_LEVELS){
+    // map name sprites
+    var mapName = MAP_LEVELS[m];
+
+    var mNameSprite = new Q.UI.Button({fill: m == mapSelected ? LIGHT_GREY : null,
+                                          x: 0,
+                                          y: mapStartY - screenH*0.6 + numMap*screenH*1.2,
+                                          w: mNameSpriteW,
+                                          h: mNameSpriteH,
+                                          label: mapName,
+                                          font: FONT_NORMAL,
+                                          mapId: m,
+                                          fontColor:  'black'
+                                        });
+    mNameSprites[numMap] = mNameSprite;
+    container_map.insert(mNameSprite);
+    numMap++;
+  }
+
+  container_map.fit(UI_PADDING_VALUE,UI_PADDING_VALUE);
+
+  for(var mns in mNameSprites){
+
+    mNameSprites[mns].on("click", function() {  
+
+      if(this.p.fill){
+        this.p.fill = null;
+        mapSelected = undefined;
+
+      }else{
+        this.p.fill = LIGHT_GREY;
+        mapSelected = this.p.mapId;
+
+        // reset others
+        for(var o in mNameSprites){
+          if(mapSelected !== mNameSprites[o].p.mapId){
+            mNameSprites[o].p.fill = null;
+          }
+        }
+      }
+
+      // show create button if a map is selected
+      if(mapSelected){
+        buttonCreate.p.opacity = 1;
+      }else{
+        buttonCreate.p.opacity = 0;
+      }
+    });
+  }
+});
+
 
 // create background screen
 Q.scene(SCENE_BACKGROUND,function(stage) {
@@ -524,48 +689,14 @@ Q.scene(SCENE_BACKGROUND,function(stage) {
   );
 });
 
-// ## Level1 scene
-// Create a new scene called level 1
-Q.scene('level1',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level1.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-Q.scene('level2',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level2.json',
-                                            sheet: 'tiles' })
-  );
-});
-
-// ## Level3 scene - Main gameplay map
-// Create a new scene called level 3
-// To set Main gameplay map, go to Scene.js -> 'tiles' with 'map_tiles'
-// Go to Session-socket.js and replace default from level1 to level3
-Q.scene('level3',function(stage) {
-
-  // Add in a tile layer, and make it the collision layer
-  stage.collisionLayer(new Q.TileLayer({dataAsset: 'level3.json',
-                                            sheet: 'tiles' })
-                       
-  );
-    
-}); 
-
 Q.scene(SCENE_LEVEL, function(stage) {
 
-  var backgroundStage = Q.stage(STAGE_BACKGROUND);
   var miniStage = stage.options.miniStage;
   var mapStage = Q.stage(miniStage);
 
   var level = stage.options.level;
 
-  if(miniStage && mapStage){
-    
+  if(miniStage !== undefined && mapStage !== undefined){
     // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
     mapStage.on("postrender", function(ctx){
 
@@ -573,19 +704,18 @@ Q.scene(SCENE_LEVEL, function(stage) {
       stage.trigger('prerender', ctx);
 
       var vp = stage.viewport;
-      var cLayer = mapStage._collisionLayers[0];
-      var vpScale = 0.1;
       var screenH = Q.height/3;
       var screenW = Q.width/3;
       var startX, startY, endX, endY;
 
+      var cLayer = mapStage._collisionLayers[0];
+      var vpScale = 0.1;
       if(cLayer) {
         vpScale = Math.max(0.1, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
         vpScale = Math.round(vpScale * 100) / 100;
       }
       
       if(vp) {
-
         vp.scale = vpScale;
         vp.screenW = screenW;
         vp.screenH = screenH;
@@ -624,7 +754,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       var preVp = mapStage.viewport;
       if(preVp && vp){
         // change to minimap viewport
-        mapStage.viewport = vp;   
+        mapStage.viewport = vp;
       }
 
       // render miniStage
@@ -643,7 +773,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
           isWithinY = startY <= item.p.y && endY >= item.p.y;
         }
 
-        if(!item.container && (item.p.renderAlways ||(isWithinX && isWithinY))) {
+        if(!item.container && !item.isA('Repeater') &&(item.p.renderAlways ||(isWithinX && isWithinY))) {
           item.render(ctx);
         }
       }
@@ -652,59 +782,18 @@ Q.scene(SCENE_LEVEL, function(stage) {
       mapStage.viewport = preVp;
       
       // call viewport to pop matrix if viewport exists
-      stage.trigger('render', ctx);
-
-      
-    });
-      
+      stage.trigger('render', ctx);   
+    });    
   }else{
     // Add in a tile layer, and make it the collision layer
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
-  );
-  /*
-    stage.insert(new Q.Ladder({x:1457, y:784}));
-    stage.insert(new Q.Ladder({x:1457, y:752}));
-    stage.insert(new Q.Ladder({x:1457, y:720}));
-    stage.insert(new Q.Ladder({x:1457, y:688}));
-    stage.insert(new Q.Ladder({x:1457, y:656}));
-    stage.insert(new Q.Ladder({x:1457, y:624}));
-    stage.insert(new Q.Ladder({x:1457, y:592}));
-    stage.insert(new Q.Ladder({x:1457, y:560}));
-    stage.insert(new Q.Ladder({x:1457, y:528}));
-    stage.insert(new Q.Ladder({x:1457, y:496}));
-    stage.insert(new Q.Ladder({x:1457, y:464}));
-    stage.insert(new Q.Ladder({x:1457, y:432}));
-    stage.insert(new Q.Ladder({x:1457, y:400}));
-    stage.insert(new Q.Ladder({x:1457, y:368}));
-    stage.insert(new Q.Ladder({x:1457, y:336}));
-    stage.insert(new Q.Ladder({x:1457, y:304}));
-    stage.insert(new Q.Ladder({x:1457, y:272}));
-    stage.insert(new Q.Ladder({x:1457, y:240}));
-    stage.insert(new Q.Ladder({x:1457, y:208}));
-
-    stage.insert(new Q.Ladder({x:500, y:764}));
-    stage.insert(new Q.Ladder({x:500, y:702}));
-    stage.insert(new Q.Ladder({x:500, y:640}));
-
-    stage.insert(new Q.Ladder({x:465, y:480}));
-    stage.insert(new Q.Ladder({x:465, y:542}));
-
-    stage.insert(new Q.Ladder({x:272, y:288}));
-    stage.insert(new Q.Ladder({x:272, y:350}));
-    stage.insert(new Q.Ladder({x:272, y:412}));
-    stage.insert(new Q.Ladder({x:272, y:474}));
-    
-   */
+    );
   }
 });
 
 Q.scene(SCENE_HUD, function(stage) {
-  
-  // session does not need to show element selector
-  if(isSession){
-    return;
-  }
+
   var isScreenWidthTooSmall = Q.width < 480 ? true : false;
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
@@ -715,146 +804,181 @@ Q.scene(SCENE_HUD, function(stage) {
                                                        radius: 0 //0 = no rounded corners
                                                       }));
 
+  var container_back = stage.insert(new Q.UI.Container({x: Q.width/10, 
+                                                        y: Q.height/35
+                                                      }));
 
-  var currentPlayer = getPlayerSprite(selfId);
-  if(!currentPlayer){
-    console.log("Cannot locate current player during HUD element selector initialization");
-    return;
-  }
-  var element = currentPlayer.p.element;
-  // convert into number
-  element = Number(element);
-  
-  if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
-    console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
-    return;
-  }
-
-  var eleSelectors = {};
-  var eleW = 70;
-  var eleH = 30;
-  var inactiveScale = 0.3;
-  var activeScale = 1;
-  var scalingStep = 0.1;
-  var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
-                                                         y: 0,
-                                                         activeElement: element,
-                                                         targetAngle: 0,
-                                                         angleStep: 0,
-                                                         angleShifted: 0,
-                                                         angleNeeded: 0
+  var backLabel = isSession ? "Switch Map" : "Switch Session";
+  var buttonBack = container_back.insert(new Q.UI.Button({fill: 'limegreen',
+                                                          opacity: 1,
+                                                          x: SIZE_BOLD*backLabel.length/10,
+                                                          y: 0,
+                                                          h: SIZE_BOLD*1.4,
+                                                          label: backLabel,
+                                                          font: FONT_NORMAL,
+                                                          fontColor: 'black'
                                                         }));
 
-  selector.on('step', function(dt){
+  buttonBack.on('click', function(){
+    var msg;
+    var callback;
+    if(isSession){
+      msg = "Switching map will disconnect all players in this session\nAre you sure to switch it?";
+    }else{
+      msg = "Switching session will cause you to lose all your current game progress\nAre you sure to switch it?";
+   }
 
-    var player = getPlayerSprite(selfId);
-    if(player && this.p.activeElement != player.p.element){
-      
-      console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
-      
-      updateEleSelector(player.p.element);
-    }
+    var callback = function(){
+      Q.input.trigger('switch');
+    };
 
-    var a = this.p.angle;
-    var tAngle = this.p.targetAngle;
-    var aNeeded = this.p.angleNeeded;
-    var aShifted = this.p.angleShifted;
-
-    var aStep = this.p.angleStep;
-    
-    if(aNeeded >= aShifted){
-
-      // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
-      
-      var aS = aStep * dt;
-      this.p.angleShifted += aS;
-      if(this.p.angleShifted > this.p.angleNeeded){
-        aS = this.p.angleNeeded - (this.p.angleShifted - aS);
-        this.p.angleShifted = this.p.angleNeeded;
-      }
-      var nextAngle = a - aS;
-
-      if(nextAngle<0){
-        nextAngle = 360 + nextAngle;
-      }
-
-      // console.log('next angle '+nextAngle);
-      var nAngle = Math.max(nextAngle % 360, 0);
-      this.p.angle = nAngle;
-    }
+    var buttons = [{label: "YES", callback: callback}, {label: "NO"}];
+    Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, {msg: msg, buttons: buttons});
   });
 
-  for(var eId in ELEBALL_ELEMENTNAMES){
-    var eleId = Number(eId);
-    var eleAngle = eleId * 90;
-    var isActive = eleId == element;
-    var scaling = isActive ? activeScale : inactiveScale;
-    eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
-                                                          sprite: ELEBALL_ANIMATION,
-                                                          angle: eleAngle,
-                                                          scale: scaling,
-                                                          targetScale: 1
-                                                          }));
+  container_back.fit(UI_PADDING_VALUE, UI_PADDING_VALUE);
 
-    eleSelectors[eId].on('step', function(dt){
-      var s = this.p.scale;
-      var tScale = this.p.targetScale;
-
-      if(s != tScale){
-        
-        var sign = s > tScale ? -1 : 1;
-        this.p.scale += sign*scalingStep;
-
-        if(Math.abs(this.p.scale - tScale)< 0.01){
-          this.p.scale = tScale;
-        }
-      }
-    });
-  }
-
-  var updateEleSelector = function(nextElement){
-
-    if(nextElement == undefined){
-      console.log("Invalid element during HUD next element toggling");
+  if(!isSession){
+    var currentPlayer = getPlayerSprite(selfId);
+    if(!currentPlayer){
+      console.log("Cannot locate current player during HUD element selector initialization");
       return;
     }
+    var element = currentPlayer.p.element;
+    // convert into number
+    element = Number(element);
     
-    for(var eId in eleSelectors){
-      var eleId = Number(eId);
-      var isActive = eleId == nextElement;
-      var eleAngle = eleId * 90;
-      var scaling = isActive ? activeScale : inactiveScale;
+    if(!(element >= 0 && element < ELEBALL_ELEMENTNAMES.length)){
+      console.log("Invalid element during HUD element selector initialization [element: "+element+"]");
+      return;
+    }
 
-      var eS = eleSelectors[eId];
-      eS.p.targetScale = scaling;
-      eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
-      eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
+    var eleSelectors = {};
+    var eleW = 70;
+    var eleH = 30;
+    var inactiveScale = 0.3;
+    var activeScale = 1;
+    var scalingStep = 0.1;
+    var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
+                                                           y: 0,
+                                                           activeElement: element,
+                                                           targetAngle: 0,
+                                                           angleStep: 0,
+                                                           angleShifted: 0,
+                                                           angleNeeded: 0
+                                                          }));
 
-      if(isActive){
-        eS.add('animation');
-        eS.play('fire');
-      }else if(eS.has('animation')){
-        eS.del('animation');
+    selector.on('step', function(dt){
+
+      var player = getPlayerSprite(selfId);
+      if(player && this.p.activeElement != player.p.element){
+        
+        console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
+        
+        updateEleSelector(player.p.element);
       }
+
+      var a = this.p.angle;
+      var tAngle = this.p.targetAngle;
+      var aNeeded = this.p.angleNeeded;
+      var aShifted = this.p.angleShifted;
+
+      var aStep = this.p.angleStep;
+      
+      if(aNeeded >= aShifted){
+
+        // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
+        
+        var aS = aStep * dt;
+        this.p.angleShifted += aS;
+        if(this.p.angleShifted > this.p.angleNeeded){
+          aS = this.p.angleNeeded - (this.p.angleShifted - aS);
+          this.p.angleShifted = this.p.angleNeeded;
+        }
+        var nextAngle = a - aS;
+
+        if(nextAngle<0){
+          nextAngle = 360 + nextAngle;
+        }
+
+        // console.log('next angle '+nextAngle);
+        var nAngle = Math.max(nextAngle % 360, 0);
+        this.p.angle = nAngle;
+      }
+    });
+
+    for(var eId in ELEBALL_ELEMENTNAMES){
+      var eleId = Number(eId);
+      var eleAngle = eleId * 90;
+      var isActive = eleId == element;
+      var scaling = isActive ? activeScale : inactiveScale;
+      eleSelectors[eId] = selector.insert(new Q.UI.Button({ sheet: ELEBALL_ELEMENTNAMES[eId],
+                                                            sprite: ELEBALL_ANIMATION,
+                                                            angle: eleAngle,
+                                                            scale: scaling,
+                                                            targetScale: 1
+                                                            }));
+
+      eleSelectors[eId].on('step', function(dt){
+        var s = this.p.scale;
+        var tScale = this.p.targetScale;
+
+        if(s != tScale){
+          
+          var sign = s > tScale ? -1 : 1;
+          this.p.scale += sign*scalingStep;
+
+          if(Math.abs(this.p.scale - tScale)< 0.01){
+            this.p.scale = tScale;
+          }
+        }
+      });
     }
 
-    var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
-    var angleNeeded = selector.p.angle - targetAngle;
-    
-    if(angleNeeded < 0){
-      angleNeeded = 360 + angleNeeded;
-    }
+    var updateEleSelector = function(nextElement){
 
-    selector.p.targetAngle = targetAngle;
-    selector.p.angleNeeded = angleNeeded;
-    selector.p.angleStep = angleNeeded/0.3;
-    selector.p.angleShifted = 0;
-    selector.p.activeElement = nextElement;
+      if(nextElement == undefined){
+        console.log("Invalid element during HUD next element toggling");
+        return;
+      }
+      
+      for(var eId in eleSelectors){
+        var eleId = Number(eId);
+        var isActive = eleId == nextElement;
+        var eleAngle = eleId * 90;
+        var scaling = isActive ? activeScale : inactiveScale;
 
-    // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
-  };
+        var eS = eleSelectors[eId];
+        eS.p.targetScale = scaling;
+        eS.p.x = scaling*(Math.cos(eleAngle*2*Math.PI/360))*eleW/2;
+        eS.p.y = scaling*(Math.sin(eleAngle*2*Math.PI/360))*eleW/2;
 
-  updateEleSelector(element);
+        if(isActive){
+          eS.add('animation');
+          eS.play('fire');
+        }else if(eS.has('animation')){
+          eS.del('animation');
+        }
+      }
+
+      var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
+      var angleNeeded = selector.p.angle - targetAngle;
+      
+      if(angleNeeded < 0){
+        angleNeeded = 360 + angleNeeded;
+      }
+
+      selector.p.targetAngle = targetAngle;
+      selector.p.angleNeeded = angleNeeded;
+      selector.p.angleStep = angleNeeded/0.3;
+      selector.p.angleShifted = 0;
+      selector.p.activeElement = nextElement;
+
+      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
+    };
+
+    updateEleSelector(element);
+  }
 
   var initHud  = true;
   var initHud2 = true;
@@ -868,7 +992,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var timerText;
 
   var secondHudContainer = null;
-  if (isScreenWidthTooSmall && initHud2) {
+  if (!isSession && isScreenWidthTooSmall && initHud2) {
     secondHudContainer = stage.insert(new Q.UI.Container({ 
                                                      x: Q.width/2, 
                                                      y: hudContainer.p.y + hudContainer.p.h/2 + HEIGH_HUD / 2,
@@ -974,128 +1098,161 @@ Q.scene(SCENE_HUD, function(stage) {
       timerText.p.color = timeLeft < 15 ? 'red' : 'black'; 
     }
 
-    var currentPlayer = getPlayerSprite(selfId);
-    if(!currentPlayer) {
-      console.log("Cannot locate current player during HUD player attribute drawing");
-      resetPowerupIcons();
-      return;
-    }
-    
-    /* 
-    ** HP CIRCLE
-    ** represented by a hollow circle with text inside
-    */
-    var radius    = this.p.h*0.3;
-    var lineWidth = radius / 2;
-    ctx.lineWidth = lineWidth;
-    ctx.textAlign = "center";
+    if(isSession){
+      var pList = session.players;
+      var rtts = {};
+      var numPlayer = 0;
 
-    //if circles will overlap each other, then adjust based on width instead
-    if (radius + lineWidth > this.p.w/15) {
-      radius        = this.p.w / 20;
-      lineWidth     = radius / 2;
+      if(pList){
+        
+        for(var p in pList){
+          rtts[p] = getAvgRttOfPlayer(p);
+          numPlayer++;
+        }  
+      }
+
+
+      if(numPlayer > 0){
+
+      }else{
+        color           = '#3BB9FF'; //blue
+        ctx.strokeStyle = color;
+        ctx.fillStyle   = color;
+        centerX         = 0;
+        centerY         = -hudContainer.p.h/3;
+        // var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
+        ctx.font        = WEIGHT_BOLD + " "+SIZE_BOLD+"px "+FONT_FAMILY;
+        ctx.fillText("No player has connected to this session", centerX, centerY);
+        // ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+      }
+    }
+
+
+    var currentPlayer;
+    if(!isSession){
+      currentPlayer = getPlayerSprite(selfId);
+      if(!currentPlayer) {
+        console.log("Cannot locate current player during HUD player attribute drawing");
+        resetPowerupIcons();
+        return;
+      }
+      
+      /* 
+      ** HP CIRCLE
+      ** represented by a hollow circle with text inside
+      */
+      var radius    = this.p.h*0.3;
+      var lineWidth = radius / 2;
       ctx.lineWidth = lineWidth;
-    }
+      ctx.textAlign = "center";
 
-    var currentHp = Math.round(currentPlayer.p.currentHealth);
-    var maxHp     = currentPlayer.p.maxHealth;
-    var scaledHp  = currentHp / maxHp;
+      //if circles will overlap each other, then adjust based on width instead
+      if (radius + lineWidth > this.p.w/15) {
+        radius        = this.p.w / 20;
+        lineWidth     = radius / 2;
+        ctx.lineWidth = lineWidth;
+      }
 
-    //green -> yellow -> red
-    var color       = scaledHp > 0.5 ? 'green' : scaledHp > 0.25 ? 'yellow' : 'brown';
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    var centerX     = 4*this.p.w/15;
-    var centerY     = 0;
-    
-    drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
+      var currentHp = Math.round(currentPlayer.p.currentHealth);
+      var maxHp     = currentPlayer.p.maxHealth;
+      var scaledHp  = currentHp / maxHp;
 
-    /* 
-    ** MANA CIRCLE
-    ** represented by a hollow circle with text inside
-    */
-    var currentMana = Math.round(currentPlayer.p.currentMana);
-    var maxMana     = currentPlayer.p.maxMana;
+      //green -> yellow -> red
+      var color       = scaledHp > 0.5 ? 'limegreen' : scaledHp > 0.25 ? 'yellow' : 'brown';
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      var centerX     = 4*this.p.w/15;
+      var centerY     = 0;
+      
+      drawHollowCircleWithTextInside(currentHp, maxHp, centerX, centerY, radius, ctx);
 
-    color           = '#3BB9FF'; //blue
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerX         = 6*this.p.w/15;
-    centerY         = 0;
+      /* 
+      ** MANA CIRCLE
+      ** represented by a hollow circle with text inside
+      */
+      var currentMana = Math.round(currentPlayer.p.currentMana);
+      var maxMana     = currentPlayer.p.maxMana;
 
-    drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
+      color           = '#3BB9FF'; //blue
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = 6*this.p.w/15;
+      centerY         = 0;
 
-    //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
-    var scaleIcons = this.p.h / 3 / 34;
-    /*
-    ** Mana cost per shot
-    ** represented by a light blue line with blue text beside
-    */
+      drawHollowCircleWithTextInside(currentMana, maxMana, centerX, centerY, radius, ctx);
 
-    color           = '#3BB9FF'; //blue
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerX         = selector.p.x - eleW / 1.2;
-    centerY         = selector.p.y;
-    var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
+      var scaleIcons = this.p.h / 3 / 34;
+      /*
+      ** Mana cost per shot
+      ** represented by a light blue line with blue text beside
+      */
 
-    ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+      color           = '#3BB9FF'; //blue
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerX         = selector.p.x - eleW / 1.2;
+      centerY         = selector.p.y;
+      var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
+      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
 
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
-                                    x: centerX,
-                                    y: centerY,
-                                    scale: scaleIcons
+      ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_ZERO_MANA_COST,
+                                      x: centerX,
+                                      y: centerY,
+                                      scale: scaleIcons
+                                      }));
+      }
+
+      /*
+      ** Attack Damage per shot
+      ** represented by a sword with orangey text beside
+      */
+      color             = '#F88017'; //orangey
+      ctx.strokeStyle   = color;
+      ctx.fillStyle     = color;
+      centerY           = selector.p.y - this.p.h / 3;
+      var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
+      ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+
+      ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
+                                      x: centerX,
+                                      y: centerY,
+                                      scale: scaleIcons
+                                      }));
+      }
+
+      /*
+      ** Movement Speed
+      ** represented by a shoe with green text beside
+      */
+      color           = '#00FF00'; //green
+      ctx.strokeStyle = color;
+      ctx.fillStyle   = color;
+      centerY         = selector.p.y + this.p.h / 3;
+      var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
+      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+
+      ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
+
+      if (initHud) {
+        this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
+                                      x    : centerX,
+                                      y    : centerY,
+                                      scale: scaleIcons
                                     }));
-    }
-
-    /*
-    ** Attack Damage per shot
-    ** represented by a sword with orangey text beside
-    */
-    color             = '#F88017'; //orangey
-    ctx.strokeStyle   = color;
-    ctx.fillStyle     = color;
-    centerY           = selector.p.y - this.p.h / 3;
-    var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
-    ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
-
-    ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
-
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_DOUBLE_DMG,
-                                    x: centerX,
-                                    y: centerY,
-                                    scale: scaleIcons
-                                    }));
-    }
-
-    /*
-    ** Movement Speed
-    ** represented by a shoe with green text beside
-    */
-    color           = '#00FF00'; //green
-    ctx.strokeStyle = color;
-    ctx.fillStyle   = color;
-    centerY         = selector.p.y + this.p.h / 3;
-    var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
-    ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
-
-    ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
-
-    if (initHud) {
-      this.insert(new Q.UI.Button({ sheet: HUD_ACTIVE_150_MOVESPEED,
-                                    x    : centerX,
-                                    y    : centerY,
-                                    scale: scaleIcons
-                                  }));
+      }
     }
     
     /*
     ** Power ups
     */
-    if (secondHudContainer === null) {
+    if (!isSession && secondHudContainer === null) {
       var powerupIconWidth        = 34;
       var spaceBetweenPowerupIcon = 15;
       var borderWidth             = 4;
@@ -1122,6 +1279,12 @@ Q.scene(SCENE_HUD, function(stage) {
                                                                     y    : powerupIconCenterY[2],
                                                                     scale: scaleToHeight
                                       }));
+
+        //reset hud powerup icons when player dies
+        currentPlayer.on('destroyed', function() {
+          resetPowerupIcons();
+        });
+
       } else {
         var isZeroManaActive        = currentPlayer.p.powerupsHeld[POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST];
         var isDoubleDmgActive       = currentPlayer.p.powerupsHeld[POWERUP_CLASS_ATTACK_150PERCENTDMG];
@@ -1152,12 +1315,6 @@ Q.scene(SCENE_HUD, function(stage) {
     }
 
     initHud = false;
-
-  });
-
-  //reset hud powerup icons when player dies
-  currentPlayer.on('destroyed', function() {
-    resetPowerupIcons();
   });
 
   var roundToOneDecimalPlace = function (number) {
@@ -1523,21 +1680,30 @@ Q.scene(SCENE_SCORE, function(stage) {
 
     buttonPlay.on("click", function(){
       Q.input.trigger('playAgain');
-    }); 
+    });
+
+    stage.insert(new Q.UI.Text({x: 0, 
+                                y: -Q.height*0.1,
+                                size: SIZE_TITLE,
+                                font: FONT_FAMILY,
+                                algin: "center",
+                                weight: WEIGHT_BOLD,
+                                color: 'black',
+                                label: "ROUND ENDED"
+                              }), overlayContainer
+    );
   }
 });
 
 Q.scene(SCENE_NOTIFICATION, function(stage){
 
   var msg = stage.options.msg;
-  var callback = stage.options.callback;
-
   if(!msg){
     console.log("No message passed when creating notificationScreen");
     return;
   }
 
-  var buttonOkH = Q.height/20;
+  var buttonH = Q.height/20;
   var msgArray = msg.split('\n');
   var maxMsgLength = 0;
   var msgLength;
@@ -1556,24 +1722,33 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                                   }));
 
 
-  var buttonOk = stage.insert(new Q.UI.Button({ x: 0, 
+  var buttons = stage.options.buttons;
+  for(var b=0; buttons && b<buttons.length; b++){
+    var bLen = buttons.length;
+    var bW = Q.width/20;
+    var bLabel = buttons[b].label;
+    var bCallback = buttons[b].callback;
+
+    var button = stage.insert(new Q.UI.Button({ x: -bLen*bW/2 + b*bW + bW/2, 
                                                 y: 0,
-                                                w: container.p.w/3,
-                                                h: buttonOkH,
+                                                w: bW*0.8,
+                                                h: buttonH,
                                                 font: FONT_BOLD,
                                                 fill: LIGHT_GREY,
-                                                label: 'OK'
+                                                label: bLabel,
+                                                callback: bCallback
                                           }), container);
 
-  buttonOk.on("click", function(){
-    
-    if(callback) callback();
+    button.on("click", function(){
 
-    container.destroy();
-  }); 
+      if(this.p.callback) this.p.callback();
+
+      container.destroy();
+    }); 
+  }
 
   var label = stage.insert(new Q.UI.Text({x: 0, 
-                                          y: -SIZE_BOLD*msgCount - buttonOkH,
+                                          y: -SIZE_BOLD*msgCount - buttonH,
                                           size: SIZE_BOLD,
                                           font: FONT_FAMILY,
                                           algin: "center",
@@ -1582,7 +1757,6 @@ Q.scene(SCENE_NOTIFICATION, function(stage){
                                           label: msg
                                         }), container);
 
-  // button is shown, increase message box size
   container.fit(Q.height/20, Q.width/30);
 
 });

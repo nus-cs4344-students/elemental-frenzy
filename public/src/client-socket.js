@@ -365,7 +365,7 @@ var getSpriteProperties = function (entityType, id) {
   var properties;
 
   if(s){
-    properties = clone(gameState.sprites[eType][spriteId].p);
+    properties = cloneValueOnly(allSprites[eType][spriteId].p);
   }
 
   return properties;
@@ -719,7 +719,7 @@ var setupEventListeners = function () {
 
   Q.input.on('playAgain', function(){
     Q.input.trigger('sessionCast', {
-      eventName:'playAgain', 
+      eventName: 'playAgain', 
       eventData: {
         spriteId: selfId, 
         sessionId: sessionId, 
@@ -727,6 +727,22 @@ var setupEventListeners = function () {
       }
     });
     
+  });
+
+  Q.input.on('switch', function(){
+    console.log('switch session');
+
+    // tell everyone in the session that currnet session is switching map
+    Q.input.trigger('sessionCast', {'eventName': 'playerDisconnected', eventData: {spriteId: selfId}});
+
+    resetGameState();
+
+    _isSessionConnected = false;
+    _isGameLoaded = false;
+    _isJoinSent = false;
+    _isEndGame = false;
+
+    displayWelcomeScreen();
   });
 
     
@@ -1017,8 +1033,12 @@ var resetDisplayScreen = function () {
 
 var displayNotificationScreen = function (msg, callback) {
   var stageOptions = {msg: msg,
-                      callback: callback};
+                      buttons: [{label: 'OK', callback: callback}]};
   Q.stageScene(SCENE_NOTIFICATION, STAGE_NOTIFICATION, stageOptions);
+};
+
+var displayInfoScreen = function(msg){
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 };
 
 var displayStatusScreeen = function (msg) {
@@ -1092,10 +1112,7 @@ var displayGameScreen = function (level) {
   });
 };
 
-// ## Loads the game state.
-var loadGameSession = function (receivedGameState) {
-  console.log("Loading game state...");
-
+var resetGameState = function(){
   // there is old game state,
   // remove all of them
   if(gameState){
@@ -1105,7 +1122,13 @@ var loadGameSession = function (receivedGameState) {
       }
     }
   } 
+
   resetState(clone(infoState));
+};
+
+// ## Loads the game state.
+var loadGameSession = function (receivedGameState) {
+  console.log("Loading game state...");
 
   // load default values
   gameState = receivedGameState || getDefaultGameState();
@@ -1146,7 +1169,7 @@ var loadGameSession = function (receivedGameState) {
   // show connected status
   displayStatusScreeen(STATUS_CONNECTION.replace('[id]', sessionId));
   
-    // load player HUD info
+  // load player HUD info
   displayPlayerHUDScreen();
   
   _isGameLoaded = true;
@@ -1412,7 +1435,7 @@ socket.on('addSprite', function (data) {
       props.y = newY;
     }
   }else if(eType == 'PLAYER') {
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: "Player "+props.name+" has joined"});
+    displayInfoScreen("Player "+props.name+" has joined");
   }
   addSprite(eType, spriteId, props);
 });
@@ -1583,7 +1606,6 @@ socket.on('spriteDied', function (data) {
   sprite.die(killerEntityType, killerId);
 });
 
-
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
 
@@ -1596,8 +1618,19 @@ socket.on('sessionDisconnected', function (data) {
   _isJoinSent = false;
   _isEndGame = false;
 
+  var msg;
+  if(data){
+    msg = data.msg;
+  } 
+
+  if(msg === undefined){
+    msg = "";
+  }else{
+    msg = "Due to ["+msg+ "]\n";
+  }
+
   // ask player to join a session again
-  displayNotificationScreen("You are disconnected\nPlease join another session", displayWelcomeScreen);
+  displayNotificationScreen("You are disconnected\n"+msg+"Please join another session", displayWelcomeScreen);
 
   // create disconnected status
   displayStatusScreeen("Disconnected");
@@ -1622,7 +1655,7 @@ socket.on('playerDisconnected', function (data) {
   
   var player = getPlayerSprite(sId);
   var msg = "Player "+ (player ? player.p.name : sId)+" has left";
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+  displayInfoScreen(msg);
 
   // Destroy player and remove him from game state
   removePlayerSprite(sId);
