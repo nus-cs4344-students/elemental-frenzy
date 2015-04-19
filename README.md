@@ -18,9 +18,11 @@ Elemental Frenzy is a 2D side-scrolling platform player-vs-player (PvP) battle a
 To play the game locally, make sure you **open a new Chrome browser** and enter `http://localhost:4344/index.html`
 
 
+---
 
+Our game video can be found at ~~https://www.youtube.com/watch?v=IghZZvWoLi8~~
 
+Link to updated game video with correct STePS group number : https://www.youtube.com/watch?v=Vck2Q0GYJdo
 
-Our game video can be found at https://www.youtube.com/watch?v=IghZZvWoLi8
 
 Instructions video can be found at https://www.youtube.com/watch?v=9cDKEEsxJLg
