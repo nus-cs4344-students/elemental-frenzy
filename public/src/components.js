@@ -59,15 +59,10 @@ Q.component("manaBar", {
   draw: function(ctx) {
     var color = '#FF00FF'; // defaults to purple
     if (this.entity.isA('Player')) {
-      color = '#1589FF'; // player manaBar is light blue
+      color = this.entity.p.currentMana > this.entity.p.manaPerShot ? '#1589FF' : 'blue'; // player manaBar is light blue
     }
     var mf = this.entity.p.currentMana / this.entity.p.maxMana;
-    if (mf <= 0.5) {
-      color = '#3BB9FF';
-      if (mf <= 0.25) {
-        color = 'cyan';
-      }
-    }
+    
     var width = this.entity.p.w * MANABAR_WIDTH_SF;
     var height = this.entity.p.h * MANABAR_HEIGHT_SF;
     ctx.fillStyle = color;
