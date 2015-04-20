@@ -26,9 +26,9 @@ var STAGE_NOTIFICATION = 15;
 var SCENE_NOTIFICATION = 'notificationScreen';
 
 // ## UI constants
-var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
-var SCOREBOARD_TEXT_COLOR = "rgba(1,1,1,0.7)";
-var SCOREBOARD_HIGHLIGHT_SELF = "rgba(255, 255, 194, 0.7)"; //light yellowish
+var SCOREBOARD_OVERLAY_COLOR = "rgba(255,255,255,0.5)"; //white
+var SCOREBOARD_TEXT_COLOR = "rgba(0,0,0,0.7)"; //black
+var SCOREBOARD_HIGHLIGHT_SELF = "rgba(128, 0, 255, 0.7)"; //purple
 var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.4)";
