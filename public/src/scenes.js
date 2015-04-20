@@ -79,7 +79,7 @@ var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 //Scoreboard constants
 var SCOREBOARD_SHEET = ["scoreboard_first", "scoreboard_second", "scoreboard_third", "scoreboard_fourth"];
 
-var STATS_OFFSET = 25;
+var STATS_OFFSET = 30;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -1233,6 +1233,7 @@ Q.scene(SCENE_HUD, function(stage) {
 
       //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
       var scaleIcons = this.p.h / 3 / 34;
+      var scaleFonts = this.p.h > 50 ? " 16px " : this.p.h > 30 ? " 14px " : " 12px ";
       /*
       ** Mana cost per shot
       ** represented by a light blue line with blue text beside
@@ -1244,7 +1245,7 @@ Q.scene(SCENE_HUD, function(stage) {
       centerX         = selector.p.x - eleW / 1.2;
       centerY         = selector.p.y;
       var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font        = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
 
@@ -1265,7 +1266,7 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.fillStyle     = color;
       centerY           = selector.p.y - this.p.h / 3;
       var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
-      ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font          = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
 
@@ -1286,7 +1287,7 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.fillStyle   = color;
       centerY         = selector.p.y + this.p.h / 3;
       var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
-      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font        = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
