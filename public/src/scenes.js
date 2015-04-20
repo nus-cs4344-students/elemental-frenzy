@@ -407,52 +407,53 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   //controls in text form
   var changeElementTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y,
+                                                  x     : controlsContainer.p.x + 2.5* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTitleColor,
-                                                  label : 'Change attack element'
+                                                  label : 'Rotate attack element'
                                               }));
 
   var changeElementText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y,
+                                                  x     : controlsContainer.p.x + 2.5* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTextColor,
-                                                  label : '\nSPACE'
+                                                  label : '\nQ, E'
                                               }));
 
   var movementTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x - 2.5* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTitleColor,
-                                                  label : 'Movement'
+                                                  label : 'Move left / right'
                                               }));
 
   var movementText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x - 2.5* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTextColor,
-                                                  label : '\nW,A,S,D'
+                                                  label : '\nA,D'
                                               }));
 
+  
   var shootTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  x     : controlsContainer.p.x - 3* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
@@ -462,8 +463,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               }));
 
   var shootText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  x     : controlsContainer.p.x - 3* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
@@ -472,8 +473,30 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   label : '\nMouse Click'
                                               }));
 
+  var shootTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : controlsTitleColor,
+                                                  label : 'Jump / Ladder'
+                                              }));
+
+  var shootText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : controlsTextColor,
+                                                  label : '\nSPACE, W, S'
+                                              }));
+
   var scoreboardTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x + 3* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y,
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
@@ -484,7 +507,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               }));
 
   var scoreboardText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x + 3* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y,
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
