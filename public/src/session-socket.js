@@ -883,8 +883,10 @@ var displayGameScreen = function(level){
   // for PLAYER and ACTOR sprites only
   Q.stage(STAGE_LEVEL).on('inserted', function(item) {
     if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+      var prevW = item.p.w;
       item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
       Q._generatePoints(item, true);
+      item.p.w = prevW;
     }
   });
   
