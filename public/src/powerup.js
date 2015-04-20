@@ -44,6 +44,8 @@ var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT          = 20.0;
 var POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST  = 2*POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST;
 var POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED     = 2*POWERUP_DURATION_MOVESPEED_150PERCENTSPEED;
 
+var NUM_TILES_PER_POWERUP = 25;
+
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
 // ## 2d powerup to be attached to powerups
@@ -186,7 +188,7 @@ Q.component('powerupSystem', {
     var tileLayer = this.entity._collisionLayers[0];
     var numPowerup;
     if(tileLayer){
-      numPowerup = Math.floor(Math.max(tileLayer.p.rows, tileLayer.p.cols) / 15);
+      numPowerup = Math.floor(Math.max(tileLayer.p.rows, tileLayer.p.cols) / NUM_TILES_PER_POWERUP);
     }
 
     // All the powerups of the game
