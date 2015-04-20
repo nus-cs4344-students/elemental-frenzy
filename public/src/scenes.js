@@ -1096,7 +1096,7 @@ Q.scene(SCENE_HUD, function(stage) {
       label : getTimeFormat(timeLeft),
       x: Q.width/2,
       y: timerPosY,
-      size: SIZE_NORMAL,
+      size: SIZE_TITLE,
       font: FONT_FAMILY
       }));
 
@@ -1449,7 +1449,7 @@ Q.scene(SCENE_INFO ,function(stage) {
   }
 
   var infoHolder = stage.insert(new Q.UI.Text({ x: Q.width/2,
-                                          y: Q.height/3,
+                                          y: Q.height*0.45,
                                           size: 20,
                                           font: FONT_FAMILY,
                                           align: 'center',
@@ -1495,7 +1495,7 @@ Q.scene(SCENE_INFO ,function(stage) {
   });
 
   infoHolder.on('draw', infoHolder, function(ctx) {
-    ctx.font = SIZE_BOLD+"px "+FONT_FAMILY;
+    ctx.font = WEIGHT_BOLD+" "+SIZE_BOLD+"px "+FONT_FAMILY;
     ctx.textAlign = "center";
     ctx.fillStyle = this.p.color || 'black';
 
