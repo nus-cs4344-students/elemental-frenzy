@@ -717,7 +717,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
       var cLayer = mapStage._collisionLayers[0];
       var vpScale = 0.1;
       if(cLayer) {
-        vpScale = Math.max(0.1, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
+        vpScale = Math.max(0.2, Math.min(1, Math.max(screenW/cLayer.p.w, screenH/cLayer.p.h)));
         vpScale = Math.round(vpScale * 100) / 100;
       }
       
@@ -889,26 +889,27 @@ Q.scene(SCENE_HUD, function(stage) {
       var tAngle = this.p.targetAngle;
       var aNeeded = this.p.angleNeeded;
       var aShifted = this.p.angleShifted;
-
       var aStep = this.p.angleStep;
       
-      if(aNeeded >= aShifted){
+      if(Math.abs(aNeeded) > Math.abs(aShifted)){
 
         // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
         
         var aS = aStep * dt;
         this.p.angleShifted += aS;
-        if(this.p.angleShifted > this.p.angleNeeded){
-          aS = this.p.angleNeeded - (this.p.angleShifted - aS);
-          this.p.angleShifted = this.p.angleNeeded;
+        if(Math.abs(this.p.angleShifted) > Math.abs(aNeeded)){
+          // console.log("reverted to "+(this.p.angleShifted - aS)+" aShifted "+this.p.angleShifted+" aStep "+aS);
+          aS = (Math.abs(aNeeded) - Math.abs(this.p.angleShifted - aS)) * Math.sign(aNeeded);
+          // console.log("over shot: aNeeded "+aNeeded+" aShifted "+this.p.angleShifted+" as "+aS);
+          this.p.angleShifted = aNeeded;
         }
-        var nextAngle = a - aS;
+        var nextAngle = a + aS;
 
         if(nextAngle<0){
           nextAngle = 360 + nextAngle;
         }
 
-        // console.log('next angle '+nextAngle);
+        console.log('next angle '+nextAngle);
         var nAngle = Math.max(nextAngle % 360, 0);
         this.p.angle = nAngle;
       }
@@ -969,19 +970,34 @@ Q.scene(SCENE_HUD, function(stage) {
       }
 
       var targetAngle = ((ELEBALL_ELEMENTNAMES.length- nextElement) *90 )% 360;
-      var angleNeeded = selector.p.angle - targetAngle;
-      
+      var angleNeeded = Math.abs(selector.p.angle - targetAngle);
+      var sign;
+      var currentEle = selector.p.activeElement;
+
+      if((currentEle == 0 && nextElement == 3) || 
+        (currentEle > nextElement && Math.abs(currentEle - nextElement) < 2)){
+        // special case need to move clockwise
+        sign = 1;
+      }else{
+        sign = -1;
+      }
+
+
       if(angleNeeded < 0){
         angleNeeded = 360 + angleNeeded;
       }
 
+      if(angleNeeded >= 180){
+        angleNeeded = 360 - angleNeeded;
+      }
+
       selector.p.targetAngle = targetAngle;
-      selector.p.angleNeeded = angleNeeded;
-      selector.p.angleStep = angleNeeded/0.3;
+      selector.p.angleNeeded = sign*angleNeeded;
+      selector.p.angleStep = sign*angleNeeded/0.3;
       selector.p.angleShifted = 0;
       selector.p.activeElement = nextElement;
 
-      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" angleNeeded "+angleNeeded);
+      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep);
     };
 
     updateEleSelector(element);

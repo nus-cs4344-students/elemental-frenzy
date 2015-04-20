@@ -2,11 +2,13 @@
 
 // ## Keyboard controls
 var KEYBOARD_CONTROLS_PLAYER = {
+  Q : "togglePreviousElement",
+  E : "toggleNextElement",
   W : "up",
   S : "down",
   A : "left",
   D : "right",
-  SPACE : "toggleNextElement",
+  SPACE : "up",
   Z : "",
   TAB : "displayScoreScreen",
   LEFT : "",

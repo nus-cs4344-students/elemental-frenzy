@@ -895,32 +895,44 @@ var setupEventListeners = function () {
     }, false);
   }
 
-  Q.input.on('toggleNextElementUp', function () {
 
-    if(!_isGameLoaded) {
-      // client side need to be connected to the server in order
-      // to show score screen
-      return;
-    }
+  each(['togglePreviousElementUp','toggleNextElementUp'], function(actionName) {
+    
+    Q.input.on(actionName, function () {
 
-    var player = getPlayerSprite(selfId);
-    if(!player || player.p.toggleElementCooldown > 0) {
-      // player is died or cannot located current player sprite
-      // player toggleElement is in cooldown
-      return;
-    }
+      if(!_isGameLoaded) {
+        // client side need to be connected to the server in order
+        // to show score screen
+        return;
+      }
 
-    player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+      var player = getPlayerSprite(selfId);
+      if(!player || player.p.toggleElementCooldown > 0) {
+        // player is died or cannot located current player sprite
+        // player toggleElement is in cooldown
+        return;
+      }
 
-    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
-    player.p.element = nextElement;
+      player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
 
-    var eData = { sessionId: sessionId,
-                  spriteId: selfId,
-                  entityType: 'PLAYER'
-    };
+      
+      var eleSign = actionName == 'togglePreviousElementUp' ? -1 : 1;
+      var ele = (Number(player.p.element) + eleSign);
+     
+      if(ele < 0 ) {
+        ele = ELEBALL_ELEMENTNAMES.length + ele;
+      }
 
-    Q.input.trigger('sessionCast', {eventName:'toggleNextElementUp', eventData: eData});
+      var nextElement = ele % ELEBALL_ELEMENTNAMES.length;
+      player.p.element = nextElement;
+
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER'
+      };
+
+      Q.input.trigger('sessionCast', {eventName: actionName, eventData: eData});
+    });
   });
 
   var handleMouseOrTouchEvent = function (e) {
