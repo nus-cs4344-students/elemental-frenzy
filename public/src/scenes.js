@@ -1034,7 +1034,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupMovement_150Speed;
   var powerupIconCenterX = [];
   var powerupIconCenterY = [];
-
+  var maxScaleOfPowerupIcons = 1.75;
   var timerText;
 
   var secondHudContainer = null;
@@ -1065,7 +1065,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > maxScaleOfPowerupIcons*(powerupIconWidth + 2 * borderWidth)) ? maxScaleOfPowerupIcons : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud2) {
 
@@ -1332,7 +1332,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > maxScaleOfPowerupIcons*(powerupIconWidth + 2 * borderWidth)) ? maxScaleOfPowerupIcons : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud) {
 

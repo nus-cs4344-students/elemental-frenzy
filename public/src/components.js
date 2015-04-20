@@ -71,7 +71,14 @@ Q.component("manaBar", {
     ctx.fillStyle = "black";
     ctx.strokeRect(-width/2, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
           width, height);
-  }
+
+    var widthOfOneShot = this.entity.p.manaPerShot / this.entity.p.maxMana * width;
+    var numPossibleShots = Math.floor(this.entity.p.maxMana / this.entity.p.manaPerShot);
+    for (var i = 0; i < numPossibleShots; i++) {
+      ctx.strokeRect(-width/2 + i * widthOfOneShot, -this.entity.p.cy - height - MANABAR_HEIGHT_OFFSET,
+          widthOfOneShot, height);  }
+    }
+    
 });
 
 // ## Namebar component to be attached to a player/actor which displays their name above them
