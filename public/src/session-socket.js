@@ -1507,7 +1507,8 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
 
 },this);
 
-socket.on('toggleNextElementUp', function(data){
+each(['togglePreviousElementUp','toggleNextElementUp'], function(actionName) {
+  socket.on(actionName, function(data){
 
     var sId = data.spriteId;
     var eType = data.entityType;
@@ -1515,11 +1516,11 @@ socket.on('toggleNextElementUp', function(data){
 
     var sToken = data.sessionToken;
     if(!sToken || sToken != sessionToken){
-      console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during toggleNextElementUp");
+      console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during "+actionName);
       return;
     }
 
-    if(!checkGoodSprite(eType, sId, "toggleNextElementUp")){
+    if(!checkGoodSprite(eType, sId, actionName)){
       return;
     }
 
@@ -1532,7 +1533,15 @@ socket.on('toggleNextElementUp', function(data){
 
     player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
 
-    var nextElement = (Number(player.p.element) + 1) % ELEBALL_ELEMENTNAMES.length;
+    var eleSign = actionName == 'togglePreviousElementUp' ? -1 : 1;
+    var ele = (Number(player.p.element) + eleSign);
+   
+    if(ele < 0 ) {
+      ele = ELEBALL_ELEMENTNAMES.length + ele;
+    }
+
+    var nextElement = ele % ELEBALL_ELEMENTNAMES.length;
     console.log("current "+player.p.element+" received "+nextElement);
     player.p.element = nextElement;
   });
+},this);
