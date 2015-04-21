@@ -51,9 +51,13 @@ var POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST  = 2*POWERUP_DURATION_MANA_RE
 var POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED     = 2*POWERUP_DURATION_MOVESPEED_150PERCENTSPEED;
 var POWERUP_SPAWNTIME_ENEMYDROP_DMGHPMP             = 999999999; // infinite
 
+var POWERUP_MAXSTACKS_ENEMYDROP_DMGHPMP = 4; // only can stack 4 of these permanent boosts
+
 var NUM_TILES_PER_POWERUP = 25;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
+
+var SOUND_DANGEROUS = "warningSiren.ogg";
 
 // ## 2d powerup to be attached to powerups
 // gravity turns off once it collides with something
@@ -414,7 +418,27 @@ Q.component('powerupable', {
       case POWERUP_CLASS_ENEMYDROP_DMGHPMP                  :
         // Store into the state the permanent boosts so that it sticks after death
         if (entity.p.isServerSide) {
-          Q.state.trigger('playerStatBoost', {dmg: 5, maxHealth: 10, maxMana: 10, spriteId: entity.p.spriteId});
+          var numStacks = Q.state.get('playerPermanentBoosts')[entity.p.spriteId].stacks[powerupName];
+          if (typeof numStacks === 'undefined') {
+            numStacks = 0;
+          }
+          if (numStacks < POWERUP_MAXSTACKS_ENEMYDROP_DMGHPMP) {
+            // Can still take more stacks
+            Q.state.trigger('playerStatBoost', {powerupName: powerupName, 
+                                                maxStacksAllowed: POWERUP_MAXSTACKS_ENEMYDROP_DMGHPMP, 
+                                                spriteId: entity.p.spriteId,
+                                                dmg: 5, maxHealth: 10, maxMana: 10});
+            // Tell all players about his boost in power!
+            var msg = entity.p.name + " just got more POWERFUL from the enemy's drop! Stop him!";
+            var sound = SOUND_DANGEROUS;
+            Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
+          } else {
+            // Cannot take more stacks
+            // Inform everybody
+            var msg = entity.p.name + " is at MAXIMUM stacks of POWER from killing the boss! Can't take no more!";
+            var sound = SOUND_DANGEROUS;
+            Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
+          }
         }
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 

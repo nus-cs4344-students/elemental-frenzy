@@ -12,9 +12,11 @@ var ENEMY_NUM_CHARACTERS = 2; // 2 different sprites only at the moment
 var ENEMY_ANIMATION = "enemy";
 var ENEMY_NO_FIRE_ANIMATION = "no_fire";
 var ENEMY_FIRE_ANIMATION_TIME = 0.5;
+var ENEMY_SPAWN_SOUND = "bossSpawn.ogg";
+var ENEMY_DIE_SOUND = "victorious.ogg";
 
 var ENEMYAISYSTEM_ENEMY_LIMIT = 1; // 1 enemy at most at any one time
-var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 6000; // 6 seconds
+var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 30000; // 30 seconds
 var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ENEMYDROP_DMGHPMP"; // Powerup dropped upon enemy's death
 
 // ## Enemy Sprite
@@ -129,13 +131,17 @@ Q.Sprite.extend("Enemy",{
         killer: {entityType: killerEntityType, spriteId: killerId}
       }});
       
+      // Tell all players and play the enemy die sound
+      var msg = "An enemy has been slain by " + killerName + "!!!";
+      var sound = ENEMY_DIE_SOUND;
+      Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound, sound}});
+      
+      // Display the message and play the audio on the server side too
+      Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+      Q.audio.play(sound);
+      
       this.trigger('died', {x: this.p.x, y: this.p.y});
     }
-    
-    // Show the enemy killed info
-    var msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
-            "just got killed by "+killerEntityType+" "+killerId+" '"+killerName+"'";
-    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
 
     removeEnemySprite(this.p.spriteId);
   },
@@ -348,7 +354,7 @@ Q.Sprite.extend("Enemy",{
         console.log("Shooting at " + playerToShoot.p.name + "(" + playerToShoot.p.spriteId + ")");
         
         this.p.targetX = playerToShoot.p.x;
-        this.p.targetY = playerToShoot.p.y;
+        this.p.targetY = playerToShoot.p.y - playerToShoot.p.h/2; // Always aim a bit higher because the enemy will be in a ditch most of the time
         
         // shoot
         this.fire(angleDeg);
@@ -434,6 +440,12 @@ Q.component('enemyAiSystem', {
     var enemy = new Q.Enemy({x: randomX, y: randomY, spriteId: getNextSpriteId()});
     entity.insert(enemy);
     this.numExistingEnemies++;
+    
+    // Tell the players about this enemy!
+    var msg = "A NEUTRAL ENEMY HAS JUST SPAWNED SOMEWHERE! KILL IT AND YOU MIGHT BECOME STRONGER...!!!"
+    var sound = ENEMY_SPAWN_SOUND;
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+    Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
     
     // Decrement counter of existing enemies, spawn powerup, and set a new timer to spawn enemy
     enemy.on('died', function(data) { // data consists of coordinates of death for now

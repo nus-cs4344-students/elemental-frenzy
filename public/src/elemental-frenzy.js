@@ -90,7 +90,9 @@ Q.load("level1.json, level2.json, background-wall.png, level3.json, \
     scoreboard.png, scoreboard.json, \
     hastePowerUp.ogg, healthPowerUp.ogg, \
     manaPowerUp.ogg, manaInsufficient.ogg, \
-    damagePowerUp.ogg, dmghpmpup.ogg", function() {
+    damagePowerUp.ogg, dmghpmpup.ogg, \
+    bossSpawn.ogg, victorious.ogg, \
+    warningSiren.ogg, theBattle.ogg", function() {
 
   // Sprites sheets can be created manually
   Q.sheet("map_tiles", "map_tiles.png", { tilew: 32, tileh: 32 });

@@ -32,7 +32,7 @@ var resetState = function(newState){
       playerPermanentBoosts : Q.state.get('playerPermanentBoosts')
     }
     newState.kills[playerSprite.p.name] = newState.deaths[playerSprite.p.name] = 0;
-    newState.playerPermanentBoosts[playerSprite.p.spriteId] = {dmg: 0, maxHealth: 0, maxMana: 0};
+    newState.playerPermanentBoosts[playerSprite.p.spriteId] = {dmg: 0, maxHealth: 0, maxMana: 0, stacks: {}};
     Q.state.set(newState);
   }
 
@@ -203,10 +203,16 @@ var resetState = function(newState){
     var spriteId = data.spriteId;
     var boosts = Q.state.get('playerPermanentBoosts');
     console.log("adding dmg from " + boosts[spriteId].dmg + " to " + (boosts[spriteId].dmg+data.dmg));
-    boosts[spriteId].dmg       += data.dmg;
-    boosts[spriteId].maxHealth += data.maxHealth;
-    boosts[spriteId].maxMana   += data.maxMana;
-    Q.state.set({playerPermanentBoosts: boosts});
+    if (typeof boosts[spriteId].stacks[data.powerupName] === 'undefined') {
+      boosts[spriteId].stacks[data.powerupName] = 0;
+    } 
+    if (boosts[spriteId].stacks[data.powerupName] < data.maxStacksAllowed) {
+      boosts[spriteId].stacks[data.powerupName]++;
+      boosts[spriteId].dmg       += data.dmg;
+      boosts[spriteId].maxHealth += data.maxHealth;
+      boosts[spriteId].maxMana   += data.maxMana;
+      Q.state.set({playerPermanentBoosts: boosts});
+    }
   });
 
   Q.state.on('change', function() {

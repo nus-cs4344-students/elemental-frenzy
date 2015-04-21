@@ -902,7 +902,8 @@ Q.scene(SCENE_HUD, function(stage) {
                                                            targetAngle: 0,
                                                            angleStep: 0,
                                                            angleShifted: 0,
-                                                           angleNeeded: 0
+                                                           angleNeeded: 0,
+                                                           angle: 0
                                                           }));
 
     selector.on('step', function(dt){
@@ -1508,12 +1509,24 @@ Q.scene(SCENE_INFO ,function(stage) {
                                           label: ' ',
                                           countDown: isNaN(countdown) ? 0 : Number(countdown),
                                           vx: 0,
-                                          vy: -0.5
+                                          vy: -0.7
                                         }));
 
   infoMsgList.push(msg);
   infoTimeLeftList.push(3); // display for 3 second
-  infoPositionList.push([0, -20]);
+  
+  var x = 0; // display in center of screen
+  var y = -20;
+  var MIN_DISTAPART = 20;
+  var sizeOfInfoList = infoPositionList.length;
+  if (sizeOfInfoList > 0) {
+    var prevTextY = infoPositionList[sizeOfInfoList-1][1];
+    if (y - prevTextY < MIN_DISTAPART) { // text is floating up, so prevTextY is smaller
+      // Need to increase the space between this new text and the previous text being displayed
+      y = prevTextY + MIN_DISTAPART;
+    }
+  }
+  infoPositionList.push([x, y]);
 
   infoHolder.on('step', infoHolder, function(dt){
 
