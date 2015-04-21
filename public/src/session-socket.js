@@ -45,6 +45,9 @@ var PLAYERACTOR_WIDTHSCALEDOWNFACTOR = 0.55;
 // Debugging helper variables
 var numSpriteUpdatesToPlayer = {};
 
+// Sound to be played when the game loads
+var SOUND_GAMESTART = "theBattle.ogg";
+
 // RTT-related
 var avgRttOfPlayers = [];
 var rttAlpha = 0.9; // weighted RTT calculation depends on this. 0 <= alpha < 1 value close to one makes the rtt respond less to new segments of delay
@@ -1044,6 +1047,8 @@ var loadGameState = function(level) {
       
       // Recalculate stats because boosts might not have been applied
       sprite.recalculateStats();
+      sprite.p.currentHealth = sprite.p.maxHealth;
+      sprite.p.currentMana = sprite.p.maxMana;
     }
   });
 
@@ -1322,8 +1327,9 @@ socket.on('synchronizeClocks', function(data) {
 socket.on('playerGameLoaded', function(data) {
   // Tell the player about how to win
   var msg = "Win by having the most kills before the timer reaches 0!";
-  var sound = "damagePowerUp.ogg";
-  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound}});
+  var sound = SOUND_GAMESTART;
+  var loopSound = true;
+  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound, loopSound: loopSound}});
 });
 
 // when a player request to respawn

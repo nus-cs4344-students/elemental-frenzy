@@ -1651,7 +1651,8 @@ socket.on('message', function(data) {
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: data.msg});
   }
   if (data.sound) {
-    Q.audio.play(data.sound);
+    var loopSound = typeof data.loopSound !== 'undefined' && data.loopSound;
+    Q.audio.play(data.sound, {loop: loopSound});
   }
 });
 
