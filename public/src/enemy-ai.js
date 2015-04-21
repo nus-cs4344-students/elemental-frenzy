@@ -354,7 +354,7 @@ Q.Sprite.extend("Enemy",{
         console.log("Shooting at " + playerToShoot.p.name + "(" + playerToShoot.p.spriteId + ")");
         
         this.p.targetX = playerToShoot.p.x;
-        this.p.targetY = playerToShoot.p.y;
+        this.p.targetY = playerToShoot.p.y - playerToShoot.p.h/2; // Always aim a bit higher because the enemy will be in a ditch most of the time
         
         // shoot
         this.fire(angleDeg);

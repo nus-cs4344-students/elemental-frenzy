@@ -84,7 +84,7 @@ Q.Sprite.extend("Eleball", {
     // Destroy itself after 10 seconds
     var that = this;
     this.selfDestruct = setTimeout(function() {
-      if (that) {
+      if (that && !that.isDestroyed) {
         removeSprite(that.p.entityType, that.p.spriteId);
       }
     }, TIME_TO_SELFDESTRUCT);
