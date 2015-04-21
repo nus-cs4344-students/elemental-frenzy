@@ -801,7 +801,7 @@ Q.scene(SCENE_LEVEL, function(stage) {
 
 Q.scene(SCENE_HUD, function(stage) {
 
-  var isScreenWidthTooSmall = Q.width < 480 ? true : false;
+  var isScreenWidthTooSmall = Q.width < 520 ? true : false;
 
   var hudContainer = stage.insert(new Q.UI.Container({ x: Q.width/2, 
                                                        y: 11*Q.height/100,
@@ -1046,7 +1046,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud2) {
 
@@ -1312,7 +1312,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > (powerupIconWidth + 2 * borderWidth)) ? 1 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud) {
 
