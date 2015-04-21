@@ -1647,7 +1647,12 @@ socket.on('spriteTookDmg', function (data) {
 
 // Received a message to be displayed
 socket.on('message', function(data) {
-  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: data.msg});
+  if (data.msg) {
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: data.msg});
+  }
+  if (data.sound) {
+    Q.audio.play(data.sound);
+  }
 });
 
 // sprite died

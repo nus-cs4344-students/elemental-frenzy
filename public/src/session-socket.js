@@ -1322,7 +1322,8 @@ socket.on('synchronizeClocks', function(data) {
 socket.on('playerGameLoaded', function(data) {
   // Tell the player about how to win
   var msg = "Win by having the most kills before the timer reaches 0!";
-  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg}});
+  var sound = "damagePowerUp.ogg";
+  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound}});
 });
 
 // when a player request to respawn
