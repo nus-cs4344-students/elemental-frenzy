@@ -120,7 +120,8 @@ Q.component("feedbackDisplay", {
     this.feedbackTimeLeftList = [];   // timeLeft for each feedback to be displayed
     this.feedbackDisplayPosList = []; // positions x and y of the display for each damage
     this.feedbackDisplayVx = 0;       // 
-    this.feedbackDisplayVy = -2;      // velocities for the display
+    this.feedbackDisplayVy = -1.5;      // velocities for the display
+    this.feedbackMinDistApart = 20;   // Text must be displayed this far apart at least
     
     this.entity.on('draw', this, 'draw');
     this.entity.on('step', this, 'step');
@@ -157,6 +158,17 @@ Q.component("feedbackDisplay", {
   },
   
   extend: {
+    /**
+     * Can specify options for the text:
+     * 1. fillStyle - color (e.g. 'black')
+     * 2. fontSize - font size (e.g. 20)
+     * 3. fontFamily - font family (e.g. FONT_FAMILY)
+     * 4. textAlign - text alignment (e.g. 'left')
+     * 5. displayTime - how long to display, in seconds (e.g. 2)
+     * 6. displayVx - how fast horizontally should it move (e.g. 5)
+     * 7. displayVy - how fast vertically should it move (e.g. 5)
+     * 8. offset - how far away from the center of the entity attached to, horizontally, should it be displayed at (e.g. 10)
+     */
     displayFeedback: function(text, options) {
       // No text, don't bother doing anything
       if (!text) {
@@ -179,7 +191,19 @@ Q.component("feedbackDisplay", {
       var feedbackDisplay = this.feedbackDisplay;
       feedbackDisplay.feedbackList.push({text: text, options: options});
       feedbackDisplay.feedbackTimeLeftList.push(options.displayTime); 
-      feedbackDisplay.feedbackDisplayPosList.push([this.p.cx + options.offset, 0]);
+      
+      // Calculate the starting x and y position of the text and then insert it
+      var x = this.p.cx + options.offset;
+      var y = 0;
+      var sizeOfFeedbackDisplay = feedbackDisplay.feedbackDisplayPosList.length;
+      if (sizeOfFeedbackDisplay > 0) {
+        var prevTextY = feedbackDisplay.feedbackDisplayPosList[sizeOfFeedbackDisplay-1][1];
+        if (y - prevTextY < feedbackDisplay.feedbackMinDistApart) { // text is floating up, so prevTextY is smaller
+          // Need to increase the space between this new text and the previous text being displayed
+          y = prevTextY + feedbackDisplay.feedbackMinDistApart;
+        }
+      }
+      feedbackDisplay.feedbackDisplayPosList.push([x, y]);
     }
   }
 });

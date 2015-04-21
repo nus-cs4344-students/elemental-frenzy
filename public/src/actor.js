@@ -114,6 +114,7 @@ Q.Sprite.extend("Actor", {
       this.takeDamageIntervalId = -1;
     }
 
+    /*
     if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
 
@@ -127,6 +128,7 @@ Q.Sprite.extend("Actor", {
     }else{
       this.p.gravity = 1;
     }
+    */
 
     if(!this.p.onLadder && this.has('animation')){
 

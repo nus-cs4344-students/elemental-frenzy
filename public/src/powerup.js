@@ -55,6 +55,8 @@ var NUM_TILES_PER_POWERUP = 25;
 
 var POWERUP_DEFAULT_BOUNCEAMOUNT = 15; // for powerups to bounce up and down
 
+var SOUND_DANGEROUS = "warningSiren.ogg";
+
 // ## 2d powerup to be attached to powerups
 // gravity turns off once it collides with something
 Q.component('2dPowerup', {
@@ -415,6 +417,10 @@ Q.component('powerupable', {
         // Store into the state the permanent boosts so that it sticks after death
         if (entity.p.isServerSide) {
           Q.state.trigger('playerStatBoost', {dmg: 5, maxHealth: 10, maxMana: 10, spriteId: entity.p.spriteId});
+          // Tell all players about his boost in power!
+          var msg = entity.p.name + " just got more POWERFUL from the enemy's drop! Stop him!";
+          var sound = SOUND_DANGEROUS;
+          Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
         }
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
