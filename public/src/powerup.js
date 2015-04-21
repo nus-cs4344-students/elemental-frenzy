@@ -14,35 +14,42 @@ var POWERUP_CLASS_ATTACK_150PERCENTDMG          = "POWERUP_CLASS_ATTACK_150PERCE
 var POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST  = "POWERUP_CLASS_MANA_REDUCE70PERCENTMANACOST";
 var POWERUP_CLASS_MOVESPEED_150PERCENTSPEED     = "POWERUP_CLASS_MOVESPEED_150PERCENTSPEED";
 var POWERUP_CLASS_HEALTH_HEAL30PERCENT          = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
+var POWERUP_CLASS_ENEMYDROP_DMGHPMP             = "POWERUP_CLASS_ENEMYDROP_DMGHPMP";
 
 var POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG          = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST  = 'powerup_mana';
 var POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED     = 'powerup_movement';
 var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT          = 'powerup_red';
+var POWERUP_SPRITESHEET_ENEMYDROP_DMGHPMP             = 'powerup_green';
 
 var POWERUP_DURATION_ATTACK_150PERCENTDMG         = 10.0;
 var POWERUP_DURATION_HEALTH_HEAL30PERCENT         = 0.0;
 var POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST = 10.0;
 var POWERUP_DURATION_MOVESPEED_150PERCENTSPEED    = 10.0;
+var POWERUP_DURATION_ENEMYDROP_DMGHPMP            = 0.0; // infinite (permanent)
 
 var POWERUP_FEEDBACKONTAKEN_ATTACK_150PERCENTDMG          = "Dmg 150%";
 var POWERUP_FEEDBACKONTAKEN_MANA_REDUCE70PERCENTMANACOST  = "Manacost 30%";
 var POWERUP_FEEDBACKONTAKEN_MOVESPEED_150PERCENTSPEED     = "Speed 150%";
+var POWERUP_FEEDBACKONTAKEN_ENEMYDROP_DMGHPMP             = "Dmg+5 Hp+10 Mp+10";
 
-var POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG             = "damagePowerUp2.ogg";
+var POWERUP_SOUNDONTAKEN_ATTACK_DOUBLEDMG             = "damagePowerUp.ogg";
 var POWERUP_SOUNDONTAKEN_HEALTH_HEAL30PERCENT         = "healthPowerUp.ogg";
 var POWERUP_SOUNDONTAKEN_MANA_REDUCE70PERCENTMANACOST = "manaPowerUp.ogg";
 var POWERUP_SOUNDONTAKEN_MOVESPEED_150PERCENTSPEED    = "hastePowerUp.ogg";
+var POWERUP_SOUNDONTAKEN_ENEMYDROP_DMGHPMP            = "dmghpmpup.ogg";
 
 var POWERUP_MAXNUMATATIME_ATTACK_150PERCENTDMG          = 2;
 var POWERUP_MAXNUMATATIME_HEALTH_HEAL30PERCENT          = 2;
 var POWERUP_MAXNUMATATIME_MANA_REDUCE70PERCENTMANACOST  = 2;
 var POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED     = 2;
+var POWERUP_MAXNUMATATIME_ENEMYDROP_DMGHPMP             = 0; // only spawns from killing enemies
 
 var POWERUP_SPAWNTIME_ATTACK_150PERCENTDMG          = 2*POWERUP_DURATION_ATTACK_150PERCENTDMG;
 var POWERUP_SPAWNTIME_HEALTH_HEAL30PERCENT          = 20.0;
 var POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST  = 2*POWERUP_DURATION_MANA_REDUCE70PERCENTMANACOST;
 var POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED     = 2*POWERUP_DURATION_MOVESPEED_150PERCENTSPEED;
+var POWERUP_SPAWNTIME_ENEMYDROP_DMGHPMP             = 999999999; // infinite
 
 var NUM_TILES_PER_POWERUP = 25;
 
@@ -172,6 +179,10 @@ Q.Sprite.extend("Powerup", {
   },
   
   taken: function(player) {
+    if (this.p.isTaken) {
+      // Can't take more than once
+      return;
+    }
     this.p.isTaken = true;
     this.givePlayerEffect(player);
     this.trigger('taken', this.p.name);
@@ -220,7 +231,7 @@ Q.component('powerupSystem', {
                                           spawnTime:      POWERUP_SPAWNTIME_MANA_REDUCE70PERCENTMANACOST,
                                           existing:       0
                                         },
-      POWERUP_CLASS_MOVESPEED_150PERCENTSPEED: {name:     POWERUP_CLASS_MOVESPEED_150PERCENTSPEED,
+      POWERUP_CLASS_MOVESPEED_150PERCENTSPEED:{name:      POWERUP_CLASS_MOVESPEED_150PERCENTSPEED,
                                           sheet:          POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED,
                                           duration:       POWERUP_DURATION_MOVESPEED_150PERCENTSPEED,
                                           feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_MOVESPEED_150PERCENTSPEED,
@@ -228,7 +239,16 @@ Q.component('powerupSystem', {
                                           maxNumAtATime:  numPowerup ||  POWERUP_MAXNUMATATIME_MOVESPEED_150PERCENTSPEED,
                                           spawnTime:      POWERUP_SPAWNTIME_MOVESPEED_150PERCENTSPEED,
                                           existing:       0
-                                        }
+                                        },
+      POWERUP_CLASS_ENEMYDROP_DMGHPMP:{   name:           POWERUP_CLASS_ENEMYDROP_DMGHPMP,
+                                          sheet:          POWERUP_SPRITESHEET_ENEMYDROP_DMGHPMP,
+                                          duration:       POWERUP_DURATION_ENEMYDROP_DMGHPMP,
+                                          feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_ENEMYDROP_DMGHPMP,
+                                          soundOnTaken:   POWERUP_SOUNDONTAKEN_ENEMYDROP_DMGHPMP,
+                                          maxNumAtATime:  POWERUP_MAXNUMATATIME_ENEMYDROP_DMGHPMP, // only drops on enemy kill
+                                          spawnTime:      POWERUP_SPAWNTIME_ENEMYDROP_DMGHPMP,
+                                          existing:       0
+                                        }                                  
     };
     
     this.randomlySpawnPowerupsToTheLimit();
@@ -344,6 +364,8 @@ Q.component('powerupable', {
     this.playerDefaultDmg         = entity.p.dmg;
     this.playerDefaultManaPerShot = entity.p.manaPerShot;
     this.playerDefaultMovespeed   = entity.p.speed;
+    this.playerDefaultMaxHealth   = entity.p.maxHealth;
+    this.playerDefaultMaxMana     = entity.p.maxMana;
     
     entity.on('step', this, 'step');
   },
@@ -387,7 +409,13 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_MOVESPEED_150PERCENTSPEED          : this.movespeedMultiplier    += 0.5; 
         break;
-      case POWERUP_CLASS_HEALTH_HEAL30PERCENT      : entity.heal(0.3 * entity.p.maxHealth); 
+      case POWERUP_CLASS_HEALTH_HEAL30PERCENT               : entity.heal(0.3 * entity.p.maxHealth); 
+        break;
+      case POWERUP_CLASS_ENEMYDROP_DMGHPMP                  :
+        // Store into the state the permanent boosts so that it sticks after death
+        if (entity.p.isServerSide) {
+          Q.state.trigger('playerStatBoost', {dmg: 5, maxHealth: 10, maxMana: 10, spriteId: entity.p.spriteId});
+        }
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -404,6 +432,8 @@ Q.component('powerupable', {
       case POWERUP_CLASS_MOVESPEED_150PERCENTSPEED          : this.movespeedMultiplier    -= 0.5; 
         break;          
       case POWERUP_CLASS_HEALTH_HEAL30PERCENT               : // do nothing
+        break;
+      case POWERUP_CLASS_ENEMYDROP_DMGHPMP                  : // do nothing. The powerup boost is permanent!
         break;
       default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
@@ -444,10 +474,15 @@ Q.component('powerupable', {
     
     // Recalculates stats
     recalculateStats: function() {
+      // Stat boosts
+      var boosts = Q.state.get('playerPermanentBoosts')[this.p.spriteId];
+      
       // Get default values to calculate from
-      var playerDefaultDmg          = this.powerupable.playerDefaultDmg;
+      var playerDefaultDmg          = this.powerupable.playerDefaultDmg         + boosts.dmg;
       var playerDefaultManaPerShot  = this.powerupable.playerDefaultManaPerShot;
       var playerDefaultMovespeed    = this.powerupable.playerDefaultMovespeed;
+      var playerDefaultMaxHealth    = this.powerupable.playerDefaultMaxHealth   + boosts.maxHealth;
+      var playerDefaultMaxMana      = this.powerupable.playerDefaultMaxMana     + boosts.maxMana;
       
       // Get the adders and multipliers and zero flags
       var dmgAdder              = this.powerupable.dmgAdder;
@@ -463,6 +498,8 @@ Q.component('powerupable', {
       this.p.manaPerShot  = (playerDefaultManaPerShot + manaPerShotAdder) * manaPerShotMultiplier *
                             (manaPerShotIsZero ? 0 : 1);
       this.p.speed        = (playerDefaultMovespeed + movespeedAdder) * movespeedMultiplier;
+      this.p.maxHealth    = playerDefaultMaxHealth;
+      this.p.maxMana      = playerDefaultMaxMana;
     }
   }
 });

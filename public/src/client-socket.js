@@ -1316,10 +1316,10 @@ socket.on('gameStateChanged', function (data) {
   
   if(!_isGameLoaded){
     // received game state update before game is loaded
-    infoState = {kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime};
+    infoState = {kills: data.kills, deaths: data.deaths, playerPermanentBoosts: data.playerPermanentBoosts, timeLeft: data.timeLeft, totalTime: data.totalTime};
   }else{
     // recieve game state update after game is loaded
-    Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+    Q.state.set({kills: data.kills, deaths: data.deaths, playerPermanentBoosts: data.playerPermanentBoosts, timeLeft: data.timeLeft, totalTime: data.totalTime});
   }
 });
 

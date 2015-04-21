@@ -15,7 +15,7 @@ var ENEMY_FIRE_ANIMATION_TIME = 0.5;
 
 var ENEMYAISYSTEM_ENEMY_LIMIT = 1; // 1 enemy at most at any one time
 var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 6000; // 6 seconds
-var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ATTACK_150PERCENTDMG"; // Powerup dropped upon enemy's death
+var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ENEMYDROP_DMGHPMP"; // Powerup dropped upon enemy's death
 
 // ## Enemy Sprite
 // Create the Enemy class to add in some baddies

@@ -763,6 +763,7 @@ var setupListener = function(){
   Q.input.on('stateChanged', function(){
     gameState.info.kills = Q.state.get('kills');
     gameState.info.deaths = Q.state.get('deaths');
+    gameState.info.playerPermanentBoosts = Q.state.get('playerPermanentBoosts');
     gameState.info.timeLeft = Q.state.get('timeLeft');
     gameState.info.totalTime = Q.state.get('totalTime');
 
@@ -1007,6 +1008,7 @@ var loadGameState = function(level) {
       Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: cloneValueOnly(item.p)}});
     }
     
+    // Add update interval
     var sprite = getSprite(eType, spriteId);
     var spriteNeedUpdateInterval = false;
     switch(eType){
@@ -1025,6 +1027,23 @@ var loadGameState = function(level) {
     }
     if(spriteNeedUpdateInterval && !sprite.has('serverSprite')){
       sprite.add('serverSprite'); 
+    }
+    
+    // Add on player stats if there is a stat boost stored in the gamestate for the player
+    if (eType == 'PLAYER') {
+      var boosts = Q.state.get('playerPermanentBoosts');
+      if (typeof boosts === 'undefined') {
+        console.log("Error in trying to add player's boosted stats: boosts is undefined");
+        return;
+      }
+      var sId = sprite.p.spriteId;
+      if (typeof boosts[sId] === 'undefined') {
+        console.log("Error in trying to add player's boosted stats: boosts for sprite " + sId + " is undefined");
+        return;
+      }
+      
+      // Recalculate stats because boosts might not have been applied
+      sprite.recalculateStats();
     }
   });
 

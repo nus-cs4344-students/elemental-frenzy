@@ -14,6 +14,7 @@ var resetState = function(newState){
     Q.state.reset({
       kills : {},
       deaths : {},
+      playerPermanentBoosts : {}, // indexed by id, and then things like dmg, maxHealth, maxMana
       totalTime : 0,  // total time for a round in seconds (should not change for each round)
       timeLeft : 0    // time left for a round in seconds
     });
@@ -27,9 +28,11 @@ var resetState = function(newState){
     }
     var newState = {
       kills: Q.state.get('kills'),
-      deaths: Q.state.get('deaths')
+      deaths: Q.state.get('deaths'),
+      playerPermanentBoosts : Q.state.get('playerPermanentBoosts')
     }
     newState.kills[playerSprite.p.name] = newState.deaths[playerSprite.p.name] = 0;
+    newState.playerPermanentBoosts[playerSprite.p.spriteId] = {dmg: 0, maxHealth: 0, maxMana: 0};
     Q.state.set(newState);
   }
 
@@ -194,6 +197,16 @@ var resetState = function(newState){
       Q.clearStage(STAGE_SCORE);
       Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
     }
+  });
+  
+  Q.state.on('playerStatBoost', function(data) {
+    var spriteId = data.spriteId;
+    var boosts = Q.state.get('playerPermanentBoosts');
+    console.log("adding dmg from " + boosts[spriteId].dmg + " to " + (boosts[spriteId].dmg+data.dmg));
+    boosts[spriteId].dmg       += data.dmg;
+    boosts[spriteId].maxHealth += data.maxHealth;
+    boosts[spriteId].maxMana   += data.maxMana;
+    Q.state.set({playerPermanentBoosts: boosts});
   });
 
   Q.state.on('change', function() {
