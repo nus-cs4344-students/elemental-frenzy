@@ -291,37 +291,44 @@ Q.component('2dEleball', {
   //        and continues on its path if (j-i) == 1 or (i-j) == (numElements-1)
   //  - Case 3: Both elements pass through each other if |i-j| == 2
   collision: function(col,last) {    
-    // Don't collide with the shooter of the eleball
-    if ( (col.obj.isA('Actor') || col.obj.isA('Player')) && col.obj.p.spriteId == this.entity.p.shooterId ){
+    var entity = this.entity;
+    var other = col.obj;
+    
+    // Don't collide with the shooter of the eleball (for PlayerEleball)
+    if ( entity.isA('PlayerEleball') && (other.isA('Actor') || other.isA('Player')) && other.p.spriteId == entity.p.shooterId ){
+      // console.log("Eleball passing object!!!");
+      return;
+    }
+    
+    // Don't collide with enemies for EnemyEleball
+    if ( entity.isA('EnemyEleball') && other.isA('Enemy') ){
       // console.log("Eleball passing object!!!");
       return;
     }
     
     // Don't collide with powerups and ladders
-    if (col.obj.isA('Powerup') || col.obj.isA('Ladder')) {
+    if (other.isA('Powerup') || other.isA('Ladder')) {
       return;
     }
     
     // Don't destroy eleballs on hit with enemy players if we are NOT the server (only the server decides this)
-    if ( !this.entity.p.isServerSide && col.obj.isA('Actor') ) {
+    if ( !entity.p.isServerSide && other.isA('Actor') ) {
       return;
     }
     
-    var entity = this.entity;
-    var other = col.obj;
     if (other.has("2dEleball")) {
       // Eleball - eleball collision
       //console.log("Eleball-eleball collision");
       var i = entity.p.element,
         j = other.p.element;
-      console.log("i = " + i + " j = " + j);
+      //console.log("i = " + i + " j = " + j);
       if (i == j) {
         // Case 1, destroy each other
         //console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 
         //      + " destroys and gets destroyed by " + ELEBALL_ELEMENTNAMES[j]);
 
         removeSprite(entity.p.entityType, entity.p.spriteId);
-
+        
         // Play sound
         if ( !entity.p.soundIsAnnoying) {
           Q.audio.play(ELEBALL_ELEMENTSOUNDS[i]);

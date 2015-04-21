@@ -1316,10 +1316,10 @@ socket.on('gameStateChanged', function (data) {
   
   if(!_isGameLoaded){
     // received game state update before game is loaded
-    infoState = {kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime};
+    infoState = {kills: data.kills, deaths: data.deaths, playerPermanentBoosts: data.playerPermanentBoosts, timeLeft: data.timeLeft, totalTime: data.totalTime};
   }else{
     // recieve game state update after game is loaded
-    Q.state.set({kills: data.kills, deaths: data.deaths, timeLeft: data.timeLeft, totalTime: data.totalTime});
+    Q.state.set({kills: data.kills, deaths: data.deaths, playerPermanentBoosts: data.playerPermanentBoosts, timeLeft: data.timeLeft, totalTime: data.totalTime});
   }
 });
 
@@ -1625,7 +1625,8 @@ socket.on('spriteTookDmg', function (data) {
 
   // console.log("Event: spriteTookDmg: data: " + getJSON(data));
 
-  var victimEntityType = data.victim.entityType,
+  var dmg = data.dmg,
+      victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       shooterEntityType = data.shooter.entityType,
       shooterId = data.shooter.spriteId;
@@ -1638,7 +1639,7 @@ socket.on('spriteTookDmg', function (data) {
     return;
   }
   
-  sprite.trigger('takeDamage', {dmg: data.dmg, shooter: {entityType: shooterEntityType, spriteId: shooterId} });
+  sprite.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
 });
 
 // sprite died

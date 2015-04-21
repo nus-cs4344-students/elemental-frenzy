@@ -9,6 +9,7 @@ var ELEBALL_ELEMENT_FIRE = 0;
 var ELEBALL_ELEMENT_EARTH = 1;
 var ELEBALL_ELEMENT_LIGHTNING = 2;
 var ELEBALL_ELEMENT_WATER = 3;
+var ELEBALL_NUM_ELEMENTS = 4;
 var ELEBALL_ELEMENTNAMES = ["element_fire", "element_earth", "element_lightning", "element_water"];
 // TODO Change the sound files once they are ready
 var ELEBALL_ELEMENTSOUNDS = ["fireBall.ogg", "earthBall.ogg", "lightningBall.ogg", "waterBall.ogg"];
@@ -54,6 +55,7 @@ Q.Sprite.extend("Eleball", {
       x : 0,
       y : 0,
       dmg : ELEBALL_DEFAULT_DMG,
+      collided : false, // to check if has collided already
       type: Q.SPRITE_PARTICLE, // Eleballs are particles
       collisionMask: Q.SPRITE_ALL 
                       ^ Q.SPRITE_POWERUP 
@@ -117,11 +119,16 @@ Q.Eleball.extend("PlayerEleball", {
   
   // Player eleballs only damage enemies
   onHit: function(collision) {
+    if (this.p.collided) {
+      // Already collided, this is just an extraneous collision due to trigger
+      return;
+    }
     if (this.p.isServerSide // Damage simulation only happens on server side
       && (collision.obj.isA("Enemy") ||
       (collision.obj.isA("Player") && collision.obj.p.spriteId != this.p.shooterId) ||
       collision.obj.isA("Actor")) ) {
-      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
+        collision.obj.takeDamage({dmg: this.p.dmg, shooterEntityType: this.p.shooterEntityType, shooterSpriteId: this.p.shooterId});
+        this.p.collided = true;
     }
     this._super(collision);
   }
@@ -138,15 +145,20 @@ Q.Eleball.extend("EnemyEleball", {
       entityType: 'ENEMYELEBALL',
       shooterEntityType: 'ENEMY',
       shooterEntityId: -1,
-      dmg : ENEMY_ELEBALL_DEFAULT_DMG,
-      collisionMask : Q.SPRITE_ALL ^ Q.SPRITE_ENEMY
+      dmg : ENEMY_ELEBALL_DEFAULT_DMG
     });  
   },
   
   // Enemy eleballs only damage players
   onHit: function(collision) {
-    if (collision.obj.isA("Player") || collision.obj.isA("Actor")) {
-      collision.obj.trigger('takeDamage', {dmg: this.p.dmg, shooter: {entityType: this.p.shooterEntityType, spriteId: this.p.shooterId} });
+    if (this.p.collided) {
+      // Already collided, this is just an extraneous collision due to trigger
+      return;
+    }
+    // Damage simulation happens on server only
+    if (this.p.isServerSide && collision.obj.isA("Player") || collision.obj.isA("Actor")) {
+      collision.obj.takeDamage({dmg:this.p.dmg, shooterEntityType: this.p.shooterEntityType, shooterSpriteId: this.p.shooterId});
+      this.p.collided = true;
     }
     this._super(collision);
   }

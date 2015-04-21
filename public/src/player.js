@@ -12,7 +12,7 @@ var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
 var PLAYER_DEFAULT_MANA_PER_SHOT = 15;
 var PLAYER_DEFAULT_MANA_REGEN = 0.2;
-var PLAYER_DEFAULT_DMG = 10;
+var PLAYER_DEFAULT_DMG = 1000;
 var PLAYER_DEFAULT_CHARACTERID = 0; // fire
 // ## Animation
 var PLAYER_ANIMATION = "character";
@@ -98,7 +98,6 @@ Q.Sprite.extend("Player",{
   },
   
   addEventListeners: function() { 
-    this.on('takeDamage');
     this.on('fire');
     this.on('fired');
     this.on("onLadder", this, 'climbLadder');
@@ -290,8 +289,8 @@ Q.Sprite.extend("Player",{
     // server side damage calculation
     if (this.p.isServerSide){
       var dmg = dmgAndShooter.dmg,
-          shooterEntityType = dmgAndShooter.shooter.entityType,
-          shooterId = dmgAndShooter.shooter.spriteId;
+          shooterEntityType = dmgAndShooter.shooterEntityType,
+          shooterId = dmgAndShooter.shooterSpriteId;
       
       this.p.currentHealth -= dmg;
       
@@ -312,6 +311,9 @@ Q.Sprite.extend("Player",{
       if(this.p.currentHealth <= 0) {
         this.die(shooterEntityType, shooterId);
       }
+      
+      // Mainly for the dmgDisplay
+      this.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
     }
   },
   
@@ -349,7 +351,7 @@ Q.Sprite.extend("Player",{
 
       // session show player killed info
       var msg = vType+" "+vId+" '"+getSprite(vType,vId).p.name+"' "+
-            "is killed by "+killerEntityType+" "+killerId+" '"+killerName+"'";
+            "just got killed by "+killerEntityType+" "+killerId+" '"+killerName+"'";
       Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});  
 
     } else{
