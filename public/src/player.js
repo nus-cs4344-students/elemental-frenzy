@@ -22,6 +22,7 @@ var PLAYER_STAND_ANIMATION_TIME = 0.5;
 var PLAYER_TAKEDAMAGE_ANIMATION_TIME = 0.5;
 var PLAYER_RUN_STILL_ANIMATION_TIME = 0.5;
 var PLAYER_RUN_ANIMATION_TIME = 0.5;
+var PLAYER_DEPTH = 10;
 
 var PLAYER_DEFAULT_FIRING_COOLDOWN = PLAYER_FIRE_ANIMATION_TIME;
 var PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
@@ -80,6 +81,7 @@ Q.Sprite.extend("Player",{
     this.p.element = this.p.characterId;
     this.p.sheet = PLAYER_CHARACTERS[this.p.characterId];
     this.p.name = PLAYER_NAMES[this.p.characterId];
+    this.p.z = PLAYER_DEPTH;
     
     // Add in pre-made components to get up and running quickly
     // The `2d` component adds in default 2d collision detection
@@ -429,7 +431,7 @@ Q.Sprite.extend("Player",{
     // Update countdown
     //this.p.updateCountdown -= dt;
     
-    if(this.p.onLadder) {
+    if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
       if( !this.p.isServerSide && Q.inputs['up']) {
         if (this.p.vx > 0) {

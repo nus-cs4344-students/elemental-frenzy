@@ -935,6 +935,40 @@ var setupEventListeners = function () {
     });
   });
 
+  each(['toggleElement0','toggleElement1', 'toggleElement2', 'toggleElement3'], function(actionName) {
+    
+    Q.input.on(actionName, function () {
+
+      if(!_isGameLoaded) {
+        // client side need to be connected to the server in order
+        // to show score screen
+        return;
+      }
+
+      var player = getPlayerSprite(selfId);
+      if(!player || player.p.toggleElementCooldown > 0) {
+        // player is died or cannot located current player sprite
+        // player toggleElement is in cooldown
+        return;
+      }
+
+      player.p.toggleElementCooldown = PLAYER_DEFAULT_TOGGLE_ELEMENT_COOLDOWN;
+
+      var ele = actionName.substring(actionName.length - 1);
+
+      if(Number(ele) != NaN){
+        player.p.element = ele % ELEBALL_ELEMENTNAMES.length;
+      }else console.log(" wrong ele "+ele);
+
+      var eData = { sessionId: sessionId,
+                    spriteId: selfId,
+                    entityType: 'PLAYER'
+      };
+
+      Q.input.trigger('sessionCast', {eventName: actionName, eventData: eData});
+    });
+  });
+
   var handleMouseOrTouchEvent = function (e) {
     
     var player = getPlayerSprite(selfId);
@@ -1114,9 +1148,9 @@ var displayGameScreen = function (level) {
   resetDisplayScreen();
 
   // Load the level
-  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level});
+  Q.stageScene(SCENE_LEVEL, STAGE_LEVEL, {level: level, sort: true});
   
-  Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level});
+  Q.stageScene(SCENE_LEVEL, STAGE_MINIMAP, {miniStage: STAGE_LEVEL, level: level, sort: true});
 
   // Shrink the bounding box for the sprites' width to fit its real width
   // for PLAYER and ACTOR sprites only

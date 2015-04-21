@@ -2,6 +2,10 @@
 
 // ## Keyboard controls
 var KEYBOARD_CONTROLS_PLAYER = {
+  '1': "toggleElement0",
+  '2': "toggleElement1",
+  '3': "toggleElement2",
+  '4': "toggleElement3",
   Q : "togglePreviousElement",
   E : "toggleNextElement",
   W : "up",

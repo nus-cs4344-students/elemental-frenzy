@@ -69,6 +69,7 @@ Q.component('2dPowerup', {
       bounceAmount: POWERUP_DEFAULT_BOUNCEAMOUNT,                         // bounce amplitude (up-down )
       sensor: true // so that it doesn't bounce off players
     });
+
     entity.on('step',this,"step");
     entity.on('hit',this,"collision");
   },
@@ -147,7 +148,7 @@ Q.Sprite.extend("Powerup", {
     });
     
     //console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
-    
+    this.p.z = 3;
     this.add('2dPowerup');
   },
   

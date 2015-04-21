@@ -89,13 +89,21 @@ Q.component("nameBar", {
   },
   
   draw: function(ctx) {
-    ctx.font = "15px "+FONT_FAMILY;
-    ctx.textAlign = "center";
-    ctx.fillStyle = "black";
-    ctx.textBaseline = "alphabetic";
+    ctx.save();
+
     var entity = this.entity;
     var y = -entity.p.cy - 20;
+    var color = '#FF0000'; // defaults to red
+    if (this.entity.isA('Player')) {
+      color = 'black'; // player healthbar is green
+    }
+    ctx.font = "600 15px "+FONT_FAMILY;
+    ctx.textAlign = "center";
+    ctx.fillStyle = color || "black";
+    ctx.textBaseline = "alphabetic";
     ctx.fillText(this.entity.p.name, 0, y);
+
+    ctx.restore();
   }
 });
 

@@ -16,6 +16,7 @@ var ACTOR_STAND_ANIMATION_TIME = 0.5;
 var ACTOR_TAKEDAMAGE_ANIMATION_TIME = 0.5;
 var ACTOR_RUN_STILL_ANIMATION_TIME = 0.5;
 var ACTOR_RUN_ANIMATION_TIME = 0.5;
+var ACTOR_DEPTH = 8;
 
 var ACTOR_NO_FIRE_ANIMATION = "no_fire";
 var ACTOR_DEFAULT_TAKE_DAMAGE_COOLDOWN = 0.5;
@@ -37,6 +38,8 @@ Q.Sprite.extend("Actor", {
       update: true
     });
     
+    this.p.z = ACTOR_DEPTH;
+
     this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder');
 
     var that = this;
@@ -111,7 +114,7 @@ Q.Sprite.extend("Actor", {
       this.takeDamageIntervalId = -1;
     }
 
-    if(this.p.onLadder) {
+    if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
 
       if(Q.inputs['up']) {
