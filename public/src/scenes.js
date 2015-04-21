@@ -890,7 +890,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var aNeeded = this.p.angleNeeded;
       var aShifted = this.p.angleShifted;
       var aStep = this.p.angleStep;
-      
+
       if(Math.abs(aNeeded) > Math.abs(aShifted)){
 
         // console.log("aNeeded "+aNeeded+" aShifted "+aShifted+" tAngle "+tAngle+" angle "+a);
@@ -909,7 +909,7 @@ Q.scene(SCENE_HUD, function(stage) {
           nextAngle = 360 + nextAngle;
         }
 
-        console.log('next angle '+nextAngle);
+        // console.log('next angle '+nextAngle);
         var nAngle = Math.max(nextAngle % 360, 0);
         this.p.angle = nAngle;
       }
@@ -973,15 +973,19 @@ Q.scene(SCENE_HUD, function(stage) {
       var angleNeeded = Math.abs(selector.p.angle - targetAngle);
       var sign;
       var currentEle = selector.p.activeElement;
+      var numEle = ELEBALL_ELEMENTNAMES.length;
 
-      if((currentEle == 0 && nextElement == 3) || 
-        (currentEle > nextElement && Math.abs(currentEle - nextElement) < 2)){
-        // special case need to move clockwise
+      if((currentEle != 0 && currentEle != 3 && currentEle >= nextElement) ||
+        // special case for 0
+        (currentEle == 0 && currentEle <= nextElement && (currentEle+numEle/2)%numEle <= nextElement) ||
+        // special case for 3
+        (currentEle == 3 && currentEle >= nextElement && (currentEle+numEle/2)%numEle <= nextElement)){
+        //  move clockwise
         sign = 1;
       }else{
+        // move counter clockwise
         sign = -1;
       }
-
 
       if(angleNeeded < 0){
         angleNeeded = 360 + angleNeeded;
@@ -997,7 +1001,7 @@ Q.scene(SCENE_HUD, function(stage) {
       selector.p.angleShifted = 0;
       selector.p.activeElement = nextElement;
 
-      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep);
+      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep+" sign "+sign);
     };
 
     updateEleSelector(element);

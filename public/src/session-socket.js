@@ -993,7 +993,7 @@ var loadGameState = function(level) {
       // sprite doesn't exist, add it into the game state
 
       // console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
-      
+
       // store sprite reference
       allSprites[eType][spriteId] = item;
       // store sprite properties into game state
@@ -1501,7 +1501,7 @@ each(['leftUp','rightUp','upUp', 'downUp'], function(actionName) {
       return;
     }
 
-    var action = actionName.substring(0, actionName.length - "Up".length);//console.log(action);
+    var action = actionName.substring(0, actionName.length - "Up".length);
     player.inputs[action] = false;
   });
 
