@@ -31,36 +31,36 @@
     "tileh": 42,
     "frames": 18
   },
-  "aura_fire": {
+  "aura_fire_bottom": {
     "sx": 0,
     "sy": 504,
     "cols": 6,
     "tilew": 50,
     "tileh": 42,
-    "frames": 18
+    "frames": 12
   },
-  "aura_earth": {
+  "aura_earth_bottom": {
     "sx": 0,
     "sy": 588,
     "cols": 6,
     "tilew": 50,
     "tileh": 42,
-    "frames": 18
+    "frames": 12
   },
-  "aura_light": {
+  "aura_light_bottom": {
     "sx": 0,
     "sy": 672,
     "cols": 6,
     "tilew": 50,
     "tileh": 42,
-    "frames": 18
+    "frames": 12
   },
-  "aura_water": {
+  "aura_water_bottom": {
     "sx": 0,
     "sy": 756,
     "cols": 6,
     "tilew": 50,
     "tileh": 42,
-    "frames": 18
+    "frames": 12
   }
 }

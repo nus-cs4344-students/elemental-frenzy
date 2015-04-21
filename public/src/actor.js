@@ -40,7 +40,7 @@ Q.Sprite.extend("Actor", {
     
     this.p.z = ACTOR_DEPTH;
 
-    this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder');
+    this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder, auraEffect');
     
     this.on("takeDamage");
 

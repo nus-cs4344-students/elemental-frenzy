@@ -90,7 +90,8 @@ var creates = {
   ENEMYELEBALL:   function(p) { return new Q.EnemyEleball(p); },
   ENEMY:          function(p) { return new Q.Enemy(p); },
   POWERUP:        function(p) { return new Q.Powerup(p); },
-  LADDER:         function(p) { return new Q.Ladder(p); }
+  LADDER:         function(p) { return new Q.Ladder(p); },
+  AURA:         function (p) { return new Q.Aura(p); }
 };
 
 var getDefaultSprites = function() {  
@@ -100,7 +101,8 @@ var getDefaultSprites = function() {
                           ENEMYELEBALL: {},
                           ENEMY: {},
                           POWERUP: {},
-                          LADDER: {}
+                          LADDER: {},
+                          AURA: {}
                         };
   return defaultSprites;
 }
@@ -992,7 +994,7 @@ var loadGameState = function(level) {
     if( !isSpriteExists(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
 
-      // console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
 
       // store sprite reference
       allSprites[eType][spriteId] = item;

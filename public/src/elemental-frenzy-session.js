@@ -14,7 +14,7 @@ requirejs.config({
             deps: ['helper-functions', 'keyboard-controls',
                   'game-state', 'components',
                   'eleballs', 'player', 'actor', 'enemy-ai',
-                  'tower', 'ladder', 'powerup']//,
+                  'tower', 'ladder', 'powerup', 'aura']//,
             
             //Once loaded, use the global 'Scenes' as the
             //module value.
@@ -80,6 +80,7 @@ Q.load("level1.json, level2.json, background-wall.png, level3.json, \
     character_lightning.png, character_lightning.json, \
     character_water.png, character_water.json, \
     character_fire.png, character_fire.json, \
+    aura.png, aura.json, \
     map_tiles.png, \
     ladder.png, ladder.json, \
     hud.png, hud.json, \
@@ -103,6 +104,7 @@ Q.load("level1.json, level2.json, background-wall.png, level3.json, \
   Q.compileSheets("hud.png", "hud.json");
   Q.compileSheets("powerups.png", "powerups.json");
   Q.compileSheets("scoreboard.png", "scoreboard.json");
+  Q.compileSheets("aura.png", "aura.json");
   // console.log('Asset loaded');
 
   require([ 'keyboard-controls',
