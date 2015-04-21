@@ -16,7 +16,7 @@ var ENEMY_SPAWN_SOUND = "bossSpawn.ogg";
 var ENEMY_DIE_SOUND = "victorious.ogg";
 
 var ENEMYAISYSTEM_ENEMY_LIMIT = 1; // 1 enemy at most at any one time
-var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 6000; // 6 seconds
+var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 30000; // 30 seconds
 var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ENEMYDROP_DMGHPMP"; // Powerup dropped upon enemy's death
 
 // ## Enemy Sprite
