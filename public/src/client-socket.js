@@ -1591,7 +1591,8 @@ socket.on('spriteTookDmg', function (data) {
 
   // console.log("Event: spriteTookDmg: data: " + getJSON(data));
 
-  var victimEntityType = data.victim.entityType,
+  var dmg = data.dmg,
+      victimEntityType = data.victim.entityType,
       victimId = data.victim.spriteId,
       shooterEntityType = data.shooter.entityType,
       shooterId = data.shooter.spriteId;
@@ -1604,7 +1605,7 @@ socket.on('spriteTookDmg', function (data) {
     return;
   }
   
-  sprite.trigger('takeDamage', {dmg: data.dmg, shooter: {entityType: shooterEntityType, spriteId: shooterId} });
+  sprite.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
 });
 
 // sprite died

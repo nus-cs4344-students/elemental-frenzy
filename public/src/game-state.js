@@ -46,42 +46,73 @@ var resetState = function(newState){
     var victimEntityType = data.victim.entityType,
         victimId = data.victim.spriteId;
     if (data.killer) {
-      // Normal case where a player kills another player
+      // Normal case where a player kills another player or an enemy killed a player
       var killerEntityType = data.killer.entityType;
       var killerId = data.killer.spriteId;
           
-      // Might be actors on the client side
-      victimEntityType = (victimEntityType == 'PLAYER' && typeof selfId != 'undefined' && victimId != selfId) ? 'ACTOR' : victimEntityType;
-      killerEntityType = (killerEntityType == 'PLAYER' && typeof selfId != 'undefined' && killerId != selfId) ? 'ACTOR' : killerEntityType;
-      
-      var victimName = getSprite(victimEntityType, victimId).p.name,
-          killerName = getSprite(killerEntityType, killerId).p.name;
-      console.log("State log: victim " + victimName + " killer " + killerName);
-      
-      var kills = Q.state.get('kills');
-      var deaths = Q.state.get('deaths');
-      
-      if (typeof kills[killerName] === 'undefined') {
-        console.log("Error in gamestate event playerDied: kills[" + killerName + "] is undefined");
-        return;
-      }
-      if (typeof deaths[victimName] === 'undefined') {
-        console.log("Error in gamestate event playerDied: deaths[" + victimName + "] is undefined");
-        return;
-      }
-      
-      kills[killerName]++;
-      deaths[victimName]++;
-      Q.state.set({kills: kills, deaths: deaths});
+      if (killerEntityType == 'PLAYER') {
+        // Case where a player killed the player
+        // Might be actors on the client side
+        victimEntityType = (victimEntityType == 'PLAYER' && typeof selfId != 'undefined' && victimId != selfId) ? 'ACTOR' : victimEntityType;
+        killerEntityType = (killerEntityType == 'PLAYER' && typeof selfId != 'undefined' && killerId != selfId) ? 'ACTOR' : killerEntityType;
+        
+        var victimName = getSprite(victimEntityType, victimId).p.name,
+            killerName = getSprite(killerEntityType, killerId).p.name;
+        console.log("State log: victim " + victimName + " killer " + killerName);
+        
+        var kills = Q.state.get('kills');
+        var deaths = Q.state.get('deaths');
+        
+        if (typeof kills[killerName] === 'undefined') {
+          console.log("Error in gamestate event playerDied: kills[" + killerName + "] is undefined");
+          return;
+        }
+        if (typeof deaths[victimName] === 'undefined') {
+          console.log("Error in gamestate event playerDied: deaths[" + victimName + "] is undefined");
+          return;
+        }
+        
+        kills[killerName]++;
+        deaths[victimName]++;
+        Q.state.set({kills: kills, deaths: deaths});
 
-      console.log("Kills for player " + killerName + " is " + Q.state.get('kills')[killerName]);
-      console.log("Deaths for player " + victimName + " is " + Q.state.get('deaths')[victimName]);
+        console.log("Kills for player " + killerName + " is " + Q.state.get('kills')[killerName]);
+        console.log("Deaths for player " + victimName + " is " + Q.state.get('deaths')[victimName]);
 
-      //update scoreboard if it is open, and if it is not on server
-      if (!(typeof Q.stage(STAGE_SCORE) === 'undefined' || Q.stage(STAGE_SCORE) === null) &&
-          !isSession) {
-        Q.clearStage(STAGE_SCORE);
-        Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+        //update scoreboard if it is open, and if it is not on server
+        if (!(typeof Q.stage(STAGE_SCORE) === 'undefined' || Q.stage(STAGE_SCORE) === null) &&
+            !isSession) {
+          Q.clearStage(STAGE_SCORE);
+          Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+        }
+      } else {
+        // Case where an enemy killed the player
+        // Might be actors on the client side
+        victimEntityType = (victimEntityType == 'PLAYER' && typeof selfId != 'undefined' && victimId != selfId) ? 'ACTOR' : victimEntityType;
+        
+        var victimName = getSprite(victimEntityType, victimId).p.name,
+            killerName = getSprite(killerEntityType, killerId).p.name;
+        console.log("State log: victim " + victimName + " killer " + killerName);
+        
+        // Only increase player deaths
+        var deaths = Q.state.get('deaths');
+        
+        if (typeof deaths[victimName] === 'undefined') {
+          console.log("Error in gamestate event playerDied: deaths[" + victimName + "] is undefined");
+          return;
+        }
+        
+        deaths[victimName]++;
+        Q.state.set({deaths: deaths});
+
+        console.log("Deaths for player " + victimName + " is " + Q.state.get('deaths')[victimName]);
+
+        //update scoreboard if it is open, and if it is not on server
+        if (!(typeof Q.stage(STAGE_SCORE) === 'undefined' || Q.stage(STAGE_SCORE) === null) &&
+            !isSession) {
+          Q.clearStage(STAGE_SCORE);
+          Q.stageScene(SCENE_SCORE, STAGE_SCORE); 
+        }
       }
     } else {
       // Special case where the player went out of bounds
@@ -113,36 +144,49 @@ var resetState = function(newState){
   });
 
   // # When player disconnects, remove it from the gamestate
-Q.state.on('playerDisconnected', function(playerName) {
+  Q.state.on('playerDisconnected', function(playerName) {
     console.log("Gamestate playerDisconnected event triggered");
-  if (typeof playerName === 'undefined') {
-    console.log("Error in event in gamestate: playerDisconnected: player name is undefined");
+    if (typeof playerName === 'undefined') {
+      console.log("Error in event in gamestate: playerDisconnected: player name is undefined");
       return;
     }
     var newState = {
       kills: Q.state.get('kills'),
       deaths: Q.state.get('deaths')
     }
-  delete newState.kills[playerName];
-  delete newState.deaths[playerName];
+    delete newState.kills[playerName];
+    delete newState.deaths[playerName];
     Q.state.set(newState);
   });
 
   // # When enemy dies, update the kills of the killer only
   Q.state.on("enemyDied", function(killer) {
-    if (typeof killer === 'undefined') {
+    console.log("Gamestate enemyDied event triggered");
+    if (!killer) {
+      console.log("Error in gamestate event enemyDied: killer is undefined");
       return;
     }
     
-    var killerEntityType = data.killer.entityType,
-        killerId = data.killer.spriteId;
-    var killerName = getSprite(killerEntityType, killerId).p.name;
+    var killerEntityType = killer.entityType;
+    var killerId = killer.spriteId;
+        
+    // Might be actors on the client side
+    killerEntityType = (killerEntityType == 'PLAYER' && typeof selfId != 'undefined' && killerId != selfId) ? 'ACTOR' : killerEntityType;
     
-    if (typeof Q.state.p.kills[killerName] === 'undefined') {
-      Q.state.p.kills[killerName] = 0;
+    var killerName = getSprite(killerEntityType, killerId).p.name;
+    console.log("State log: an enemy-ai was killed by " + killerName);
+    
+    var kills = Q.state.get('kills');
+    
+    if (typeof kills[killerName] === 'undefined') {
+      console.log("Error in gamestate event playerDied: kills[" + killerName + "] is undefined");
+      return;
     }
-    Q.state.p.kills[killerName]++;
-    console.log("Kills for player " + killerName + " is " + Q.state.p.kills[killerName]);
+    
+    kills[killerName]++;
+    Q.state.set({kills: kills});
+
+    console.log("Kills for player " + killerName + " is " + Q.state.get('kills')[killerName]);
 
     //update scoreboard if it is open, and if it is not on server
     if (!(typeof Q.stage(STAGE_SCORE) === 'undefined' || Q.stage(STAGE_SCORE) === null) &&

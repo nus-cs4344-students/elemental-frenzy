@@ -981,14 +981,19 @@ var loadGameState = function(level) {
     }
   }
   
-  // Listen to the inserted event to add sprites into the state
+  // Listen to the inserted event to add sprites into the stage
   Q.stage(STAGE_LEVEL).on('inserted', function(item) {
     var eType = item.p.entityType;
     var spriteId = item.p.spriteId;
-    if (!eType || typeof spriteId === 'undefined') {
-      console.log("Error in inserted event listener: entityType of spriteId is undefined");
+    if (typeof eType === 'undefined') {
+      console.log("Error in inserted event listener: entityType is undefined");
       return;
     }
+    if (typeof spriteId === 'undefined') {
+      console.log("Error in inserted event listener: spriteId is undefined");
+      return;
+    }
+    
     if( !isSpriteExists(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
 
@@ -1000,6 +1005,26 @@ var loadGameState = function(level) {
       gameState.sprites[eType][spriteId] = {p: clone(item.p)}; 
       // Tell the clients about this
       Q.input.trigger('broadcastAll', {'eventName': 'updateSprite', eventData: {p: cloneValueOnly(item.p)}});
+    }
+    
+    var sprite = getSprite(eType, spriteId);
+    var spriteNeedUpdateInterval = false;
+    switch(eType){
+      case 'ACTOR':{
+        eType = 'PLAYER';
+      } // fall through
+      case 'PLAYER':
+      case 'ENEMY':{
+        spriteNeedUpdateInterval = true;
+        break;
+      }
+      default:{
+        spriteNeedUpdateInterval = false;
+        break;
+      }
+    }
+    if(spriteNeedUpdateInterval && !sprite.has('serverSprite')){
+      sprite.add('serverSprite'); 
     }
   });
 
@@ -1017,6 +1042,7 @@ var loadGameState = function(level) {
   
   Q.stage(STAGE_LEVEL).add("ladderSystem");
   Q.stage(STAGE_LEVEL).add("powerupSystem");
+  Q.stage(STAGE_LEVEL).add("enemyAiSystem");
 
   for(var i =0; i< spritesToAdd.length; i++){
     addSprite(spritesToAdd[i].entityType, 

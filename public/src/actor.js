@@ -38,8 +38,6 @@ Q.Sprite.extend("Actor", {
     });
     
     this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder');
-    
-    this.on("takeDamage");
 
     var that = this;
     var selfDestruct = setInterval(function() {
@@ -60,7 +58,7 @@ Q.Sprite.extend("Actor", {
     if(this.p.takeDamageCooldown > 0){
       return;
     }
-
+    
     var that = this;
     if(this.takeDamageIntervalId == -1){
         var playTakeDamage = function (){
