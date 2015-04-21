@@ -319,7 +319,7 @@ Q.component('2dEleball', {
       //console.log("Eleball-eleball collision");
       var i = entity.p.element,
         j = other.p.element;
-      console.log("i = " + i + " j = " + j);
+      //console.log("i = " + i + " j = " + j);
       if (i == j) {
         // Case 1, destroy each other
         //console.log("Case 1, " + ELEBALL_ELEMENTNAMES[i] 

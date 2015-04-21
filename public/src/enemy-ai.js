@@ -4,14 +4,18 @@
 var ENEMY_DEFAULT_MAXHEALTH = 300;
 var ENEMY_DEFAULT_COOLDOWN = 1.0;
 var ENEMY_DEFAULT_DMG = 10;
-var ENEMY_ELEBALL_DEFAULT_DMG = 30;
+var ENEMY_ELEBALL_DEFAULT_DMG = 20;
 var ENEMY_DEFAULT_RANGE = 400; // only fire at players 400 distance away when shooting at nearest player
 var ENEMY_DEFAULT_ELEMENT = 0; // fire (but enemy elements will randomly change)
 var ENEMY_CHARACTERS = ["character_orc", "character_skeleton"];
-var ENEMY_NUM_CHARACTERS = 2;
+var ENEMY_NUM_CHARACTERS = 2; // 2 different sprites only at the moment
 var ENEMY_ANIMATION = "enemy";
 var ENEMY_NO_FIRE_ANIMATION = "no_fire";
 var ENEMY_FIRE_ANIMATION_TIME = 0.5;
+
+var ENEMYAISYSTEM_ENEMY_LIMIT = 1; // 1 enemy at most at any one time
+var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 6000; // 6 seconds
+var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ATTACK_150PERCENTDMG"; // Powerup dropped upon enemy's death
 
 // ## Enemy Sprite
 // Create the Enemy class to add in some baddies
@@ -124,6 +128,8 @@ Q.Sprite.extend("Enemy",{
         victim: {entityType: vType, spriteId: vId}, 
         killer: {entityType: killerEntityType, spriteId: killerId}
       }});
+      
+      this.trigger('died', {x: this.p.x, y: this.p.y});
     }
     
     // Show the enemy killed info
@@ -392,7 +398,63 @@ Q.Sprite.extend("Enemy",{
 Q.component('enemyAiSystem', {
   added: function() {
     var entity = this.entity;
-    entity.insert(new Q.Enemy({x: 300, y: 200, spriteId: 1}));
+    var that = this;
+    
+    this.numExistingEnemies = 0;
+    
+    for (var i = 0; i < ENEMYAISYSTEM_ENEMY_LIMIT; i++) {
+      setTimeout(function() {
+        if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
+          return;
+        }
+        
+        that.randomlySpawnEnemy();
+      }, ENEMYAISYSTEM_ENEMY_SPAWNTIME);
+    }
+  },
+  
+  randomlySpawnEnemy: function() {
+    var entity = this.entity;
+    var that = this;
+    // Spawn enemies in 1 minute's time from the start
+    // Get random spawn position
+    var tileLayer = entity._collisionLayers[0];
+    var randomCoord;
+    var randomX, randomY;
+    var MARGIN = 0.2 * tileLayer.p.w; // 20% away from the left/right gameworld edges
+    // Get random coords for spawning
+    do {
+      randomCoord = tileLayer.getRandomTileCoordInGameWorldCoord(2);
+      randomX = randomCoord.x;
+      randomY = randomCoord.y - tileLayer.p.tileH;
+    } while (randomX <= MARGIN || randomX >= (tileLayer.p.w - MARGIN) || Q.stage(STAGE_LEVEL).locate(randomX, randomY));
+    
+    // Spawn and insert the enemy
+    console.log("Spawning enemy at (" + randomX + "," + randomY + ")");
+    var enemy = new Q.Enemy({x: randomX, y: randomY, spriteId: getNextSpriteId()});
+    entity.insert(enemy);
+    this.numExistingEnemies++;
+    
+    // Decrement counter of existing enemies, spawn powerup, and set a new timer to spawn enemy
+    enemy.on('died', function(data) { // data consists of coordinates of death for now
+      // Decrement counter
+      that.numExistingEnemies--;
+      // Set timer to spawn new enemy
+      setTimeout(function() {
+        if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
+          return;
+        }
+        
+        that.randomlySpawnEnemy();
+      }, ENEMYAISYSTEM_ENEMY_SPAWNTIME);
+      
+      if (!entity.has('powerupSystem')) {
+        console.log("Error in trying to spawn powerup on enemy's death: the stage does not have powerupSystem");
+        return;
+      }
+      // Spawn powerup
+      entity.spawnPowerup(ENEMYAISYSTEM_ENEMY_POWERUPDROP, data.x, data.y);
+    });
   }
 });
 
