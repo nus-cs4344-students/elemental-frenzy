@@ -875,6 +875,12 @@ Q.scene(SCENE_HUD, function(stage) {
       console.log("Cannot locate current player during HUD element selector initialization");
       return;
     }
+
+    //stores the current player name (mainly for scoreboard use)
+    if (CURRENT_PLAYER_NAME == null && currentPlayer != null) {
+      CURRENT_PLAYER_NAME = currentPlayer.p.name;
+    }
+
     var element = currentPlayer.p.element;
     // convert into number
     element = Number(element);
@@ -1567,12 +1573,6 @@ Q.scene(SCENE_SCORE, function(stage) {
   if(!isSession){
     currentPlayer = getPlayerSprite(selfId);
   }
-
-  if (CURRENT_PLAYER_NAME == null) {
-    //save and store the current player name
-    CURRENT_PLAYER_NAME = currentPlayer.p.name;
-  }
-
   /*
   ** Set up UI containers
   */
