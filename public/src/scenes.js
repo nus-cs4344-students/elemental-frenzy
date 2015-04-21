@@ -78,6 +78,7 @@ var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 
 //Scoreboard constants
 var SCOREBOARD_SHEET = ["scoreboard_first", "scoreboard_second", "scoreboard_third", "scoreboard_fourth"];
+var CURRENT_PLAYER_NAME = null;
 
 var STATS_OFFSET = 30;
 
@@ -1563,6 +1564,11 @@ Q.scene(SCENE_SCORE, function(stage) {
     currentPlayer = getPlayerSprite(selfId);
   }
 
+  if (CURRENT_PLAYER_NAME == null) {
+    //save and store the current player name
+    CURRENT_PLAYER_NAME = currentPlayer.p.name;
+  }
+
   /*
   ** Set up UI containers
   */
@@ -1687,7 +1693,7 @@ Q.scene(SCENE_SCORE, function(stage) {
     }
 
     var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
-    if (currentPlayer && currentPlayer.p.name == name) {
+    if (CURRENT_PLAYER_NAME != null && CURRENT_PLAYER_NAME == name) {
       scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
     }
 
