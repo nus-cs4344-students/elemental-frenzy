@@ -12,6 +12,8 @@ Q.Sprite.extend("Ladder", {
       sensor: true
     });
 
+    this.p.z = 1;
+
     this.add('2dLadder');
   }
 });
