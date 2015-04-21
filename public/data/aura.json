@@ -1,0 +1,66 @@
+{
+  "aura_fire_ulti": {
+    "sx": 0,
+    "sy": 0,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_earth_ulti": {
+    "sx": 0,
+    "sy": 126,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_light_ulti": {
+    "sx": 0,
+    "sy": 252,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_water_ulti": {
+    "sx": 0,
+    "sy": 378,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_fire": {
+    "sx": 0,
+    "sy": 504,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_earth": {
+    "sx": 0,
+    "sy": 588,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_light": {
+    "sx": 0,
+    "sy": 672,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  },
+  "aura_water": {
+    "sx": 0,
+    "sy": 756,
+    "cols": 6,
+    "tilew": 50,
+    "tileh": 42,
+    "frames": 18
+  }
+}
