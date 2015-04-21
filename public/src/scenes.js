@@ -1509,7 +1509,7 @@ Q.scene(SCENE_INFO ,function(stage) {
                                           label: ' ',
                                           countDown: isNaN(countdown) ? 0 : Number(countdown),
                                           vx: 0,
-                                          vy: -0.5
+                                          vy: -0.7
                                         }));
 
   infoMsgList.push(msg);
