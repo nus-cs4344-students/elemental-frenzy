@@ -429,7 +429,7 @@ Q.Sprite.extend("Player",{
     // Update countdown
     //this.p.updateCountdown -= dt;
     
-    if(this.p.onLadder) {
+    if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
       if( !this.p.isServerSide && Q.inputs['up']) {
         if (this.p.vx > 0) {

@@ -116,7 +116,7 @@ Q.Sprite.extend("Actor", {
       this.takeDamageIntervalId = -1;
     }
 
-    if(this.p.onLadder) {
+    if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
 
       if(Q.inputs['up']) {
