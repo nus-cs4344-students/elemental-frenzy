@@ -1230,6 +1230,9 @@ var loadGameSession = function (receivedGameState) {
   displayPlayerHUDScreen();
   
   _isGameLoaded = true;
+  
+  // Tell the session
+  Q.input.trigger('sessionCast', {eventName: 'playerGameLoaded', eventData: {playerId: selfId}});
 }
 
 var sendToApp = function (eventName, eventData) {
@@ -1640,6 +1643,11 @@ socket.on('spriteTookDmg', function (data) {
   }
   
   sprite.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
+});
+
+// Received a message to be displayed
+socket.on('message', function(data) {
+  Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: data.msg});
 });
 
 // sprite died

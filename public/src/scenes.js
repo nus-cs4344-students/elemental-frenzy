@@ -902,7 +902,8 @@ Q.scene(SCENE_HUD, function(stage) {
                                                            targetAngle: 0,
                                                            angleStep: 0,
                                                            angleShifted: 0,
-                                                           angleNeeded: 0
+                                                           angleNeeded: 0,
+                                                           angle: 0
                                                           }));
 
     selector.on('step', function(dt){

@@ -435,6 +435,11 @@ Q.component('enemyAiSystem', {
     entity.insert(enemy);
     this.numExistingEnemies++;
     
+    // Tell the players about this enemy!
+    var msg = "A NEUTRAL ENEMY HAS JUST SPAWNED SOMEWHERE! KILL IT AND YOU MIGHT BECOME STRONGER...!!!"
+    Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
+    Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg}});
+    
     // Decrement counter of existing enemies, spawn powerup, and set a new timer to spawn enemy
     enemy.on('died', function(data) { // data consists of coordinates of death for now
       // Decrement counter

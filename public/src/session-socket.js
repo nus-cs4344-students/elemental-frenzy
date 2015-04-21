@@ -1286,6 +1286,7 @@ each(['join', 'playAgain'], function(event) {
         sessionToken: sessionToken
       };
 
+      // Tell the player that he is successful!
       Q.input.trigger('singleCast', {receiverId: pId, eventName:'joinSuccessful', eventData: newPlayerData});
       
       // update other players
@@ -1315,6 +1316,13 @@ socket.on('synchronizeClocks', function(data) {
 
   var playerId = data.playerId;
   Q.input.trigger('singleCast', {receiverId: playerId, eventName:'synchronizeClocks', eventData: data});
+});
+
+// When a player loads the game completely
+socket.on('playerGameLoaded', function(data) {
+  // Tell the player about how to win
+  var msg = "Win by having the most kills before the timer reaches 0!";
+  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg}});
 });
 
 // when a player request to respawn
