@@ -26,9 +26,9 @@ var STAGE_NOTIFICATION = 15;
 var SCENE_NOTIFICATION = 'notificationScreen';
 
 // ## UI constants
-var SCOREBOARD_OVERLAY_COLOR = "rgba(1,1,1,0.3)";
-var SCOREBOARD_TEXT_COLOR = "rgba(1,1,1,0.7)";
-var SCOREBOARD_HIGHLIGHT_SELF = "rgba(255, 255, 194, 0.7)"; //light yellowish
+var SCOREBOARD_OVERLAY_COLOR = "rgba(255,255,255,0.5)"; //white
+var SCOREBOARD_TEXT_COLOR = "rgba(0,0,0,0.7)"; //black
+var SCOREBOARD_HIGHLIGHT_SELF = "rgba(128, 0, 255, 0.7)"; //purple
 var UI_PADDING_VALUE = 5; //in pixels
 var LIGHT_GREY = "#CCCCCC";
 var DARK_GREY = "rgba(0,0,0,0.4)";
@@ -78,8 +78,9 @@ var HUD_INACTIVE_ZERO_MANA_COST = "icon_mana_inactive";
 
 //Scoreboard constants
 var SCOREBOARD_SHEET = ["scoreboard_first", "scoreboard_second", "scoreboard_third", "scoreboard_fourth"];
+var CURRENT_PLAYER_NAME = null;
 
-var STATS_OFFSET = 25;
+var STATS_OFFSET = 30;
 
 // welcome screen to allow player to choose characterSprites and sessionSprites
 Q.scene(SCENE_WELCOME,function(stage) {
@@ -407,52 +408,53 @@ Q.scene(SCENE_WELCOME,function(stage) {
 
   //controls in text form
   var changeElementTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y,
+                                                  x     : controlsContainer.p.x + 2.5* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTitleColor,
-                                                  label : 'Change attack element'
+                                                  label : 'Rotate attack element'
                                               }));
 
   var changeElementText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y,
+                                                  x     : controlsContainer.p.x + 2.5* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTextColor,
-                                                  label : '\nSPACE'
+                                                  label : '\nQ, E'
                                               }));
 
   var movementTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x - 2.5* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTitleColor,
-                                                  label : 'Movement'
+                                                  label : 'Move left / right'
                                               }));
 
   var movementText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x - 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x - 2.5* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
                                                   align : 'center',
                                                   color : controlsTextColor,
-                                                  label : '\nW,A,S,D'
+                                                  label : '\nA,D'
                                               }));
 
+  
   var shootTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  x     : controlsContainer.p.x - 3* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
@@ -462,8 +464,8 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               }));
 
   var shootText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
-                                                  y     : controlsContainer.p.y - (2*controlsContainer.p.h/5),
+                                                  x     : controlsContainer.p.x - 3* controlsContainer.p.w / 12,
+                                                  y     : controlsContainer.p.y,
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
                                                   font  : FONT_FAMILY,
@@ -472,8 +474,30 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                                   label : '\nMouse Click'
                                               }));
 
+  var shootTitle = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_BOLD,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : controlsTitleColor,
+                                                  label : 'Jump / Ladder'
+                                              }));
+
+  var shootText = stage.insert(new Q.UI.Text({ 
+                                                  x     : controlsContainer.p.x,
+                                                  y     : controlsContainer.p.y,
+                                                  weight: WEIGHT_NORMAL,
+                                                  size  : SIZE_SMALL,
+                                                  font  : FONT_FAMILY,
+                                                  align : 'center',
+                                                  color : controlsTextColor,
+                                                  label : '\nSPACE, W, S'
+                                              }));
+
   var scoreboardTitle = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x + 3* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y,
                                                   weight: WEIGHT_BOLD,
                                                   size  : SIZE_SMALL,
@@ -484,7 +508,7 @@ Q.scene(SCENE_WELCOME,function(stage) {
                                               }));
 
   var scoreboardText = stage.insert(new Q.UI.Text({ 
-                                                  x     : controlsContainer.p.x + 2* controlsContainer.p.w / 12,
+                                                  x     : controlsContainer.p.x + 3* controlsContainer.p.w / 12,
                                                   y     : controlsContainer.p.y,
                                                   weight: WEIGHT_NORMAL,
                                                   size  : SIZE_SMALL,
@@ -851,6 +875,12 @@ Q.scene(SCENE_HUD, function(stage) {
       console.log("Cannot locate current player during HUD element selector initialization");
       return;
     }
+
+    //stores the current player name (mainly for scoreboard use)
+    if (CURRENT_PLAYER_NAME == null && currentPlayer != null) {
+      CURRENT_PLAYER_NAME = currentPlayer.p.name;
+    }
+
     var element = currentPlayer.p.element;
     // convert into number
     element = Number(element);
@@ -1015,7 +1045,7 @@ Q.scene(SCENE_HUD, function(stage) {
   var powerupMovement_150Speed;
   var powerupIconCenterX = [];
   var powerupIconCenterY = [];
-
+  var maxScaleOfPowerupIcons = 1.75;
   var timerText;
 
   var secondHudContainer = null;
@@ -1046,7 +1076,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > maxScaleOfPowerupIcons*(powerupIconWidth + 2 * borderWidth)) ? maxScaleOfPowerupIcons : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud2) {
 
@@ -1237,6 +1267,7 @@ Q.scene(SCENE_HUD, function(stage) {
 
       //icon sprites are 34 by 34. ideal case is scale their height to this.p.h / 3
       var scaleIcons = this.p.h / 3 / 34;
+      var scaleFonts = this.p.h > 50 ? " 16px " : this.p.h > 30 ? " 14px " : " 12px ";
       /*
       ** Mana cost per shot
       ** represented by a light blue line with blue text beside
@@ -1248,7 +1279,7 @@ Q.scene(SCENE_HUD, function(stage) {
       centerX         = selector.p.x - eleW / 1.2;
       centerY         = selector.p.y;
       var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
-      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font        = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(manaPerShot, centerX + STATS_OFFSET, centerY - 6);
 
@@ -1269,7 +1300,7 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.fillStyle     = color;
       centerY           = selector.p.y - this.p.h / 3;
       var damagePerShot = roundToOneDecimalPlace(currentPlayer.p.dmg);
-      ctx.font          = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font          = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(damagePerShot, centerX + STATS_OFFSET, centerY - 6);
 
@@ -1290,7 +1321,7 @@ Q.scene(SCENE_HUD, function(stage) {
       ctx.fillStyle   = color;
       centerY         = selector.p.y + this.p.h / 3;
       var moveSpeed   = roundToOneDecimalPlace(currentPlayer.p.speed);
-      ctx.font        = WEIGHT_BOLD + " " +"12px "+FONT_FAMILY;
+      ctx.font        = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
 
       ctx.fillText(moveSpeed, centerX + STATS_OFFSET, centerY - 6);
 
@@ -1312,7 +1343,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var borderWidth             = 4;
       var numPowerupsType         = 3;
 
-      var scaleToHeight = (this.p.h > 2*(powerupIconWidth + 2 * borderWidth)) ? 2 : this.p.h / (powerupIconWidth + 2 * borderWidth);
+      var scaleToHeight = (this.p.h > maxScaleOfPowerupIcons*(powerupIconWidth + 2 * borderWidth)) ? maxScaleOfPowerupIcons : this.p.h / (powerupIconWidth + 2 * borderWidth);
 
       if (initHud) {
 
@@ -1542,7 +1573,6 @@ Q.scene(SCENE_SCORE, function(stage) {
   if(!isSession){
     currentPlayer = getPlayerSprite(selfId);
   }
-
   /*
   ** Set up UI containers
   */
@@ -1667,7 +1697,7 @@ Q.scene(SCENE_SCORE, function(stage) {
     }
 
     var scoreboardTextColor = SCOREBOARD_TEXT_COLOR;
-    if (currentPlayer && currentPlayer.p.name == name) {
+    if (CURRENT_PLAYER_NAME != null && CURRENT_PLAYER_NAME == name) {
       scoreboardTextColor = SCOREBOARD_HIGHLIGHT_SELF;
     }
 
