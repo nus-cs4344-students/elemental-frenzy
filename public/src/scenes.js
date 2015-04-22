@@ -922,6 +922,8 @@ Q.scene(SCENE_HUD, function(stage) {
         console.log("Element toggling: player-"+player.p.element+" selector-"+this.p.activeElement);
         
         updateEleSelector(player.p.element);
+      }else if(!player){
+        updateEleSelector(this.p.activeElement);
       }
 
       var a = this.p.angle;
