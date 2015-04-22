@@ -36,6 +36,7 @@ var mapLevelLoaded;
 var _playerToFollowId; // To be used when toggling between players to follow, for the session
 var _isMapSelectionScreenShown = false;
 var _isMapCreated = false;
+var _isGameLoaded = false;
 
 var STATUS_CONNECTTION = "Connected as 'Session [id]' ([level])";
 
@@ -577,7 +578,7 @@ var removeSprite = function(entityType, id){
 
   //console.log("Removed sprite " + eType + " id " + spriteId);
   
-  if (eType == 'PLAYERELEBALL') {
+  if (eType == 'PLAYERELEBALL' && _isGameLoaded) {
     // Only the server chooses to destroy eleballs, so it must tell all players to remove the sprite
     Q.input.trigger('broadcastAll', {eventName:'removeSprite', eventData: {
         p: {
@@ -888,7 +889,9 @@ var displayGameScreen = function(level){
   // Shrink the bounding box for the sprites' width to fit its real width
   // for PLAYER and ACTOR sprites only
   Q.stage(STAGE_LEVEL).on('inserted', function(item) {
-    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || 
+        item.p.entityType == 'ACTOR' || item.p.entityType == 'ENEMY') ) {
+      
       var prevW = item.p.w;
       item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
       Q._generatePoints(item, true);
@@ -909,6 +912,8 @@ var createGameSession = function(level){
 };
 
 var resetGameState = function(){
+  _isGameLoaded = false;
+
   // there is old game state,
   // remove all of them
   if(gameState){
@@ -1003,7 +1008,7 @@ var loadGameState = function(level) {
     if( !isSpriteExists(eType,spriteId)){
       // sprite doesn't exist, add it into the game state
 
-      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+      // console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
 
       // store sprite reference
       allSprites[eType][spriteId] = item;
@@ -1078,6 +1083,8 @@ var loadGameState = function(level) {
 
   // load session HUD info
   displaySessionHUDScreen();
+
+  _isGameLoaded = true;
 };
 
 var joinSession = function(playerId, characterId) {
@@ -1420,6 +1427,8 @@ socket.on('playerDisconnected', function(data) {
 socket.on('disconnect', function(){
   console.log("App.js is disconnected");
 
+  _isGameLoaded = false;
+
   // ask host to refresh browser again
   displayNotificationScreen("Server cannot be reached\nPlease refresh your page after a while");
 
@@ -1433,6 +1442,11 @@ socket.on('authoritativeSpriteUpdate', function(data) {
   var sToken = data.sessionToken;
   if(!sToken || sToken != sessionToken){
     console.log("Incorrect session token expected: "+sessionToken+" received: "+sToken+" during authoritativeSpriteUpdate");
+    return;
+  }
+
+  if(!_isGameLoaded){
+    console.log("authoritativeSpriteUpdate "+data.entityType+" "+data.spriteId+" received when game is not loaded");
     return;
   }
 
@@ -1603,7 +1617,7 @@ each(['togglePreviousElementUp','toggleNextElementUp'], function(actionName) {
     }
 
     var nextElement = ele % ELEBALL_ELEMENTNAMES.length;
-    console.log("current "+player.p.element+" received "+nextElement);
+    // console.log("current "+player.p.element+" received "+nextElement);
     player.p.element = nextElement;
   });
 },this);

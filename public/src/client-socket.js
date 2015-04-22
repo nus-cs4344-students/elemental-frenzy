@@ -434,11 +434,13 @@ var isSpriteExists = function (entityType, id) {
  Create and add sprite into game state and insert it into active stage
  */
 var addSprite = function (entityType, id, properties) {
+  
   var eType = entityType;
   if(!eType) {
     console.log("Trying to add sprite without entityType");
     return;
   }
+
   if (!allSprites[eType]) {
     console.log("Trying to add sprite of type " + eType + " that currently is not in allSprites array");
     return;
@@ -1157,7 +1159,9 @@ var displayGameScreen = function (level) {
   // Shrink the bounding box for the sprites' width to fit its real width
   // for PLAYER and ACTOR sprites only
   Q.stage(STAGE_LEVEL).on('inserted', function(item) {
-    if (item && item.p && (item.p.entityType == 'PLAYER' || item.p.entityType == 'ACTOR') ) {
+    if (item && item.p && (item.p.entityType == 'PLAYER' || 
+      item.p.entityType == 'ACTOR' || item.p.entityType == 'ENEMY') ) {
+      
       var prevW = item.p.w;
       item.p.w *= PLAYERACTOR_WIDTHSCALEDOWNFACTOR;
       Q._generatePoints(item, true);
@@ -1231,6 +1235,44 @@ var loadGameSession = function (receivedGameState) {
   // load player HUD info
   displayPlayerHUDScreen();
   
+  // Listen to the inserted event to add sprites into the stage
+  Q.stage(STAGE_LEVEL).on('inserted', function(item) {
+    var eType = item.p.entityType;
+    var spriteId = item.p.spriteId;
+    
+    if (typeof eType === 'undefined') {
+      console.log("Error in inserted event listener: entityType is undefined");
+      return;
+    }
+    if (typeof spriteId === 'undefined') {
+      console.log("Error in inserted event listener: spriteId is undefined");
+      return;
+    }
+    
+    if( !isSpriteExists(eType,spriteId)){
+      // sprite doesn't exist, add it into the game state
+
+      console.log("Storing item " + eType + " spriteId " + spriteId + " into state");
+
+      // store sprite reference
+      allSprites[eType][spriteId] = item;
+      // store sprite properties into game state
+      gameState.sprites[eType][spriteId] = {p: clone(item.p)}; 
+    }
+  });
+
+  // Listen to the removed event
+  Q.stage(STAGE_LEVEL).on('removed', function(item) {
+    var eType = item.p.entityType;
+    var spriteId = item.p.spriteId;
+    if (!eType || typeof spriteId === 'undefined') {
+      return;
+    }
+    
+    console.log("Removing item " + eType + " spriteId " + spriteId + " from state");
+    removeSprite(eType, spriteId);
+  });
+
   _isGameLoaded = true;
   
   // Tell the session
@@ -1553,7 +1595,6 @@ socket.on('updateSprite', function (data) {
     addSprite(eType, spriteId, props);
     return;
   }
-
   updateSprite(eType, spriteId, props);
 });
 
@@ -1587,7 +1628,6 @@ socket.on('removeSprite', function (data) {
     console.log("removeSprite "+eType+" id "+spriteId+" which does not exists");
     return;
   }
-
   removeSprite(eType, spriteId, props);
 });
 
