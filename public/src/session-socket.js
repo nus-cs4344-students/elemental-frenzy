@@ -1338,7 +1338,8 @@ socket.on('playerGameLoaded', function(data) {
   var msg = "Eliminate everything in your sight before time's up!";
   var sound = SOUND_GAMESTART;
   var loopSound = true;
-  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound, loopSound: loopSound}});
+  var restartAudio = true;
+  Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound, loopSound: loopSound, restartAudio: restartAudio}});
 });
 
 // when a player request to respawn

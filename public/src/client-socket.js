@@ -1684,7 +1684,7 @@ socket.on('spriteTookDmg', function (data) {
     return;
   }
   
-  sprite.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
+  sprite.takeDamage({dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
 });
 
 // Received a message to be displayed
@@ -1692,8 +1692,14 @@ socket.on('message', function(data) {
   if (data.msg) {
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: data.msg});
   }
+  if (data.restartAudio) {
+    Q.audio.stop();
+  }
   if (data.sound) {
-    var loopSound = typeof data.loopSound !== 'undefined' && data.loopSound;
+    var loopSound = false;
+    if (data.loopSound) {
+      loopSound = true;
+    }
     Q.audio.play(data.sound, {loop: loopSound});
   }
 });
@@ -1745,6 +1751,9 @@ socket.on('spriteOutOfBounds', function(data) {
 
 // when session is disconnected
 socket.on('sessionDisconnected', function (data) {
+  
+  // Stop playing audio
+  Q.audio.stop();
 
   // session disconnected does not require seesion token as it is being sent by app.js
 
@@ -1801,6 +1810,9 @@ socket.on('playerDisconnected', function (data) {
 // when app.js is disconnected
 socket.on('disconnect', function () {
   console.log("App.js disconnected");
+  
+  // Stop playing audio
+  Q.audio.stop();
 
   _isSessionConnected = false;
   _isGameLoaded = false;
