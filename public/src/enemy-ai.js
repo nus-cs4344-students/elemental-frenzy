@@ -465,13 +465,18 @@ Q.component('enemyAiSystem', {
       // Decrement counter
       that.numExistingEnemies--;
       // Set timer to spawn new enemy
-      setTimeout(function() {
+      var timeout_spawnEnemy = setTimeout(function() {
         if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
           return;
         }
         
         that.randomlySpawnEnemy();
       }, ENEMYAISYSTEM_ENEMY_SPAWNTIME);
+      
+      // Clear the spawning timeout when it is destroyed
+      that.on('destroyed', function() {
+        clearTimeout(timeout_spawnEnemy);
+      })
       
       if (!entity.has('powerupSystem')) {
         console.log("Error in trying to spawn powerup on enemy's death: the stage does not have powerupSystem");
