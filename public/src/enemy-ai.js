@@ -466,7 +466,7 @@ Q.component('enemyAiSystem', {
       that.numExistingEnemies--;
       // Set timer to spawn new enemy
       var timeout_spawnEnemy = setTimeout(function() {
-        if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
+        if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT || that.isDestroyed) {
           return;
         }
         

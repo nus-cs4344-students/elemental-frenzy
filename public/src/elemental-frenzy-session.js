@@ -65,8 +65,8 @@ var Q = window.Q = Quintus({audioSupported: [ 'ogg','mp3', 'wav' ],
                           })
                           .include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, Audio")
                           // Maximize this game to whatever the size of the browser is
-                          .setup({ maximize: true })
-                          .enableSound();
+                          .setup({ maximize: true });
+                          //.enableSound();
 
 // And turn on default input controls and touch input (for UI)
 Q.touch(Q.SPRITE_UI, TOUCHABLE_STAGES);
