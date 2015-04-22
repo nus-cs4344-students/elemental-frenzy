@@ -414,15 +414,22 @@ Q.component('enemyAiSystem', {
     
     this.numExistingEnemies = 0;
     
-    for (var i = 0; i < ENEMYAISYSTEM_ENEMY_LIMIT; i++) {
-      setTimeout(function() {
-        if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
-          return;
-        }
-        
-        that.randomlySpawnEnemy();
-      }, ENEMYAISYSTEM_ENEMY_SPAWNTIME);
-    }
+    this.timeAdded = Q.state.get('timeLeft');
+    
+    Q.state.on('change.timeLeft', function() {
+      Q.state.off('change.timeLeft', this);
+      var curTime = Q.state.get('timeLeft');
+      var timeDiff = Math.abs(that.timeAdded - curTime);
+      for (var i = 0; i < ENEMYAISYSTEM_ENEMY_LIMIT; i++) {
+        setTimeout(function() {
+          if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
+            return;
+          }
+          
+          that.randomlySpawnEnemy();
+        }, ENEMYAISYSTEM_ENEMY_SPAWNTIME - timeDiff);
+      }
+    });
   },
   
   randomlySpawnEnemy: function() {
