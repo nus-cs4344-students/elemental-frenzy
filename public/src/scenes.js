@@ -900,7 +900,7 @@ Q.scene(SCENE_HUD, function(stage) {
     var inactiveScale = 0.3;
     var activeScale = 1;
     var scalingStep = 0.1;
-    var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW, 
+    var selector = hudContainer.insert(new Q.UI.Container({x: -hudContainer.p.w/2 + eleW*2, 
                                                            y: 0,
                                                            activeElement: element,
                                                            targetAngle: 0,
@@ -1286,7 +1286,7 @@ Q.scene(SCENE_HUD, function(stage) {
       color           = '#3BB9FF'; //blue
       ctx.strokeStyle = color;
       ctx.fillStyle   = color;
-      centerX         = selector.p.x - eleW / 1.2;
+      centerX         = selector.p.x - eleW - 30;
       centerY         = selector.p.y;
       var manaPerShot = roundToOneDecimalPlace(currentPlayer.p.manaPerShot);
       ctx.font        = WEIGHT_BOLD + scaleFonts + FONT_FAMILY;
