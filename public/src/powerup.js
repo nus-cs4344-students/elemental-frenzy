@@ -451,7 +451,7 @@ Q.component('powerupable', {
           }
         }
         break;
-      default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
+      default: console.log("Error in applyPowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
     }
   },
@@ -469,7 +469,7 @@ Q.component('powerupable', {
         break;
       case POWERUP_CLASS_ENEMYDROP_DMGHPMP                  : // do nothing. The powerup boost is permanent!
         break;
-      default: console.log("Error in addPowerup: powerupName " + powerupName + " is not recognized!"); 
+      default: console.log("Error in expirePowerup: powerupName " + powerupName + " is not recognized!"); 
         break;
     }
   },
