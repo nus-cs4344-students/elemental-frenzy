@@ -70,7 +70,7 @@ Q.component('auraEffect', {
   destroyed: function(){
     var a = getSprite("AURA", this.entity.p.spriteId);
     if(a === undefined){
-      console.log("Aura of sprite "+this.p.spriteId+" not found when component auraEffect is destroyed");
+      console.log("Aura of sprite "+this.entity.p.spriteId+" not found when component auraEffect is destroyed");
       return;
     }
     a.destroy();
