@@ -71,6 +71,37 @@ var Q = window.Q = Quintus({audioSupported: [ 'ogg','mp3', 'wav' ],
 // And turn on default input controls and touch input (for UI)
 Q.touch(Q.SPRITE_UI, TOUCHABLE_STAGES);
 
+Q.scene("loading",function(stage) {
+
+    var text = "Shaping the maps";
+    stage.insert(new Q.UI.Text({
+      label: text,
+      x: Q.width/2,
+      y: Q.height/2
+    }));
+
+    // var dots = [".","..","...","....",""];
+    var dots = "..........";
+    var load = stage.insert(new Q.UI.Text({
+      label: " ",
+      x: Q.width/2,
+      y: Q.height*0.55
+    }));
+
+    var count = 0;
+    var interval = setInterval(function(){
+
+      if(_assetsLoaded){
+        clearInterval(interval);
+      }
+
+      load.p.label = dots.substring(0, (count%dots.length));
+      count++;
+    }, 150);
+});
+
+Q.stageScene("loading", 0);
+
 // ## Asset Loading and Game Launch
 // Q.load can be called at any time to load additional assets
 // assets that are already loaded will be skipped
