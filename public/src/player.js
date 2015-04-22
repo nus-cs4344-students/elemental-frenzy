@@ -287,11 +287,12 @@ Q.Sprite.extend("Player",{
     }
     this.p.takeDamageCooldown = PLAYER_DEFAULT_TAKE_DAMAGE_COOLDOWN;
 
+    var dmg = dmgAndShooter.dmg,
+        shooterEntityType = dmgAndShooter.shooterEntityType,
+        shooterId = dmgAndShooter.shooterSpriteId;
+        
     // server side damage calculation
     if (this.p.isServerSide){
-      var dmg = dmgAndShooter.dmg,
-          shooterEntityType = dmgAndShooter.shooterEntityType,
-          shooterId = dmgAndShooter.shooterSpriteId;
       
       this.p.currentHealth -= dmg;
       
@@ -312,10 +313,10 @@ Q.Sprite.extend("Player",{
       if(this.p.currentHealth <= 0) {
         this.die(shooterEntityType, shooterId);
       }
-      
-      // Mainly for the dmgDisplay
-      this.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
     }
+    
+    // Mainly for the dmgDisplay
+    this.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
   },
   
   heal: function(healAmt) {

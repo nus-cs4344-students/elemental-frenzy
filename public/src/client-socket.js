@@ -1684,7 +1684,7 @@ socket.on('spriteTookDmg', function (data) {
     return;
   }
   
-  sprite.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
+  sprite.takeDamage({dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
 });
 
 // Received a message to be displayed
