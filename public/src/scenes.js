@@ -820,6 +820,10 @@ Q.scene(SCENE_LEVEL, function(stage) {
     stage.collisionLayer(new Q.TileLayer({dataAsset: level + '.json',
                                             sheet: 'map_tiles' })
     );
+
+    infoMsgList = [];
+    infoTimeLeftList= [];
+    infoPositionList = [];
   }
 });
 
@@ -1005,12 +1009,17 @@ Q.scene(SCENE_HUD, function(stage) {
       var sign;
       var currentEle = selector.p.activeElement;
       var numEle = ELEBALL_ELEMENTNAMES.length;
+      
+      console.log("current element-"+currentEle+" next element-"+nextElement);
 
-      if((currentEle != 0 && currentEle != 3 && currentEle >= nextElement) ||
+      if(// normal case
+        (currentEle != 0 && currentEle != 3 && currentEle > nextElement) ||
+        // special case for initialization
+        (currentEle == nextElement && currentEle >= Math.floor(numEle/2)) ||
         // special case for 0
-        (currentEle == 0 && currentEle <= nextElement && (currentEle+numEle/2)%numEle <= nextElement) ||
+        (currentEle == 0 && currentEle <= nextElement && (currentEle+Math.floor(numEle/2))%numEle <= nextElement) ||
         // special case for 3
-        (currentEle == 3 && currentEle >= nextElement && (currentEle+numEle/2)%numEle <= nextElement)){
+        (currentEle == 3 && currentEle >= nextElement && (currentEle+Math.floor(numEle/2))%numEle <= nextElement)){
         //  move clockwise
         sign = 1;
       }else{
@@ -1032,7 +1041,7 @@ Q.scene(SCENE_HUD, function(stage) {
       selector.p.angleShifted = 0;
       selector.p.activeElement = nextElement;
 
-      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep+" sign "+sign);
+      console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep+" sign "+sign);
     };
 
     updateEleSelector(element);
