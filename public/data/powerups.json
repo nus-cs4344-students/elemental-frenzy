@@ -51,6 +51,14 @@
 		"tilew": 11,
 		"tileh": 29,
 		"frames": 1
-    }
-       
+    },
+
+    "powerup_diamond":{
+	    "sx": 0,
+			"sy": 35,
+			"cols": 3,
+			"tilew": 34,
+			"tileh": 34,
+			"frames": 6    
+		}   
 }

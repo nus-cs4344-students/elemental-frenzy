@@ -1041,7 +1041,7 @@ Q.scene(SCENE_HUD, function(stage) {
       selector.p.angleShifted = 0;
       selector.p.activeElement = nextElement;
 
-      console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep+" sign "+sign);
+      // console.log("tAngle "+targetAngle+" a "+selector.p.angle+" aNeeded "+sign*angleNeeded+" aStep "+selector.p.angleStep+" sign "+sign);
     };
 
     updateEleSelector(element);

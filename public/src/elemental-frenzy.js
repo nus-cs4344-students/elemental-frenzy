@@ -8,6 +8,9 @@ requirejs.config({
     //be triggered, and the deps config will be confusing
     //for those cases.
     shim: {
+        'aura':{
+          deps: ['powerup']
+        },
         'scenes': {
           //These script dependencies should be loaded before loading
           //scenes.js

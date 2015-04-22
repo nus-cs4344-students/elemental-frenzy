@@ -16,11 +16,13 @@ var POWERUP_CLASS_MOVESPEED_150PERCENTSPEED     = "POWERUP_CLASS_MOVESPEED_150PE
 var POWERUP_CLASS_HEALTH_HEAL30PERCENT          = "POWERUP_CLASS_HEALTH_HEAL30PERCENT";
 var POWERUP_CLASS_ENEMYDROP_DMGHPMP             = "POWERUP_CLASS_ENEMYDROP_DMGHPMP";
 
+var POWERUP_ANIMATION_ENEMYDROP_DMGHPMP ="powerup_diamond";
+
 var POWERUP_SPRITESHEET_ATTACK_150PERCENTDMG          = 'powerup_attack';
 var POWERUP_SPRITESHEET_MANA_REDUCE70PERCENTMANACOST  = 'powerup_mana';
 var POWERUP_SPRITESHEET_MOVESPEED_150PERCENTSPEED     = 'powerup_movement';
 var POWERUP_SPRITESHEET_HEALTH_HEAL30PERCENT          = 'powerup_red';
-var POWERUP_SPRITESHEET_ENEMYDROP_DMGHPMP             = 'powerup_green';
+var POWERUP_SPRITESHEET_ENEMYDROP_DMGHPMP             = 'powerup_diamond';
 
 var POWERUP_DURATION_ATTACK_150PERCENTDMG         = 10.0;
 var POWERUP_DURATION_HEALTH_HEAL30PERCENT         = 0.0;
@@ -160,6 +162,12 @@ Q.Sprite.extend("Powerup", {
     
     //console.log(this.p.name + " created at (" + this.p.x + "," + this.p.y + ")");
     this.p.z = 3;
+
+    if(this.p.sprite){
+      this.add('animation');
+      this.play('powerup');
+    }
+
     this.add('2dPowerup');
   },
   
@@ -245,6 +253,7 @@ Q.component('powerupSystem', {
                                           existing:       0
                                         },
       POWERUP_CLASS_ENEMYDROP_DMGHPMP:{   name:           POWERUP_CLASS_ENEMYDROP_DMGHPMP,
+                                          sprite:         POWERUP_ANIMATION_ENEMYDROP_DMGHPMP,
                                           sheet:          POWERUP_SPRITESHEET_ENEMYDROP_DMGHPMP,
                                           duration:       POWERUP_DURATION_ENEMYDROP_DMGHPMP,
                                           feedbackOnTaken:POWERUP_FEEDBACKONTAKEN_ENEMYDROP_DMGHPMP,
@@ -268,6 +277,7 @@ Q.component('powerupSystem', {
         feedbackOnTaken: this.powerups[powerupName].feedbackOnTaken,
         soundOnTaken: this.powerups[powerupName].soundOnTaken,
         spriteId: getNextSpriteId(),
+        sprite: this.powerups[powerupName].sprite,
         x: x, 
         y: y
       });
@@ -429,7 +439,7 @@ Q.component('powerupable', {
                                                 spriteId: entity.p.spriteId,
                                                 dmg: 5, maxHealth: 10, maxMana: 10});
             // Tell all players about his boost in power!
-            var msg = entity.p.name + " just got more POWERFUL from the enemy's drop! Stop him!";
+            var msg = entity.p.name + " obtained the LEGEDARY rewards! Stop him!";
             var sound = SOUND_DANGEROUS;
             Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
           } else {
@@ -526,4 +536,8 @@ Q.component('powerupable', {
       this.p.maxMana      = playerDefaultMaxMana;
     }
   }
+});
+
+Q.animations(POWERUP_ANIMATION_ENEMYDROP_DMGHPMP, {
+  powerup: { frames: [0,1,2,3,4,5], rate: 0.5/6}, 
 });
