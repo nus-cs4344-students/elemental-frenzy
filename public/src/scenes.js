@@ -730,6 +730,10 @@ Q.scene(SCENE_LEVEL, function(stage) {
     // postrender is trigger after all the items in the stage is renderred according to the viewport if it exists
     mapStage.on("postrender", function(ctx){
 
+      if(!_isMiniMapRequired){
+        return;
+      }
+
       // call viewport to push matrix and translate and scale if viewport exists
       stage.trigger('prerender', ctx);
 

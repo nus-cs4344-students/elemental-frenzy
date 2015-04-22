@@ -6,6 +6,7 @@ var KEYBOARD_CONTROLS_PLAYER = {
   '2': "toggleElement1",
   '3': "toggleElement2",
   '4': "toggleElement3",
+  M : "toggleMiniMap",
   Q : "togglePreviousElement",
   E : "toggleNextElement",
   W : "up",
@@ -22,6 +23,7 @@ var KEYBOARD_CONTROLS_PLAYER = {
 };
 
 var KEYBOARD_CONTROLS_SESSION = {
+  M : "toggleMiniMap",
   W : "",
   S : "",
   A : "",

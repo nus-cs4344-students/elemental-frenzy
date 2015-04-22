@@ -24,6 +24,7 @@ var gameState;
 var infoState;
 var isSession = false;
 var _isJoinSent = false;
+var _isMiniMapRequired = true;
 
 var SOUND_NOTENOUGHMANA = "manaInsufficient.ogg";
 
@@ -899,12 +900,20 @@ var setupEventListeners = function () {
     }, false);
   }
 
+  Q.input.on('toggleMiniMapUp', function(){
+    if(!_isGameLoaded) {
+      // game need to be loaded in order to show minimap
+      return;
+    }
+
+    _isMiniMapRequired = !_isMiniMapRequired;
+  });
 
   each(['togglePreviousElementUp','toggleNextElementUp'], function(actionName) {
     
     Q.input.on(actionName, function () {
 
-      if(!_isGameLoaded) {
+      if(!_isSessionConnected || !_isGameLoaded) {
         // client side need to be connected to the server in order
         // to show score screen
         return;

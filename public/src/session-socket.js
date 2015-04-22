@@ -37,6 +37,7 @@ var _playerToFollowId; // To be used when toggling between players to follow, fo
 var _isMapSelectionScreenShown = false;
 var _isMapCreated = false;
 var _isGameLoaded = false;
+var _isMiniMapRequired = true;
 
 var STATUS_CONNECTTION = "Connected as 'Session [id]' ([level])";
 
@@ -762,6 +763,15 @@ var setupListener = function(){
 
   Q.input.on('displayScoreScreenUp', function(){
     hideScoreScreen();
+  });
+
+  Q.input.on('toggleMiniMapUp', function(){
+    if(!_isGameLoaded) {
+      // game need to be loaded in order to show minimap
+      return;
+    }
+
+    _isMiniMapRequired = !_isMiniMapRequired;
   });
 
   // On state change, update local gameState and
