@@ -27,7 +27,7 @@ Q.component("healthBar", {
   draw: function(ctx) {
     var color = '#FF0000'; // defaults to red
     if (this.entity.isA('Player')) {
-      color = '#00FF00'; // player healthbar is green
+      color = 'lime'; // player healthbar is green
     }
     var hf = this.entity.p.currentHealth / this.entity.p.maxHealth;
     if (this.entity.isA('Player') && hf <= 0.5) {
@@ -95,15 +95,21 @@ Q.component("nameBar", {
 
     var entity = this.entity;
     var y = -entity.p.cy - 20;
-    var color = '#FF0000'; // defaults to red
+    var name = this.entity.p.name;
+    var color = 'dimgrey'; 
+
     if (this.entity.isA('Player')) {
-      color = 'black'; // player healthbar is green
+      color = 'navy';
+    }else if(this.entity.isA('Enemy')){
+      color = 'crimson';
+      name = "[BOSS] "+name;
     }
+
     ctx.font = "600 15px "+FONT_FAMILY;
     ctx.textAlign = "center";
     ctx.fillStyle = color || "black";
     ctx.textBaseline = "alphabetic";
-    ctx.fillText(this.entity.p.name, 0, y);
+    ctx.fillText(name, 0, y);
 
     ctx.restore();
   }

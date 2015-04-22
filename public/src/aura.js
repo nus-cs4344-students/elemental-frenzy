@@ -32,6 +32,7 @@ Q.component('auraEffect', {
 
     if(isSpriteExists("AURA", entity.p.spriteId)){
       // re-create for the player/actor already
+      console.log("AURA sprite of "+entity.p.spriteId+" already exists");
       removeSprite("AURA", this.entity.p.spriteId);
       return;
     }
@@ -69,7 +70,8 @@ Q.component('auraEffect', {
   destroyed: function(){
     var a = getSprite("AURA", this.entity.p.spriteId);
     if(a === undefined){
-      console.log("Aura Sprite not found when component auraEffect is destroyed");
+      console.log("Aura of sprite "+this.p.spriteId+" not found when component auraEffect is destroyed");
+      return;
     }
     a.destroy();
   }

@@ -1243,7 +1243,7 @@ Q.scene(SCENE_HUD, function(stage) {
       var scaledHp  = currentHp / maxHp;
 
       //green -> yellow -> red
-      var color       = scaledHp > 0.5 ? 'limegreen' : scaledHp > 0.25 ? 'yellow' : 'brown';
+      var color       = scaledHp > 0.5 ? 'lime' : scaledHp > 0.25 ? 'yellow' : 'brown';
       ctx.strokeStyle = color;
       ctx.fillStyle   = color;
       var centerX     = 4*this.p.w/15;

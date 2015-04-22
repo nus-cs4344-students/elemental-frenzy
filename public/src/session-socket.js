@@ -1335,7 +1335,7 @@ socket.on('synchronizeClocks', function(data) {
 // When a player loads the game completely
 socket.on('playerGameLoaded', function(data) {
   // Tell the player about how to win
-  var msg = "Win by having the most kills before the timer reaches 0!";
+  var msg = "Eliminate everything in your sight before time's up!";
   var sound = SOUND_GAMESTART;
   var loopSound = true;
   Q.input.trigger('singleCast', {receiverId: data.playerId, eventName:'message', eventData: {msg: msg, sound: sound, loopSound: loopSound}});

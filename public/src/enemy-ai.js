@@ -12,8 +12,10 @@ var ENEMY_NUM_CHARACTERS = 2; // 2 different sprites only at the moment
 var ENEMY_ANIMATION = "enemy";
 var ENEMY_NO_FIRE_ANIMATION = "no_fire";
 var ENEMY_FIRE_ANIMATION_TIME = 0.5;
+var ENEMY_NAMES = ['Murzthurg', 'Zelas'];
 var ENEMY_SPAWN_SOUND = "bossSpawn.ogg";
 var ENEMY_DIE_SOUND = "victorious.ogg";
+var ENEMY_DEPTH = 6;
 
 var ENEMYAISYSTEM_ENEMY_LIMIT = 1; // 1 enemy at most at any one time
 var ENEMYAISYSTEM_ENEMY_SPAWNTIME = 30000; // 30 seconds
@@ -24,11 +26,13 @@ var ENEMYAISYSTEM_ENEMY_POWERUPDROP = "POWERUP_CLASS_ENEMYDROP_DMGHPMP"; // Powe
 Q.Sprite.extend("Enemy",{
   
   init: function(p) {
+    var cId = Math.floor(Math.random() * ENEMY_NUM_CHARACTERS);
     this._super(p, { 
     entityType: 'ENEMY',
-    name: 'enemyAi',
     spriteId: -1,
-    sheet: ENEMY_CHARACTERS[Math.floor(Math.random() * ENEMY_NUM_CHARACTERS)],
+    characterId: cId,
+    name: ENEMY_NAMES[cId],
+    sheet: ENEMY_CHARACTERS[cId],
     sprite: ENEMY_ANIMATION,
     vx: 100,  
     type: Q.SPRITE_ENEMY,
@@ -47,10 +51,11 @@ Q.Sprite.extend("Enemy",{
     update: true,
     isDead: false
     });
+    this.p.z = ENEMY_DEPTH;
 
     // Enemies use the Bounce AI to change direction 
     // whenver they run into something.
-    this.add('2d, aiBounce, healthBar, dmgDisplay, animation');
+    this.add('2d, aiBounce, nameBar, healthBar, dmgDisplay, animation');
 
     // Listen for a sprite collision, if it's the player,
     // end the game unless the enemy is hit on top
@@ -116,6 +121,7 @@ Q.Sprite.extend("Enemy",{
     
     var vType = this.p.entityType;
     var vId = this.p.spriteId;
+    var vName = this.p.name;
     var vCharId = this.p.characterId;
     var vSessionId = this.p.sessionId;
 
@@ -132,7 +138,7 @@ Q.Sprite.extend("Enemy",{
       }});
       
       // Tell all players and play the enemy die sound
-      var msg = "An enemy has been slain by " + killerName + "!!!";
+      var msg = "[BOSS] "+vName+" has been slain by " + killerName + "!!!";
       var sound = ENEMY_DIE_SOUND;
       Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
       
@@ -442,7 +448,7 @@ Q.component('enemyAiSystem', {
     this.numExistingEnemies++;
     
     // Tell the players about this enemy!
-    var msg = "A NEUTRAL ENEMY HAS JUST SPAWNED SOMEWHERE! KILL IT AND YOU MIGHT BECOME STRONGER...!!!"
+    var msg = "[BOSS] "+enemy.p.name+" has appeared! Kill it and collect LENGENDARY rewards!!"
     var sound = ENEMY_SPAWN_SOUND;
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
     Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
