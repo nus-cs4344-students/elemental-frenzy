@@ -108,10 +108,10 @@ Q.Sprite.extend("Enemy",{
       if (this.p.currentHealth <= 0) {
         this.die(shooterEntityType, shooterId);
       }
-      
-      // Mainly for the dmgDisplay
-      this.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
     }
+    
+    // Mainly for the dmgDisplay
+    this.trigger('takeDamage', {dmg: dmg, shooterEntityType: shooterEntityType, shooterSpriteId: shooterId});
   },
   
   die: function(killerEntityType, killerId) {
