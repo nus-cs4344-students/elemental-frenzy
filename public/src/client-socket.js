@@ -281,6 +281,8 @@ var updateSprite = function (entityType, id, properties) {
     spriteToUpdate.p.maxHealth = clonedProps.maxHealth;
     spriteToUpdate.p.currentMana = clonedProps.currentMana;
     spriteToUpdate.p.maxMana = clonedProps.maxMana;
+    // Dmg
+    spriteToUpdate.p.dmg = clonedProps.dmg;
 
   } else {
     spriteToUpdate.p = Q._defaults(clonedProps, spriteToUpdate.p);
