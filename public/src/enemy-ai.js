@@ -55,7 +55,7 @@ Q.Sprite.extend("Enemy",{
 
     // Enemies use the Bounce AI to change direction 
     // whenver they run into something.
-    this.add('2d, aiBounce, nameBar, healthBar, dmgDisplay, animation');
+    this.add('2d, aiBounce, nameBar, healthBar, dmgDisplay, animation, auraEffect');
 
     // Listen for a sprite collision, if it's the player,
     // end the game unless the enemy is hit on top
@@ -448,7 +448,7 @@ Q.component('enemyAiSystem', {
     this.numExistingEnemies++;
     
     // Tell the players about this enemy!
-    var msg = "[BOSS] "+enemy.p.name+" has appeared! Kill it and collect LENGENDARY rewards!!"
+    var msg = "[BOSS] "+enemy.p.name+" has appeared! Kill it and collect the LEGENDARY rewards!!"
     var sound = ENEMY_SPAWN_SOUND;
     Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});
     Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
