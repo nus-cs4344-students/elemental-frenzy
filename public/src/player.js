@@ -6,7 +6,7 @@ var PLAYER_EARTH = 1;
 var PLAYER_LIGHTNING = 2;
 var PLAYER_WATER = 3;
 var PLAYER_NAMES = ["Fae", "Elliot" , "Lex", "Wynne"];
-var PLAYER_NAME_COLORS = ["orange", "brown" , "yellow", "cyan"];
+var PLAYER_NAME_COLORS = ["orange", "brown" , "purple", "cyan"];
 var PLAYER_CHARACTERS = ["character_fire", "character_earth" , "character_lightning", "character_water"];
 var PLAYER_DEFAULT_MAXHEALTH = 50;
 var PLAYER_DEFAULT_MAX_MANA = 50;
@@ -90,7 +90,8 @@ Q.Sprite.extend("Player",{
     // default input actions (left, right to move,  up or action to jump)
     // It also checks to make sure the player is on a horizontal surface before
     // letting them jump.
-    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, dmgDisplay, healDisplay, feedbackDisplay, 2dLadder, powerupable');
+    this.add('2d, platformerControls, animation, healthBar, manaBar, nameBar, \
+              dmgDisplay, healDisplay, feedbackDisplay, 2dLadder, powerupable, auraEffect');
     
     this.takeDamageIntervalId = -1;
 

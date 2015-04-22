@@ -134,7 +134,7 @@ Q.Sprite.extend("Enemy",{
       // Tell all players and play the enemy die sound
       var msg = "An enemy has been slain by " + killerName + "!!!";
       var sound = ENEMY_DIE_SOUND;
-      Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound, sound}});
+      Q.input.trigger('broadcastAll', {eventName: 'message', eventData: {msg: msg, sound: sound}});
       
       // Display the message and play the audio on the server side too
       Q.stageScene(SCENE_INFO, STAGE_INFO, {msg: msg});

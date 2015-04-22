@@ -40,7 +40,7 @@ Q.Sprite.extend("Actor", {
     
     this.p.z = ACTOR_DEPTH;
 
-    this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder');
+    this.add('healthBar, nameBar, dmgDisplay, healDisplay, animation, 2d, powerupable, 2dLadder, auraEffect');
 
     var that = this;
     var selfDestruct = setInterval(function() {
@@ -114,51 +114,50 @@ Q.Sprite.extend("Actor", {
       this.takeDamageIntervalId = -1;
     }
 
-    /*
+    // actor firing
+    if(this.has('animation') && this.p.fireAnimation !== undefined && 
+      this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION){
+      this.play(this.p.fireAnimation, 1);
+    }
+
+    // actor on ladder
     if(this.p.onLadder && this.p.landed < 0) {
       this.p.gravity = 0;
-
-      if(Q.inputs['up']) {
+      if(this.p.vx != 0 || this.p.vy != 0){
         this.play("run_in");
-      } else if(Q.inputs['down']) {
-        this.play("run_in");
-      } else{
+      }else{
         this.play("stand_back");
       }
     }else{
+      // actor on the ground
       this.p.gravity = 1;
-    }
-    */
-
-    if(!this.p.onLadder && this.has('animation')){
-
-      if(this.p.fireAnimation != ACTOR_NO_FIRE_ANIMATION &&
-        typeof this.p.fireAnimation != 'undefined'){
-        this.play(this.p.fireAnimation, 1);
-      }
-
-      // player not jumping
-      if(this.p.vy ==0){
-        // play running animation
-        if (this.p.vx > 0) {
-          this.play("run_right");
-        } else if (this.p.vx < 0) {
-          this.play("run_left");
-        } else {
-          this.play("stand_front");
-        }
-      }else{
-        // player is jumping
-        // play the still frame where the direction is
-        if (this.p.vx > 0) {
-          this.play("run_right_still");
-        } else if (this.p.vx < 0) {
-          this.play("run_left_still");
-        } else {
-          this.play("stand_front");
+      if(this.has('animation')){
+        // player not jumping
+        if(this.p.vy == 0){
+          // play running animation
+          if (this.p.vx > 0) {
+            this.play("run_right");
+          } else if (this.p.vx < 0) {
+            this.play("run_left");
+          } else {
+            this.play("stand_front");
+          }
+        }else{
+          // player is jumping
+          // play the still frame where the direction is
+          if (this.p.vx > 0) {
+            this.play("run_right_still");
+          } else if (this.p.vx < 0) {
+            this.play("run_left_still");
+          }
+          else {
+            this.play("stand_front");
+          }
         }
       }
     }
+
+    this.p.onLadder = false;
   },
   
   draw: function(ctx) {
