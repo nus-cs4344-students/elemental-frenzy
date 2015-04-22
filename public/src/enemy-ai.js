@@ -421,13 +421,17 @@ Q.component('enemyAiSystem', {
       var curTime = Q.state.get('timeLeft');
       var timeDiff = Math.abs(that.timeAdded - curTime);
       for (var i = 0; i < ENEMYAISYSTEM_ENEMY_LIMIT; i++) {
-        setTimeout(function() {
-          if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT) {
+        var timeout_spawnEnemy = setTimeout(function() {
+          if (that.numExistingEnemies >= ENEMYAISYSTEM_ENEMY_LIMIT || that.isDestroyed) {
             return;
           }
           
           that.randomlySpawnEnemy();
         }, ENEMYAISYSTEM_ENEMY_SPAWNTIME - timeDiff);
+        
+        that.on('destroyed', function() {
+          clearTimeout(timeout_spawnEnemy);
+        });
       }
     });
   },
